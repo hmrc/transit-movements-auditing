@@ -16,19 +16,25 @@
 
 package uk.gov.hmrc.transitmovementsauditing.controllers
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import play.api.mvc.Action
-import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
+
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.Future
 
 @Singleton()
-class MicroserviceHelloWorldController @Inject() (cc: ControllerComponents) extends BackendController(cc) {
+class AuditController @Inject() (cc: ControllerComponents, implicit val materializer: Materializer) extends BackendController(cc) with StreamingParsers {
 
-  def hello(): Action[AnyContent] = Action.async {
-    implicit request =>
-      Future.successful(Ok("Hello world"))
+  def post(message: String): Action[Source[ByteString, _]] = Action.async(
+    streamFromFile
+  ) {
+    _ =>
+      Future.successful(Accepted)
   }
 }
