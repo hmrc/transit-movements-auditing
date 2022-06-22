@@ -23,18 +23,23 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.Future
 
 @Singleton()
-class AuditController @Inject() (cc: ControllerComponents, implicit val materializer: Materializer) extends BackendController(cc) with StreamingParsers {
+class AuditController @Inject() (cc: ControllerComponents)(implicit val materializer: Materializer) extends BackendController(cc) with StreamingParsers {
 
-  def post(message: String): Action[Source[ByteString, _]] = Action.async(
+  def post(auditType: AuditType.Value): Action[Source[ByteString, _]] = Action.async(
     streamFromFile
   ) {
     _ =>
+      // build message elements
+      // build tags from metadata
+      // get body from stream
+      // call connector to send message to CIP
       Future.successful(Accepted)
   }
 }

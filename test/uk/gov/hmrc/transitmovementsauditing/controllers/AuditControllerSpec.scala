@@ -27,6 +27,7 @@ import play.api.mvc.PlayBodyParsers
 import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 
 class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem {
 
@@ -37,12 +38,12 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
   val controllerComponentWithTempFile: ControllerComponents =
     stubControllerComponents(playBodyParsers = PlayBodyParsers(SingletonTemporaryFileCreator, errorHandler)(materializer))
 
-  private val controller = new AuditController(controllerComponentWithTempFile, materializer)
+  private val controller = new AuditController(controllerComponentWithTempFile)(materializer)
 
   "POST /" - {
 
-    "return 200" in {
-      val result = controller.post("")(fakeRequest)
+    "return 202" in {
+      val result = controller.post(AmendmentAcceptance)(fakeRequest)
       status(result) shouldBe Status.ACCEPTED
     }
 
