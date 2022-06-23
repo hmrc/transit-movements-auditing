@@ -32,7 +32,7 @@ import scala.concurrent.Future
 @Singleton()
 class AuditController @Inject() (cc: ControllerComponents)(implicit val materializer: Materializer) extends BackendController(cc) with StreamingParsers {
 
-  def post(auditType: AuditType.Value): Action[Source[ByteString, _]] = Action.async(
+  def post(auditType: AuditType): Action[Source[ByteString, _]] = Action.async(
     streamFromFile
   ) {
     _ =>

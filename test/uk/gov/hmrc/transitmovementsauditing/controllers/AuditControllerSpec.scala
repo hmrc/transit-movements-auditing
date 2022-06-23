@@ -41,11 +41,9 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
   private val controller = new AuditController(controllerComponentWithTempFile)(materializer)
 
   "POST /" - {
-
     "return 202" in {
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
       status(result) shouldBe Status.ACCEPTED
     }
-
   }
 }

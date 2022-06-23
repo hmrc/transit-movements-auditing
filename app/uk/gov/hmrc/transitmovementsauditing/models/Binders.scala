@@ -20,14 +20,19 @@ import play.api.mvc.PathBindable
 
 object Binders {
 
-  implicit def auditTypePathBindable(implicit binder: PathBindable[String]): PathBindable[AuditType.Value] = new PathBindable[AuditType.Value] {
+  implicit def auditTypePathBindable(implicit binder: PathBindable[String]): PathBindable[AuditType] = new PathBindable[AuditType] {
 
-    def bind(key: String, value: String): Either[String, AuditType.Value] =
+    def bind(key: String, value: String): Either[String, AuditType] =
       for {
         name <- binder.bind(key, value).right
-      } yield AuditType.withName(name)
+        at <-
+          AuditType.fromName(name) match {
+            case None            => Left("Error locating audit type")
+            case Some(auditType) => Right(auditType)
+          }
+      } yield at
 
-    def unbind(key: String, auditType: AuditType.Value): String =
+    def unbind(key: String, auditType: AuditType): String =
       binder.unbind(key, auditType.toString)
 
   }

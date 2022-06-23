@@ -16,43 +16,56 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models
 
-sealed trait AuditType
+sealed abstract class AuditType(val name: String) extends Product with Serializable
 
-object AuditType extends Enumeration {
+object AuditType {
 
-  val AmendmentAcceptance, ArrivalNotification, InvalidationDecision, DeclarationAmendment, DeclarationInvalidationRequest, DeclarationData, Discrepancies,
-    GoodsReleasedNotification, MRNAllocated, ReleaseForTransit, UnloadingPermission, UnloadingRemarks, WriteOffNotification, NoReleaseForTransit,
-    RequestOfRelease, GuaranteeNotValid, RejectionFromOfficeOfDeparture, RejectionFromOfficeOfDestination, ControlDecisionNotification,
-    PresentationNotificationForThePreLodgedDeclaration, PositiveAcknowledge =
-    Value
+  val values: Seq[AuditType] = Seq(
+    AmendmentAcceptance,
+    ArrivalNotification,
+    InvalidationDecision,
+    DeclarationAmendment,
+    DeclarationInvalidationRequest,
+    DeclarationData,
+    Discrepancies,
+    GoodsReleasedNotification,
+    MRNAllocated,
+    ReleaseForTransit,
+    UnloadingPermission,
+    UnloadingRemarks,
+    WriteOffNotification,
+    NoReleaseForTransit,
+    RequestOfRelease,
+    GuaranteeNotValid,
+    RejectionFromOfficeOfDeparture,
+    RejectionFromOfficeOfDestination,
+    ControlDecisionNotification,
+    PresentationNotificationForThePreLodgedDeclaration,
+    PositiveAcknowledge
+  )
+
+  case object AmendmentAcceptance                                extends AuditType("AmendmentAcceptance")
+  case object ArrivalNotification                                extends AuditType("ArrivalNotification")
+  case object InvalidationDecision                               extends AuditType("InvalidationDecision")
+  case object DeclarationAmendment                               extends AuditType("DeclarationAmendment")
+  case object DeclarationInvalidationRequest                     extends AuditType("DeclarationInvalidationRequest")
+  case object DeclarationData                                    extends AuditType("DeclarationData")
+  case object Discrepancies                                      extends AuditType("Discrepancies")
+  case object GoodsReleasedNotification                          extends AuditType("GoodsReleasedNotification")
+  case object MRNAllocated                                       extends AuditType("MRNAllocated")
+  case object ReleaseForTransit                                  extends AuditType("ReleaseForTransit")
+  case object UnloadingPermission                                extends AuditType("UnloadingPermission")
+  case object UnloadingRemarks                                   extends AuditType("UnloadingRemarks")
+  case object WriteOffNotification                               extends AuditType("WriteOffNotification")
+  case object NoReleaseForTransit                                extends AuditType("NoReleaseForTransit")
+  case object RequestOfRelease                                   extends AuditType("RequestOfRelease")
+  case object GuaranteeNotValid                                  extends AuditType("GuaranteeNotValid")
+  case object RejectionFromOfficeOfDeparture                     extends AuditType("RejectionFromOfficeOfDeparture")
+  case object RejectionFromOfficeOfDestination                   extends AuditType("RejectionFromOfficeOfDestination")
+  case object ControlDecisionNotification                        extends AuditType("ControlDecisionNotification")
+  case object PresentationNotificationForThePreLodgedDeclaration extends AuditType("PresentationNotificationForThePreLodgedDeclaration")
+  case object PositiveAcknowledge                                extends AuditType("PositiveAcknowledge")
+
+  def fromName(name: String): Option[AuditType] = values.find(_.name == name)
+
 }
-//object AuditType extends AuditType {
-//
-//  def from(str: String): AuditType =
-//    str match {
-//      case "AmendmentAcceptance" => AmendmentAcceptance
-//      case _                     => Unknown
-//    }
-//}
-//
-//case object AmendmentAcceptance                                extends AuditType
-//case object ArrivalNotification                                extends AuditType
-//case object InvalidationDecision                               extends AuditType
-//case object DeclarationAmendment                               extends AuditType
-//case object DeclarationInvalidationRequest                     extends AuditType
-//case object DeclarationData                                    extends AuditType
-//case object Discrepancies                                      extends AuditType
-//case object GoodsReleasedNotification                          extends AuditType
-//case object MRNAllocated                                       extends AuditType
-//case object ReleaseForTransit                                  extends AuditType
-//case object UnloadingPermission                                extends AuditType
-//case object UnloadingRemarks                                   extends AuditType
-//case object WriteOffNotification                               extends AuditType
-//case object NoReleaseForTransit                                extends AuditType
-//case object RequestOfRelease                                   extends AuditType
-//case object GuaranteeNotValid                                  extends AuditType
-//case object RejectionFromOfficeOfDeparture                     extends AuditType
-//case object RejectionFromOfficeOfDestination                   extends AuditType
-//case object ControlDecisionNotification                        extends AuditType
-//case object PresentationNotificationForThePreLodgedDeclaration extends AuditType
-//case object PositiveAcknowledge                                extends AuditType
