@@ -17,7 +17,10 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.reset
 import org.mockito.MockitoSugar.when
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
@@ -25,45 +28,74 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.Failure
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
-class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with TestActorSystem with StreamTestHelpers {
+class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with TestActorSystem with StreamTestHelpers with BeforeAndAfterEach {
   implicit val hc = HeaderCarrier()
   implicit val ec = ExecutionContext.Implicits.global
 
   private val mockAuditConnector: AuditConnector = mock[AuditConnector]
 
+  private val someGoodCC015CJson =
+    """{
+      |  "messageSender": "sender"
+      |}""".stripMargin
+
+  private val someInvalidJson =
+    """{
+      |  "messageSender":
+      |}""".stripMargin
+
+  override def beforeEach: Unit =
+    reset(mockAuditConnector)
+
   "Audit service" - {
-    val service = new AuditServiceImpl(mockAuditConnector)
 
     "should successfully send message to audit connector" in {
-      val someCC015CJson =
-        """{
-          |  "messageSender": "sender"
-          |}""".stripMargin
-
-      val source = createStream(someCC015CJson)
-      val result = service.send(AmendmentAcceptance, source)
+      val service = new AuditServiceImpl(mockAuditConnector)
 
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(Future.successful(AuditResult.Success))
+        .thenReturn(Future.successful(Success))
 
-      whenReady(result.value) {
+      val result = service.send(DeclarationData, createStream(someGoodCC015CJson))
+
+      whenReady(result.value, Timeout(1.second)) {
         _ mustBe Right(())
       }
     }
 
-    "should fail to parse invalid json" in {}
+    "should fail to parse invalid json" in {
+      val service = new AuditServiceImpl(mockAuditConnector)
+      val result  = service.send(DeclarationData, createStream(someInvalidJson))
 
-    "should return Left Failure" in {}
+      whenReady(result.value) {
+        res =>
+          res.isLeft mustBe true
+          res.left.get must not be ""
+      }
+    }
 
+    "should return Left Failure" in {
+      val service = new AuditServiceImpl(mockAuditConnector)
+
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(Failure("a failure")))
+
+      val result = service.send(DeclarationData, createStream(someGoodCC015CJson))
+
+      whenReady(result.value, Timeout(1.second)) {
+        _ mustBe Left("a failure")
+      }
+    }
   }
 
 }

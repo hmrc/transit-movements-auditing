@@ -39,12 +39,15 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType.RequestOfRelease
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.UnloadingRemarks
 import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.Disabled
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.Failure
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Failure => AuditResultFailure}
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResultSuccess}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuditServiceImpl])
@@ -59,24 +62,26 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
   def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, String, Unit] =
     for {
       messageBody <- extractBody(stream)
-      jsValue           = Json.parse(messageBody)
+      jsValue     <- parseJson(messageBody)
       extendedDataEvent = createExtendedEvent(auditType, jsValue)
-      a <- sendEvent(extendedDataEvent)
-    } yield a
+      result <- sendEvent(extendedDataEvent)
+    } yield result
 
   private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, String, Unit] = {
     val futureResult = connector.sendExtendedEvent(extendedDataEvent)
-    EitherT(toFutureEither(futureResult))
+    toEitherT(futureResult)
   }
 
-  private def toFutureEither(eventualResult: Future[AuditResult]): Future[Either[String, Unit]] =
-    eventualResult
-      .map {
-        case Success                => Right(())
-        case Failure(msg, None)     => Left(s"$msg")
-        case Failure(msg, Some(ex)) => Left(s"$msg, exception: $ex")
-        case Disabled               => Left("Disabled")
-      }
+  private def toEitherT(futureResult: Future[AuditResult]): EitherT[Future, String, Unit] =
+    EitherT(
+      futureResult
+        .map {
+          case AuditResultSuccess                => Right(())
+          case AuditResultFailure(msg, None)     => Left(s"$msg")
+          case AuditResultFailure(msg, Some(ex)) => Left(s"$msg, exception: $ex")
+          case Disabled                          => Left("Disabled")
+        }
+    )
 
   private def createExtendedEvent(auditType: AuditType, messageBody: JsValue): ExtendedDataEvent =
     ExtendedDataEvent(
@@ -106,6 +111,14 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
         .recover {
           case NonFatal(ex) => Left("Error")
         }
+    }
+
+  private def parseJson(body: String): EitherT[Future, String, JsValue] =
+    EitherT {
+      Try(Json.parse(body)) match {
+        case Success(jsonValue) => Future.successful(Right(jsonValue))
+        case Failure(exception) => Future.successful(Left(exception.toString))
+      }
     }
 
 }
