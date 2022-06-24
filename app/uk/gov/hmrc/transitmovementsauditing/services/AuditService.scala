@@ -38,6 +38,9 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType.PresentationNotific
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.RequestOfRelease
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.UnloadingRemarks
 import uk.gov.hmrc.play.audit.AuditExtensions._
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.Disabled
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.Failure
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
 import scala.concurrent.ExecutionContext
@@ -46,14 +49,14 @@ import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuditServiceImpl])
 trait AuditService {
-  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, String, String]
+  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, String, Unit]
 }
 
 @Singleton
 class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, hc: HeaderCarrier, val materializer: Materializer)
     extends AuditService {
 
-  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, String, String] =
+  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, String, Unit] =
     for {
       messageBody <- extractBody(stream)
       jsValue           = Json.parse(messageBody)
@@ -61,15 +64,19 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       a <- sendEvent(extendedDataEvent)
     } yield a
 
-  private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, String, String] = {
+  private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, String, Unit] = {
     val futureResult = connector.sendExtendedEvent(extendedDataEvent)
     EitherT(toFutureEither(futureResult))
   }
 
-  private def toFutureEither(eventualResult: Future[AuditResult]): Future[Either[String, String]] =
-    eventualResult.map(
-      a => Right(a.toString)
-    )
+  private def toFutureEither(eventualResult: Future[AuditResult]): Future[Either[String, Unit]] =
+    eventualResult
+      .map {
+        case Success                => Right(())
+        case Failure(msg, None)     => Left(s"$msg")
+        case Failure(msg, Some(ex)) => Left(s"$msg, exception: $ex")
+        case Disabled               => Left("Disabled")
+      }
 
   private def createExtendedEvent(auditType: AuditType, messageBody: JsValue): ExtendedDataEvent =
     ExtendedDataEvent(

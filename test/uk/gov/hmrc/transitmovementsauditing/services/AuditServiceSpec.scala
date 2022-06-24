@@ -56,7 +56,7 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
         .thenReturn(Future.successful(AuditResult.Success))
 
       whenReady(result.value) {
-        _ mustBe Right("Success")
+        _ mustBe Right(())
       }
     }
 
