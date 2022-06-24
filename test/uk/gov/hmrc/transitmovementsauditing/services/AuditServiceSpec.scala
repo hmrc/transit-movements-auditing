@@ -28,11 +28,13 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.Disabled
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.Failure
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.models.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 
 import scala.concurrent.ExecutionContext
@@ -73,18 +75,18 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
       }
     }
 
-    "should fail to parse invalid json" in {
+    "should return an error when the service fails to parse invalid json" in {
       val service = new AuditServiceImpl(mockAuditConnector)
       val result  = service.send(DeclarationData, createStream(someInvalidJson))
 
-      whenReady(result.value) {
+      whenReady(result.value, Timeout(1.second)) {
         res =>
           res.isLeft mustBe true
-          res.left.get must not be ""
+          res.left.get shouldBe a[AuditError]
       }
     }
 
-    "should return Left Failure" in {
+    "should return an error when the connector reports a failure" in {
       val service = new AuditServiceImpl(mockAuditConnector)
 
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
@@ -93,7 +95,20 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
       val result = service.send(DeclarationData, createStream(someGoodCC015CJson))
 
       whenReady(result.value, Timeout(1.second)) {
-        _ mustBe Left("a failure")
+        _ mustBe Left(AuditError("a failure"))
+      }
+    }
+
+    "should return an error when the connector reports that auditing is disabled" in {
+      val service = new AuditServiceImpl(mockAuditConnector)
+
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(Disabled))
+
+      val result = service.send(DeclarationData, createStream(someGoodCC015CJson))
+
+      whenReady(result.value, Timeout(1.second)) {
+        _ mustBe Left(AuditError("Auditing disabled"))
       }
     }
   }

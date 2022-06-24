@@ -29,6 +29,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
+import uk.gov.hmrc.transitmovementsauditing.models.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.ArrivalNotification
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
@@ -52,14 +53,14 @@ import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuditServiceImpl])
 trait AuditService {
-  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, String, Unit]
+  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, AuditError, Unit]
 }
 
 @Singleton
 class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, hc: HeaderCarrier, val materializer: Materializer)
     extends AuditService {
 
-  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, String, Unit] =
+  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, AuditError, Unit] =
     for {
       messageBody <- extractBody(stream)
       jsValue     <- parseJson(messageBody)
@@ -67,19 +68,19 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       result <- sendEvent(extendedDataEvent)
     } yield result
 
-  private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, String, Unit] = {
+  private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, AuditError, Unit] = {
     val futureResult = connector.sendExtendedEvent(extendedDataEvent)
     toEitherT(futureResult)
   }
 
-  private def toEitherT(futureResult: Future[AuditResult]): EitherT[Future, String, Unit] =
+  private def toEitherT(futureResult: Future[AuditResult]): EitherT[Future, AuditError, Unit] =
     EitherT(
       futureResult
         .map {
           case AuditResultSuccess                => Right(())
-          case AuditResultFailure(msg, None)     => Left(s"$msg")
-          case AuditResultFailure(msg, Some(ex)) => Left(s"$msg, exception: $ex")
-          case Disabled                          => Left("Disabled")
+          case AuditResultFailure(msg, None)     => Left(AuditError(s"$msg"))
+          case AuditResultFailure(msg, Some(ex)) => Left(AuditError(s"$msg, exception: $ex"))
+          case Disabled                          => Left(AuditError("Auditing disabled"))
         }
     )
 
@@ -100,7 +101,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
         "transit-movements-router"
     }
 
-  private def extractBody(stream: Source[ByteString, _]): EitherT[Future, String, String] =
+  private def extractBody(stream: Source[ByteString, _]): EitherT[Future, AuditError, String] =
     EitherT {
       stream
         .fold("")(
@@ -109,15 +110,15 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
         .runWith(Sink.head[String])
         .map(Right(_))
         .recover {
-          case NonFatal(ex) => Left("Error")
+          case NonFatal(ex) => Left(AuditError(s"Error extracting body from stream: $ex"))
         }
     }
 
-  private def parseJson(body: String): EitherT[Future, String, JsValue] =
+  private def parseJson(body: String): EitherT[Future, AuditError, JsValue] =
     EitherT {
       Try(Json.parse(body)) match {
         case Success(jsonValue) => Future.successful(Right(jsonValue))
-        case Failure(exception) => Future.successful(Left(exception.toString))
+        case Failure(exception) => Future.successful(Left(AuditError(exception.toString)))
       }
     }
 
