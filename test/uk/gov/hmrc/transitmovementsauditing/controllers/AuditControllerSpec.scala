@@ -18,6 +18,7 @@ package uk.gov.hmrc.transitmovementsauditing.controllers
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.DefaultHttpErrorHandler
 import play.api.http.HttpErrorConfig
 import play.api.http.Status
@@ -28,17 +29,20 @@ import play.api.test.Helpers._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
+import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 
-class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem {
+class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem with MockitoSugar {
 
   private val fakeRequest = FakeRequest("POST", "/")
+
+  private val mockAuditService = mock[AuditService]
 
   val errorHandler = new DefaultHttpErrorHandler(HttpErrorConfig(showDevErrors = false, None), None, None)
 
   val controllerComponentWithTempFile: ControllerComponents =
     stubControllerComponents(playBodyParsers = PlayBodyParsers(SingletonTemporaryFileCreator, errorHandler)(materializer))
 
-  private val controller = new AuditController(controllerComponentWithTempFile)(materializer)
+  private val controller = new AuditController(controllerComponentWithTempFile, mockAuditService)(materializer)
 
   "POST /" - {
     "return 202" in {
