@@ -77,7 +77,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
   "POST /" - {
     "return 202 when auditing was successful" in {
       when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
-      when(mockAuditService.send(any(), any())).thenReturn(EitherT.rightT(()))
+      when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
       status(result) shouldBe Status.ACCEPTED

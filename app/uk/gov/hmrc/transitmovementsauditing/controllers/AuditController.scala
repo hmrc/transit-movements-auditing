@@ -25,6 +25,8 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
@@ -44,6 +46,7 @@ class AuditController @Inject() (cc: ControllerComponents, conversionService: Co
 
   def post(auditType: AuditType): Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
     request =>
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       (for {
         jsonStream <- convertIfNecessary(request)
         result     <- auditService.send(auditType, jsonStream).asPresentation

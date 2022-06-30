@@ -54,14 +54,13 @@ import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuditServiceImpl])
 trait AuditService {
-  def send(auditType: AuditType, jsonStream: Source[ByteString, _]): EitherT[Future, AuditError, Unit]
+  def send(auditType: AuditType, jsonStream: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, AuditError, Unit]
 }
 
 @Singleton
-class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, hc: HeaderCarrier, val materializer: Materializer)
-    extends AuditService {
+class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, val materializer: Materializer) extends AuditService {
 
-  def send(auditType: AuditType, jsonStream: Source[ByteString, _]): EitherT[Future, AuditError, Unit] =
+  def send(auditType: AuditType, jsonStream: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, AuditError, Unit] =
     for {
       messageBody <- extractBody(jsonStream)
       jsValue     <- parseJson(messageBody)
@@ -84,7 +83,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
         }
     )
 
-  private def createExtendedEvent(auditType: AuditType, messageBody: JsValue): ExtendedDataEvent =
+  private def createExtendedEvent(auditType: AuditType, messageBody: JsValue)(implicit hc: HeaderCarrier): ExtendedDataEvent =
     ExtendedDataEvent(
       auditSource = source(auditType),
       auditType = auditType.name,
