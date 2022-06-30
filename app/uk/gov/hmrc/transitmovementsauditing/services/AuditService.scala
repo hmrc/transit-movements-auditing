@@ -58,7 +58,7 @@ trait AuditService {
 }
 
 @Singleton
-class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, val materializer: Materializer) extends AuditService {
+class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer) extends AuditService {
 
   def send(auditType: AuditType, jsonStream: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, AuditError, Unit] =
     for {
