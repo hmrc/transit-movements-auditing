@@ -34,16 +34,16 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.models.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
+import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with TestActorSystem with StreamTestHelpers with BeforeAndAfterEach {
   implicit val hc = HeaderCarrier()
-  implicit val ec = ExecutionContext.Implicits.global
 
   private val mockAuditConnector: AuditConnector = mock[AuditConnector]
 
@@ -82,7 +82,7 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
       whenReady(result.value, Timeout(1.second)) {
         res =>
           res.isLeft mustBe true
-          res.left.get shouldBe a[AuditError]
+          res.left.get mustBe a[AuditError.FailedToParse]
       }
     }
 
@@ -95,7 +95,7 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
       val result = service.send(DeclarationData, createStream(someGoodCC015CJson))
 
       whenReady(result.value, Timeout(1.second)) {
-        _ mustBe Left(AuditError("a failure"))
+        _.left.get mustBe a[AuditError.UnexpectedError]
       }
     }
 
@@ -108,7 +108,7 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
       val result = service.send(DeclarationData, createStream(someGoodCC015CJson))
 
       whenReady(result.value, Timeout(1.second)) {
-        _ mustBe Left(AuditError("Auditing disabled"))
+        _ mustBe Left(AuditError.Disabled)
       }
     }
   }

@@ -21,15 +21,20 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
+import com.fasterxml.jackson.core.JsonParseException
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.AuditExtensions._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
-import uk.gov.hmrc.transitmovementsauditing.models.AuditError
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.Disabled
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Failure => AuditResultFailure}
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResultSuccess}
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.ArrivalNotification
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
@@ -38,11 +43,7 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationInvalida
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.PresentationNotificationForThePreLodgedDeclaration
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.RequestOfRelease
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.UnloadingRemarks
-import uk.gov.hmrc.play.audit.AuditExtensions._
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.Disabled
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Failure => AuditResultFailure}
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResultSuccess}
-import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -53,16 +54,16 @@ import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuditServiceImpl])
 trait AuditService {
-  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, AuditError, Unit]
+  def send(auditType: AuditType, jsonStream: Source[ByteString, _]): EitherT[Future, AuditError, Unit]
 }
 
 @Singleton
 class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, hc: HeaderCarrier, val materializer: Materializer)
     extends AuditService {
 
-  def send(auditType: AuditType, stream: Source[ByteString, _]): EitherT[Future, AuditError, Unit] =
+  def send(auditType: AuditType, jsonStream: Source[ByteString, _]): EitherT[Future, AuditError, Unit] =
     for {
-      messageBody <- extractBody(stream)
+      messageBody <- extractBody(jsonStream)
       jsValue     <- parseJson(messageBody)
       extendedDataEvent = createExtendedEvent(auditType, jsValue)
       result <- sendEvent(extendedDataEvent)
@@ -77,10 +78,9 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
     EitherT(
       futureResult
         .map {
-          case AuditResultSuccess                => Right(())
-          case AuditResultFailure(msg, None)     => Left(AuditError(s"$msg"))
-          case AuditResultFailure(msg, Some(ex)) => Left(AuditError(s"$msg, exception: $ex"))
-          case Disabled                          => Left(AuditError("Auditing disabled"))
+          case AuditResultSuccess           => Right(())
+          case AuditResultFailure(msg, thr) => Left(AuditError.UnexpectedError(msg, thr))
+          case Disabled                     => Left(AuditError.Disabled)
         }
     )
 
@@ -104,21 +104,24 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
   private def extractBody(stream: Source[ByteString, _]): EitherT[Future, AuditError, String] =
     EitherT {
       stream
-        .fold("")(
-          (cur, next) => cur + next.utf8String
+        .fold(ByteString())(
+          (cur, next) => cur ++ next
         )
+        .map(_.utf8String)
         .runWith(Sink.head[String])
         .map(Right(_))
         .recover {
-          case NonFatal(ex) => Left(AuditError(s"Error extracting body from stream: $ex"))
+          case NonFatal(ex) => Left(AuditError.UnexpectedError(s"Error extracting body from stream", Some(ex)))
         }
     }
 
   private def parseJson(body: String): EitherT[Future, AuditError, JsValue] =
     EitherT {
       Try(Json.parse(body)) match {
-        case Success(jsonValue) => Future.successful(Right(jsonValue))
-        case Failure(exception) => Future.successful(Left(AuditError(exception.toString)))
+        case Success(jsonValue)                     => Future.successful(Right(jsonValue))
+        case Failure(exception: JsonParseException) => Future.successful(Left(AuditError.FailedToParse(exception)))
+        case Failure(exception) =>
+          Future.successful(Left(AuditError.UnexpectedError("Exception thrown when attempting to parse string as Json", Some(exception))))
       }
     }
 

@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.models
+package uk.gov.hmrc.transitmovementsauditing.models.errors
 
-case class AuditError(message: String)
+import com.fasterxml.jackson.core.JsonParseException
+
+sealed trait AuditError
+
+object AuditError {
+  case object Disabled                                                       extends AuditError
+  case class FailedToParse(exception: JsonParseException)                    extends AuditError
+  case class UnexpectedError(message: String, thr: Option[Throwable] = None) extends AuditError
+}
