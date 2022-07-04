@@ -36,13 +36,6 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Failure => AuditResult
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResultSuccess}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.ArrivalNotification
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationInvalidationRequest
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.PresentationNotificationForThePreLodgedDeclaration
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.RequestOfRelease
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.UnloadingRemarks
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 
 import scala.concurrent.ExecutionContext
@@ -85,20 +78,11 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
 
   private def createExtendedEvent(auditType: AuditType, messageBody: JsValue)(implicit hc: HeaderCarrier): ExtendedDataEvent =
     ExtendedDataEvent(
-      auditSource = source(auditType),
+      auditSource = auditType.source,
       auditType = auditType.name,
       tags = hc.toAuditTags(),
       detail = messageBody
     )
-
-  private def source(auditType: AuditType): String =
-    auditType match {
-      case ArrivalNotification | DeclarationAmendment | DeclarationInvalidationRequest | DeclarationData | UnloadingRemarks | RequestOfRelease |
-          PresentationNotificationForThePreLodgedDeclaration =>
-        "common-transit-convention-traders"
-      case _ =>
-        "transit-movements-router"
-    }
 
   private def extractBody(stream: Source[ByteString, _]): EitherT[Future, AuditError, String] =
     EitherT {
