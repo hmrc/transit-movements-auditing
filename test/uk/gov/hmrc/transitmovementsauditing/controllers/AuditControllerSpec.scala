@@ -21,10 +21,12 @@ import akka.util.ByteString
 import cats.data.EitherT
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar.reset
+import org.mockito.MockitoSugar.times
+import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.DefaultHttpErrorHandler
 import play.api.http.HttpErrorConfig
@@ -38,6 +40,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
+import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
@@ -75,12 +78,45 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
   }
 
   "POST /" - {
-    "return 202 when auditing was successful" in {
+    "returns 202 when auditing was successful with an XML payload" in {
       when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
       when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
-      status(result) shouldBe Status.ACCEPTED
+      status(result) mustBe Status.ACCEPTED
+      verify(mockConversionService, times(1)).toJson(any())(any(), any())
+    }
+
+    "returns 202 when auditing was successful with a payload" in {
+      when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
+
+      val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(CONTENT_TYPE -> "application/json"))
+      status(result) mustBe Status.ACCEPTED
+      verify(mockConversionService, times(0)).toJson(any())(any(), any())
+    }
+
+    "returns 500 when the conversion service fails" in {
+      when(mockConversionService.toJson(any())(any(), any())).thenReturn(EitherT.leftT(ConversionError.UnexpectedError("test error")))
+
+      val result = controller.post(AmendmentAcceptance)(fakeRequest)
+      status(result) mustBe Status.INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
+    "returns 500 when the audit service fails" in {
+      when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
+
+      val result = controller.post(AmendmentAcceptance)(fakeRequest)
+      status(result) mustBe Status.INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
     }
   }
 }
