@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.config
+package uk.gov.hmrc.transitmovementsauditing.models.errors
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import play.api.Configuration
+sealed trait ConversionError
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
-
-  lazy val appName: String = config.get[String]("appName")
-
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
+object ConversionError {
+  case class UnexpectedError(message: String, thr: Option[Throwable] = None) extends ConversionError
 }

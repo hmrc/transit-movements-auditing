@@ -16,21 +16,15 @@
 
 package uk.gov.hmrc.transitmovementsauditing.controllers.stream
 
-import akka.stream.IOResult
 import akka.stream.Materializer
-import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.RunnableGraph
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.api.libs.Files
 import play.api.libs.streams.Accumulator
 import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
-import play.api.mvc.Request
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 
 trait StreamingParsers {
   self: BaseControllerHelpers =>
@@ -42,16 +36,6 @@ trait StreamingParsers {
   //  and cause errors for additional connections
   implicit val materializerExecutionContext: ExecutionContext =
     ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(4))
-
-  def streamFromTemporaryFile[A](block: Source[ByteString, Future[IOResult]] => RunnableGraph[Future[A]])(implicit
-    request: Request[Files.TemporaryFile]
-  ): Future[A] =
-    block(FileIO.fromPath(request.body.path)).run()
-
-  lazy val streamFromFile: BodyParser[Source[ByteString, _]] = parse.temporaryFile.map {
-    tempFile =>
-      FileIO.fromPath(tempFile.path)
-  }
 
   lazy val streamFromMemory: BodyParser[Source[ByteString, _]] = BodyParser {
     _ =>

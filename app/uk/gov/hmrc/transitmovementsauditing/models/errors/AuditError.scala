@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.config
+package uk.gov.hmrc.transitmovementsauditing.models.errors
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import play.api.Configuration
+import com.fasterxml.jackson.core.JsonParseException
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
+sealed trait AuditError
 
-  lazy val appName: String = config.get[String]("appName")
-
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
+object AuditError {
+  case object Disabled                                                       extends AuditError
+  case class FailedToParse(exception: JsonParseException)                    extends AuditError
+  case class UnexpectedError(message: String, thr: Option[Throwable] = None) extends AuditError
 }

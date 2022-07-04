@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.config
+package uk.gov.hmrc.transitmovementsauditing.models.formats
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import play.api.Configuration
+import cats.data.NonEmptyList
+import play.api.libs.functional.syntax.toInvariantFunctorOps
+import play.api.libs.json.Format
 
-@Singleton
-class AppConfig @Inject() (config: Configuration) {
+object CommonFormats extends CommonFormats
 
-  lazy val appName: String = config.get[String]("appName")
+trait CommonFormats {
 
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
+  implicit def nonEmptyListFormat[A: Format]: Format[NonEmptyList[A]] =
+    Format
+      .of[List[A]]
+      .inmap(
+        NonEmptyList.fromListUnsafe,
+        _.toList
+      )
+
 }

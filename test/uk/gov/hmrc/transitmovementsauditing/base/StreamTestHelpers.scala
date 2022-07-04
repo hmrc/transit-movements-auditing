@@ -1,0 +1,40 @@
+/*
+ * Copyright 2022 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.transitmovementsauditing.base
+
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+
+import java.nio.charset.StandardCharsets
+import scala.xml.NodeSeq
+
+object StreamTestHelpers extends StreamTestHelpers
+
+trait StreamTestHelpers {
+
+  def createStream(node: NodeSeq): Source[ByteString, _] = createStream(node.mkString)
+
+  def createStream(string: String): Source[ByteString, _] =
+    Source.single(ByteString(string, StandardCharsets.UTF_8))
+
+  def createStream(string: String, pieces: Int): Source[ByteString, _] =
+    if (pieces <= 1) createStream(string)
+    else
+      Source.fromIterator(
+        () => string.grouped(pieces).map(ByteString(_, StandardCharsets.UTF_8))
+      )
+}
