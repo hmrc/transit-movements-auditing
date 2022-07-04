@@ -16,10 +16,12 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
+import akka.stream.scaladsl.Source
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
 import org.mockito.MockitoSugar.when
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
@@ -27,6 +29,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -41,11 +44,19 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with TestActorSystem with StreamTestHelpers with BeforeAndAfterEach {
+class AuditServiceSpec
+    extends AnyFreeSpec
+    with Matchers
+    with MockitoSugar
+    with TestActorSystem
+    with StreamTestHelpers
+    with BeforeAndAfterEach
+    with ScalaCheckDrivenPropertyChecks {
+
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val mockAuditConnector: AuditConnector = mock[AuditConnector]
@@ -68,6 +79,8 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
     "should successfully send message to audit connector" - AuditType.values.foreach {
       auditType =>
         s"${auditType.name} to ${auditType.source}" in {
+          // testing the reduce works as expected by splitting the string into pieces.
+          val pieces: Int = Gen.oneOf(1 to 4).sample.getOrElse(1)
           reset(mockAuditConnector)
           val service                                   = new AuditServiceImpl(mockAuditConnector)
           val captor: ArgumentCaptor[ExtendedDataEvent] = ArgumentCaptor.forClass(classOf[ExtendedDataEvent])
@@ -75,7 +88,7 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
           when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(Success))
 
-          val result = service.send(auditType, createStream(someGoodCC015CJsonString))
+          val result = service.send(auditType, createStream(someGoodCC015CJsonString, pieces))
 
           whenReady(result.value, Timeout(1.second)) {
             result =>
@@ -122,6 +135,21 @@ class AuditServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with 
 
       whenReady(result.value, Timeout(1.second)) {
         _ mustBe Left(AuditError.Disabled)
+      }
+    }
+
+    "should return an error if an empty stream is provided" in {
+      val service = new AuditServiceImpl(mockAuditConnector)
+
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(Disabled))
+
+      val result = service.send(DeclarationData, Source.empty)
+
+      whenReady(result.value, Timeout(1.second)) {
+        case Left(AuditError.UnexpectedError(message, _)) =>
+          message mustBe "Error extracting body from stream"
+        case x => fail(s"Did not get a Left from an unexpected exception - got $x")
       }
     }
   }

@@ -30,4 +30,11 @@ trait StreamTestHelpers {
 
   def createStream(string: String): Source[ByteString, _] =
     Source.single(ByteString(string, StandardCharsets.UTF_8))
+
+  def createStream(string: String, pieces: Int): Source[ByteString, _] =
+    if (pieces <= 1) createStream(string)
+    else
+      Source.fromIterator(
+        () => string.grouped(pieces).map(ByteString(_, StandardCharsets.UTF_8))
+      )
 }

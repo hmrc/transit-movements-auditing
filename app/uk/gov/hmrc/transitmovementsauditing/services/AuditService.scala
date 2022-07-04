@@ -87,7 +87,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
   private def extractBody(stream: Source[ByteString, _]): EitherT[Future, AuditError, String] =
     EitherT {
       stream
-        .fold(ByteString())(
+        .reduce(
           (cur, next) => cur ++ next
         )
         .map(_.utf8String)

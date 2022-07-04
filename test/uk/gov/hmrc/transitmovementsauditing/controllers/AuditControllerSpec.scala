@@ -39,6 +39,7 @@ import play.api.mvc.PlayBodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
@@ -58,6 +59,8 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
     Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
   )
 
+  private val mockAppConfig = mock[AppConfig]
+
   private val mockAuditService      = mock[AuditService]
   private val mockConversionService = mock[ConversionService]
 
@@ -70,14 +73,25 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
   val controllerComponentWithTempFile: ControllerComponents =
     stubControllerComponents(playBodyParsers = PlayBodyParsers(SingletonTemporaryFileCreator, errorHandler)(materializer))
 
-  private val controller = new AuditController(controllerComponentWithTempFile, mockConversionService, mockAuditService)(materializer)
+  private val controller = new AuditController(controllerComponentWithTempFile, mockConversionService, mockAuditService, mockAppConfig)(materializer)
 
   override def beforeEach(): Unit = {
     reset(mockConversionService)
     reset(mockAuditService)
+    reset(mockAppConfig)
+    when(mockAppConfig.auditingEnabled).thenReturn(true)
   }
 
   "POST /" - {
+    "returns 202 when auditing is disabled" in {
+      reset(mockAppConfig)
+      when(mockAppConfig.auditingEnabled).thenReturn(false)
+
+      val result = controller.post(AmendmentAcceptance)(fakeRequest)
+      status(result) mustBe Status.ACCEPTED
+      verify(mockConversionService, times(0)).toJson(any())(any(), any())
+    }
+
     "returns 202 when auditing was successful with an XML payload" in {
       when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
       when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
