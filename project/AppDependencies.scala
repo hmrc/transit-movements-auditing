@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
 
   private val catsVersion     = "2.8.0"
-  private val hmrcPlayVersion = "5.24.0"
+  private val hmrcPlayVersion = "6.2.0"
 
   val compile = Seq(
     "uk.gov.hmrc"        %% "bootstrap-backend-play-28" % hmrcPlayVersion,
