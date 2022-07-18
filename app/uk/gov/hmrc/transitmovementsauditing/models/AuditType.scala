@@ -18,7 +18,7 @@ package uk.gov.hmrc.transitmovementsauditing.models
 
 import Sources._
 
-sealed abstract class AuditType(val name: String, val source: String) extends Product with Serializable
+sealed abstract class AuditType(val name: String, val source: String, val messageType: MessageType) extends Product with Serializable
 
 object Sources {
   val commonTransitConventionTraders = "common-transit-convention-traders"
@@ -51,29 +51,29 @@ object AuditType {
     PositiveAcknowledge
   )
 
-  case object AmendmentAcceptance              extends AuditType("AmendmentAcceptance", transitMovementsRouter)
-  case object ArrivalNotification              extends AuditType("ArrivalNotification", commonTransitConventionTraders)
-  case object InvalidationDecision             extends AuditType("InvalidationDecision", transitMovementsRouter)
-  case object DeclarationAmendment             extends AuditType("DeclarationAmendment", commonTransitConventionTraders)
-  case object DeclarationInvalidationRequest   extends AuditType("DeclarationInvalidationRequest", commonTransitConventionTraders)
-  case object DeclarationData                  extends AuditType("DeclarationData", commonTransitConventionTraders)
-  case object Discrepancies                    extends AuditType("Discrepancies", transitMovementsRouter)
-  case object GoodsReleasedNotification        extends AuditType("GoodsReleasedNotification", transitMovementsRouter)
-  case object MRNAllocated                     extends AuditType("MRNAllocated", transitMovementsRouter)
-  case object ReleaseForTransit                extends AuditType("ReleaseForTransit", transitMovementsRouter)
-  case object UnloadingPermission              extends AuditType("UnloadingPermission", transitMovementsRouter)
-  case object UnloadingRemarks                 extends AuditType("UnloadingRemarks", commonTransitConventionTraders)
-  case object WriteOffNotification             extends AuditType("WriteOffNotification", transitMovementsRouter)
-  case object NoReleaseForTransit              extends AuditType("NoReleaseForTransit", transitMovementsRouter)
-  case object RequestOfRelease                 extends AuditType("RequestOfRelease", commonTransitConventionTraders)
-  case object GuaranteeNotValid                extends AuditType("GuaranteeNotValid", transitMovementsRouter)
-  case object RejectionFromOfficeOfDeparture   extends AuditType("RejectionFromOfficeOfDeparture", transitMovementsRouter)
-  case object RejectionFromOfficeOfDestination extends AuditType("RejectionFromOfficeOfDestination", transitMovementsRouter)
-  case object ControlDecisionNotification      extends AuditType("ControlDecisionNotification", transitMovementsRouter)
-  case object PositiveAcknowledge              extends AuditType("PositiveAcknowledge", transitMovementsRouter)
+  case object AmendmentAcceptance              extends AuditType("AmendmentAcceptance", transitMovementsRouter, MessageType.CC015C)
+  case object ArrivalNotification              extends AuditType("ArrivalNotification", commonTransitConventionTraders, MessageType.Unknown)
+  case object InvalidationDecision             extends AuditType("InvalidationDecision", transitMovementsRouter, MessageType.Unknown)
+  case object DeclarationAmendment             extends AuditType("DeclarationAmendment", commonTransitConventionTraders, MessageType.Unknown)
+  case object DeclarationInvalidationRequest   extends AuditType("DeclarationInvalidationRequest", commonTransitConventionTraders, MessageType.Unknown)
+  case object DeclarationData                  extends AuditType("DeclarationData", commonTransitConventionTraders, MessageType.Unknown)
+  case object Discrepancies                    extends AuditType("Discrepancies", transitMovementsRouter, MessageType.Unknown)
+  case object GoodsReleasedNotification        extends AuditType("GoodsReleasedNotification", transitMovementsRouter, MessageType.Unknown)
+  case object MRNAllocated                     extends AuditType("MRNAllocated", transitMovementsRouter, MessageType.Unknown)
+  case object ReleaseForTransit                extends AuditType("ReleaseForTransit", transitMovementsRouter, MessageType.Unknown)
+  case object UnloadingPermission              extends AuditType("UnloadingPermission", transitMovementsRouter, MessageType.Unknown)
+  case object UnloadingRemarks                 extends AuditType("UnloadingRemarks", commonTransitConventionTraders, MessageType.Unknown)
+  case object WriteOffNotification             extends AuditType("WriteOffNotification", transitMovementsRouter, MessageType.Unknown)
+  case object NoReleaseForTransit              extends AuditType("NoReleaseForTransit", transitMovementsRouter, MessageType.Unknown)
+  case object RequestOfRelease                 extends AuditType("RequestOfRelease", commonTransitConventionTraders, MessageType.Unknown)
+  case object GuaranteeNotValid                extends AuditType("GuaranteeNotValid", transitMovementsRouter, MessageType.Unknown)
+  case object RejectionFromOfficeOfDeparture   extends AuditType("RejectionFromOfficeOfDeparture", transitMovementsRouter, MessageType.Unknown)
+  case object RejectionFromOfficeOfDestination extends AuditType("RejectionFromOfficeOfDestination", transitMovementsRouter, MessageType.Unknown)
+  case object ControlDecisionNotification      extends AuditType("ControlDecisionNotification", transitMovementsRouter, MessageType.Unknown)
+  case object PositiveAcknowledge              extends AuditType("PositiveAcknowledge", transitMovementsRouter, MessageType.Unknown)
 
   case object PresentationNotificationForThePreLodgedDeclaration
-      extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders)
+      extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, MessageType.Unknown)
 
   def fromName(name: String): Option[AuditType] = values.find(_.name == name)
 

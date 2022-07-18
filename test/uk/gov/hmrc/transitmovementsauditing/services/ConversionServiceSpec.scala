@@ -20,23 +20,33 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import org.mockito.ArgumentMatchers.any
+import org.mockito.MockitoSugar.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.base.TestStreamComponents
+import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnector
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with TestActorSystem with ScalaFutures {
 
   "When a valid stream is provided" - {
     "assure the stream is consumed and returns a valid JSON ByteString based stream" in {
 
-      val sut = new ConversionServiceImpl
+      val mockConversionConnector = mock[ConversionConnector]
+      when(mockConversionConnector.postXml(any(), any())(any()))
+        .thenReturn(Future.successful(Source.single(ByteString("""{ "dummy": "dummy" }"""))))
+
+      val sut = new ConversionServiceImpl(mockConversionConnector)
 
       // Because we can't spy on the source and test we ran the system (and I can't find a way to test the
       // stream was materialised) and data flows, what we do here is attach a dummy flow object that contains a
@@ -46,7 +56,10 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       val (monitor, source) =
         Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)).viaMat(TestStreamComponents.flowProbe)(Keep.right).preMaterialize()
 
-      val newSource = sut.toJson(source)
+      val messageType: MessageType   = MessageType.CC015C
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
+      val newSource = sut.toJson(messageType, source)
 
       whenReady(newSource.value.flatMap(_.right.get.runWith(Sink.head))) {
         result =>

@@ -3,12 +3,13 @@ import sbt._
 object AppDependencies {
 
   private val catsVersion     = "2.8.0"
-  private val hmrcPlayVersion = "6.2.0"
+  private val hmrcPlayVersion = "6.3.0"
 
   val compile = Seq(
     "uk.gov.hmrc"        %% "bootstrap-backend-play-28" % hmrcPlayVersion,
     "org.typelevel"      %% "cats-core"                 % catsVersion,
-    "com.lightbend.akka" %% "akka-stream-alpakka-xml"   % "3.0.4"
+    "com.lightbend.akka" %% "akka-stream-alpakka-xml"   % "3.0.4",
+    "io.lemonlabs"       %% "scala-uri"                 % "3.6.0"
   )
 
   val test = Seq(

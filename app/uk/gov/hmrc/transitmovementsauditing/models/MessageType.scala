@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.config
+package uk.gov.hmrc.transitmovementsauditing.models
 
-import io.lemonlabs.uri.Url
+sealed abstract class MessageType(val value: String)
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
-@Singleton
-class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig) {
-
-  lazy val appName: String = config.get[String]("appName")
-
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-
-  lazy val converterUrl = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
+object MessageType {
+  case object CC015C extends MessageType("CC015C")
+  // TODO: Fix this.
+  case object Unknown extends MessageType("Unknown")
 }

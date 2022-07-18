@@ -16,32 +16,40 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
+import com.google.inject.Inject
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnector
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 
-import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[ConversionServiceImpl])
 trait ConversionService {
 
-  def toJson(xmlStream: Source[ByteString, _])(implicit mat: Materializer, ec: ExecutionContext): EitherT[Future, ConversionError, Source[ByteString, _]]
+  def toJson(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, _]]
 
 }
 
-class ConversionServiceImpl extends ConversionService {
+class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)(implicit ec: ExecutionContext) extends ConversionService {
 
-  // TODO: Dummy implementation for now, awaiting conversion service to be ready
   override def toJson(
+    messageType: MessageType,
     xmlStream: Source[ByteString, _]
-  )(implicit mat: Materializer, ec: ExecutionContext): EitherT[Future, ConversionError, Source[ByteString, _]] = {
-    xmlStream.run() // right now, we don't care about this but we need to drain it.
-    EitherT.rightT(Source.single(ByteString("{ \"dummy\": \"dummy\" }", StandardCharsets.UTF_8)))
-  }
+  )(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, _]] =
+    EitherT(
+      conversionConnector
+        .postXml(messageType, xmlStream)
+        .map(Right(_))
+        .recover {
+          case NonFatal(e) => Left(ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e)))
+        }
+    )
 
 }
