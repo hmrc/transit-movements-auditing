@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.models.errors
+package uk.gov.hmrc.transitmovementsauditing.itbase
 
-sealed trait ConversionError
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+import org.scalatest.Suite
 
-object ConversionError {
-  case class FailedConversion(message: String)                               extends ConversionError
-  case class UnexpectedError(message: String, thr: Option[Throwable] = None) extends ConversionError
+object TestActorSystem {
+  val system: ActorSystem = ActorSystem("test")
+}
+
+trait TestActorSystem { self: Suite =>
+  implicit val system: ActorSystem        = TestActorSystem.system
+  implicit val materializer: Materializer = Materializer(TestActorSystem.system)
 }

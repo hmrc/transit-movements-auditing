@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.models.errors
+package uk.gov.hmrc.transitmovementsauditing.itbase
 
-sealed trait ConversionError
+import com.codahale.metrics.MetricRegistry
+import com.kenshoo.play.metrics.Metrics
 
-object ConversionError {
-  case class FailedConversion(message: String)                               extends ConversionError
-  case class UnexpectedError(message: String, thr: Option[Throwable] = None) extends ConversionError
+class TestMetrics extends Metrics {
+  override def defaultRegistry: MetricRegistry = new MetricRegistry
+  override def toJson: String                  = ""
 }

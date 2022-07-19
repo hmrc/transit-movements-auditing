@@ -17,39 +17,62 @@
 package uk.gov.hmrc.transitmovementsauditing.connectors
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import io.lemonlabs.uri.UrlPath
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): Future[Source[ByteString, _]]
+  def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]]
 
 }
 
 class ConversionConnectorImpl @Inject() (appConfig: AppConfig, httpClient: HttpClientV2)(implicit materializer: Materializer, ec: ExecutionContext)
-    extends ConversionConnector {
+    extends ConversionConnector
+    with HttpErrorFunctions {
 
-  lazy val converterPath = UrlPath.parse(s"${appConfig.converterUrl}/transit-movements-converter/convert")
+  private def converterPath(messageType: MessageType) = UrlPath.parse(s"/transit-movements-converter/convert/${messageType.messageCode}")
 
-  override def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): Future[Source[ByteString, _]] =
-    httpClient
-      .post(url"$converterPath/${messageType.value}")
-      .replaceHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-      .withBody(source)
-      .stream[Source[ByteString, _]]
+  override def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]] =
+    EitherT(
+      httpClient
+        .post(url"${appConfig.converterUrl.withPath(converterPath(messageType))}")
+        .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+        .withBody(source)
+        .stream[uk.gov.hmrc.http.HttpResponse]
+        .flatMap {
+          response =>
+            if (is2xx(response.status)) Future.successful(Right(response.bodyAsSource))
+            else
+              response.bodyAsSource
+                .reduce(_ ++ _)
+                .map(_.utf8String)
+                .runWith(Sink.head)
+                .map(
+                  result => Left(UpstreamErrorResponse(result, response.status))
+                )
+        }
+        .recover {
+          case NonFatal(e) => Left(e)
+        }
+    )
 
 }

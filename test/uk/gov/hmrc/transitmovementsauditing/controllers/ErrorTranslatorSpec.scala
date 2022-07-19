@@ -89,6 +89,14 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
   }
 
   "Conversion Error" - {
+
+    "a FailedConversion returns an internal service error with no exception" in {
+      val input  = ConversionError.FailedConversion("Unknown Error")
+      val output = PresentationError.internalServiceError()
+
+      conversionError.convert(input) mustBe output
+    }
+
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
       val input  = ConversionError.UnexpectedError("Unknown Error")
       val output = PresentationError.internalServiceError()

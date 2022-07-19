@@ -21,10 +21,13 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnector
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.StandardError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -43,13 +46,11 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
     messageType: MessageType,
     xmlStream: Source[ByteString, _]
   )(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, _]] =
-    EitherT(
-      conversionConnector
-        .postXml(messageType, xmlStream)
-        .map(Right(_))
-        .recover {
-          case NonFatal(e) => Left(ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e)))
-        }
-    )
+    conversionConnector
+      .postXml(messageType, xmlStream)
+      .leftMap {
+        case UpstreamErrorResponse(m, 400, _, _) => ConversionError.FailedConversion(Json.parse(m).as[StandardError].message)
+        case NonFatal(e)                         => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))
+      }
 
 }
