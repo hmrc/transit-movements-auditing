@@ -131,7 +131,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
     whenReady(sut.postXml(MessageType.CC015C, stream).value, timeout) {
-      case Left(UpstreamErrorResponse(msg, 400, _, _)) => Json.parse(msg)
+      case Left(UpstreamErrorResponse(msg, 400, _, _)) => Json.parse(msg) mustBe body
       case Right(_)                                    => fail("Should not have succeeded")
       case _                                           => fail("A different error occurred")
     }
