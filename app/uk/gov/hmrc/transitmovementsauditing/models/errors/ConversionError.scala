@@ -19,5 +19,6 @@ package uk.gov.hmrc.transitmovementsauditing.models.errors
 sealed trait ConversionError
 
 object ConversionError {
+  case class FailedConversion(message: String)                               extends ConversionError
   case class UnexpectedError(message: String, thr: Option[Throwable] = None) extends ConversionError
 }

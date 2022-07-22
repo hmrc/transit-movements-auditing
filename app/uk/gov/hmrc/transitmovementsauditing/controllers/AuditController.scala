@@ -20,6 +20,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
+import play.api.http.MimeTypes
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import play.api.mvc.Action
@@ -55,7 +56,7 @@ class AuditController @Inject() (
       if (appConfig.auditingEnabled) {
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          jsonStream <- convertIfNecessary(request)
+          jsonStream <- convertIfNecessary(auditType, request)
           result     <- auditService.send(auditType, jsonStream).asPresentation
         } yield result)
           .fold(
@@ -67,12 +68,9 @@ class AuditController @Inject() (
       }
   }
 
-  private def convertIfNecessary(request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, Source[ByteString, _]] =
-    // TODO: is this okay to check for an XML content type?
-    if (
-      request.contentType.exists(
-        contentType => contentType.contains("/xml")
-      )
-    ) conversionService.toJson(request.body).asPresentation
+  private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    if (request.contentType.contains(MimeTypes.XML)) conversionService.toJson(auditType.messageType, request.body).asPresentation
     else EitherT.rightT(request.body)
 }
