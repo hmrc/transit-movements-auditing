@@ -60,7 +60,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       val (monitor, source) =
         Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)).viaMat(TestStreamComponents.flowProbe)(Keep.right).preMaterialize()
 
-      val messageType: MessageType   = MessageType.CC015C
+      val messageType: MessageType   = MessageType.IE015
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
       val newSource = sut.toJson(messageType, source)
@@ -91,7 +91,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       val (monitor, source) =
         Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)).viaMat(TestStreamComponents.flowProbe)(Keep.right).preMaterialize()
 
-      val messageType: MessageType   = MessageType.CC015C
+      val messageType: MessageType   = MessageType.IE015
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
       val newSource = sut.toJson(messageType, source)
@@ -125,7 +125,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
         val (monitor, source) =
           Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)).viaMat(TestStreamComponents.flowProbe)(Keep.right).preMaterialize()
 
-        val messageType: MessageType   = MessageType.CC015C
+        val messageType: MessageType   = MessageType.IE015
         implicit val hc: HeaderCarrier = HeaderCarrier()
 
         val newSource = sut.toJson(messageType, source)

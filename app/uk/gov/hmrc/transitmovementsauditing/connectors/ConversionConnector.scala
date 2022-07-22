@@ -56,6 +56,7 @@ class ConversionConnectorImpl @Inject() (appConfig: AppConfig, httpClient: HttpC
       httpClient
         .post(url"${appConfig.converterUrl.withPath(converterPath(messageType))}")
         .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+        .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
         .withBody(source)
         .stream[uk.gov.hmrc.http.HttpResponse]
         .flatMap {

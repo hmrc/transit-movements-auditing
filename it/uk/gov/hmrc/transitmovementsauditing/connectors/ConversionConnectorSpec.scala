@@ -83,9 +83,10 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
 
     server.stubFor(
       post(
-        urlEqualTo(conversionUrl("CC015C"))
+        urlEqualTo(conversionUrl("IE015"))
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+        .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.JSON))
         .willReturn(
           aResponse().withStatus(OK).withBody(Json.stringify(success))
         )
@@ -97,7 +98,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
     val result = sut
-      .postXml(MessageType.CC015C, stream)
+      .postXml(MessageType.IE015, stream)
       .semiflatMap(
         r =>
           r.reduce(_ ++ _)
@@ -119,9 +120,10 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
 
     server.stubFor(
       post(
-        urlEqualTo(conversionUrl("CC015C"))
+        urlEqualTo(conversionUrl("IE015"))
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+        .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.JSON))
         .willReturn(
           aResponse().withStatus(BAD_REQUEST).withBody(Json.stringify(body))
         )
@@ -130,7 +132,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     val stream                     = Source.single(ByteString("<test></test>"))
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    whenReady(sut.postXml(MessageType.CC015C, stream).value, timeout) {
+    whenReady(sut.postXml(MessageType.IE015, stream).value, timeout) {
       case Left(UpstreamErrorResponse(msg, 400, _, _)) => Json.parse(msg) mustBe body
       case Right(_)                                    => fail("Should not have succeeded")
       case _                                           => fail("A different error occurred")
@@ -148,7 +150,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     when(mockRequestBuilder.stream(any(), any())).thenReturn(Future.failed(error))
 
     val failingSut = new ConversionConnectorImpl(appConfig, mockClient)
-    val result     = failingSut.postXml(MessageType.CC015C, Source.single(ByteString("")))(HeaderCarrier())
+    val result     = failingSut.postXml(MessageType.IE015, Source.single(ByteString("")))(HeaderCarrier())
 
     whenReady(result.value, timeout) {
       case Left(e) if e == error => ()
