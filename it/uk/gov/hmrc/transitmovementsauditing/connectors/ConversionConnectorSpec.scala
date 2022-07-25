@@ -59,7 +59,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
 
   private val timeout = Timeout(5.seconds)
 
-  private def conversionUrl(messageType: String) = s"/transit-movements-converter/convert/$messageType"
+  private def conversionUrl(messageType: String) = s"/transit-movements-converter/messages/$messageType"
 
   val appConfig      = mock[AppConfig]
   lazy val serverUrl = Url.parse(server.baseUrl())

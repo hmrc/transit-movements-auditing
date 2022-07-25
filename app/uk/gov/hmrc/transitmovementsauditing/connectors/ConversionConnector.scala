@@ -49,7 +49,7 @@ class ConversionConnectorImpl @Inject() (appConfig: AppConfig, httpClient: HttpC
     extends ConversionConnector
     with HttpErrorFunctions {
 
-  private def converterPath(messageType: MessageType) = UrlPath.parse(s"/transit-movements-converter/convert/${messageType.messageCode}")
+  private def converterPath(messageType: MessageType) = UrlPath.parse(s"/transit-movements-converter/messages/${messageType.messageCode}")
 
   override def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]] =
     EitherT(
