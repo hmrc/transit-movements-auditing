@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.config
+package uk.gov.hmrc.transitmovementsauditing.itbase
 
-import io.lemonlabs.uri.Url
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+import org.scalatest.Suite
 
-import javax.inject.Inject
-import javax.inject.Singleton
-import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+object TestActorSystem {
+  val system: ActorSystem = ActorSystem("test")
+}
 
-@Singleton
-class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig) {
-
-  lazy val appName: String = config.get[String]("appName")
-
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-
-  lazy val converterUrl = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
+trait TestActorSystem { self: Suite =>
+  implicit val system: ActorSystem        = TestActorSystem.system
+  implicit val materializer: Materializer = Materializer(TestActorSystem.system)
 }

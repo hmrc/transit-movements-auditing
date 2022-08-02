@@ -49,6 +49,7 @@ trait ErrorTranslator {
   implicit val conversionError = new Converter[ConversionError] {
 
     def convert(conversionError: ConversionError): PresentationError = conversionError match {
+      case ConversionError.FailedConversion(_)     => PresentationError.internalServiceError()
       case ConversionError.UnexpectedError(_, thr) => PresentationError.internalServiceError(cause = thr)
     }
   }

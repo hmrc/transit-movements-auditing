@@ -89,29 +89,29 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
       status(result) mustBe Status.ACCEPTED
-      verify(mockConversionService, times(0)).toJson(any())(any(), any())
+      verify(mockConversionService, times(0)).toJson(any(), any())(any())
     }
 
     "returns 202 when auditing was successful with an XML payload" in {
-      when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
       when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
       status(result) mustBe Status.ACCEPTED
-      verify(mockConversionService, times(1)).toJson(any())(any(), any())
+      verify(mockConversionService, times(1)).toJson(any(), any())(any())
     }
 
     "returns 202 when auditing was successful with a payload" in {
-      when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
       when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(CONTENT_TYPE -> "application/json"))
       status(result) mustBe Status.ACCEPTED
-      verify(mockConversionService, times(0)).toJson(any())(any(), any())
+      verify(mockConversionService, times(0)).toJson(any(), any())(any())
     }
 
     "returns 500 when the conversion service fails" in {
-      when(mockConversionService.toJson(any())(any(), any())).thenReturn(EitherT.leftT(ConversionError.UnexpectedError("test error")))
+      when(mockConversionService.toJson(any(), any())(any())).thenReturn(EitherT.leftT(ConversionError.UnexpectedError("test error")))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
       status(result) mustBe Status.INTERNAL_SERVER_ERROR
@@ -122,7 +122,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
     }
 
     "returns 500 when the audit service fails" in {
-      when(mockConversionService.toJson(any())(any(), any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
       when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
