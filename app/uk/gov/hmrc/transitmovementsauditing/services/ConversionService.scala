@@ -21,6 +21,7 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -49,8 +50,8 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
     conversionConnector
       .postXml(messageType, xmlStream)
       .leftMap {
-        case UpstreamErrorResponse(m, 400, _, _) => ConversionError.FailedConversion(Json.parse(m).as[StandardError].message)
-        case NonFatal(e)                         => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))
+        case UpstreamErrorResponse(m, BAD_REQUEST, _, _) => ConversionError.FailedConversion(Json.parse(m).as[StandardError].message)
+        case NonFatal(e)                                 => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))
       }
 
 }
