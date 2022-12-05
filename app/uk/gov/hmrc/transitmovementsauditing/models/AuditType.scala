@@ -42,6 +42,7 @@ object AuditType {
     RecoveryNotification,
     UnloadingPermission,
     UnloadingRemarks,
+    InformationAboutNonArrivedMovement,
     WriteOffNotification,
     NoReleaseForTransit,
     RequestOfRelease,
@@ -68,6 +69,7 @@ object AuditType {
   case object RecoveryNotification              extends AuditType("RecoveryNotification", transitMovementsRouter, MessageType.IE035)
   case object UnloadingPermission               extends AuditType("UnloadingPermission", transitMovementsRouter, MessageType.IE043)
   case object UnloadingRemarks                  extends AuditType("UnloadingRemarks", commonTransitConventionTraders, MessageType.IE044)
+  case object InformationAboutNonArrivedMovement                  extends AuditType("InformationAboutNonArrivedMovement", commonTransitConventionTraders, MessageType.IE141)
   case object WriteOffNotification              extends AuditType("WriteOffNotification", transitMovementsRouter, MessageType.IE045)
   case object NoReleaseForTransit               extends AuditType("NoReleaseForTransit", transitMovementsRouter, MessageType.IE051)
   case object RequestOfRelease                  extends AuditType("RequestOfRelease", commonTransitConventionTraders, MessageType.IE054)

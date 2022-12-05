@@ -33,6 +33,7 @@ object MessageType {
   case object IE035 extends MessageType("IE035")
   case object IE043 extends MessageType("IE043")
   case object IE044 extends MessageType("IE044")
+  case object IE141 extends MessageType("IE141")
   case object IE045 extends MessageType("IE045")
   case object IE051 extends MessageType("IE051")
   case object IE054 extends MessageType("IE054")
