@@ -21,7 +21,7 @@ import org.scalatest.matchers.must.Matchers
 
 class MessageTypeSpec extends AnyFreeSpec with Matchers {
 
-  "every AuditType must match the object name" - MessageType.values.foreach {
+  "every MessageType must match the object name" - MessageType.values.foreach {
     messageType =>
       messageType.toString in {
         messageType.messageCode mustBe messageType.toString
