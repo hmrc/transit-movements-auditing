@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models
 
-sealed abstract class MessageType(val messageCode: String)
+sealed abstract class MessageType(val messageCode: String) extends Product with Serializable
 
 object MessageType {
   case object IE004 extends MessageType("IE004")
@@ -33,6 +33,7 @@ object MessageType {
   case object IE035 extends MessageType("IE035")
   case object IE043 extends MessageType("IE043")
   case object IE044 extends MessageType("IE044")
+  case object IE141 extends MessageType("IE141")
   case object IE045 extends MessageType("IE045")
   case object IE051 extends MessageType("IE051")
   case object IE054 extends MessageType("IE054")
@@ -43,4 +44,31 @@ object MessageType {
   case object IE170 extends MessageType("IE170")
   case object IE182 extends MessageType("IE182")
   case object IE928 extends MessageType("IE928")
+
+  val values: Seq[MessageType] = Seq(
+    IE004,
+    IE007,
+    IE009,
+    IE013,
+    IE014,
+    IE015,
+    IE019,
+    IE022,
+    IE025,
+    IE028,
+    IE029,
+    IE035,
+    IE043,
+    IE044,
+    IE045,
+    IE051,
+    IE054,
+    IE055,
+    IE056,
+    IE057,
+    IE060,
+    IE170,
+    IE182,
+    IE928
+  )
 }
