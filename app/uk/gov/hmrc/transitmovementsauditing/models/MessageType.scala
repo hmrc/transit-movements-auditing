@@ -44,6 +44,7 @@ object MessageType {
   case object IE170 extends MessageType("IE170")
   case object IE182 extends MessageType("IE182")
   case object IE928 extends MessageType("IE928")
+  case object IE140 extends MessageType("IE140")
 
   val values: Seq[MessageType] = Seq(
     IE004,
@@ -69,6 +70,7 @@ object MessageType {
     IE060,
     IE170,
     IE182,
-    IE928
+    IE928,
+    IE140
   )
 }
