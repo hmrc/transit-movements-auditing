@@ -79,6 +79,7 @@ object AuditType {
   case object ControlDecisionNotification        extends AuditType("ControlDecisionNotification", transitMovementsRouter, MessageType.IE060)
   case object ForwardedIncidentNotificationToED  extends AuditType("ForwardedIncidentNotificationToED", commonTransitConventionTraders, MessageType.IE182)
   case object PositiveAcknowledge                extends AuditType("PositiveAcknowledge", transitMovementsRouter, MessageType.IE928)
+  case object RequestOnNonArrivedMovement        extends AuditType("RequestOnNonArrivedMovement", transitMovementsRouter, MessageType.IE140)
 
   case object PresentationNotificationForThePreLodgedDeclaration
       extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, MessageType.IE170)
