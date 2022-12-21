@@ -108,7 +108,7 @@ class AuditServiceSpec
       whenReady(result.value, Timeout(1.second)) {
         res =>
           res.isLeft mustBe true
-          res.left.get mustBe a[AuditError.FailedToParse]
+          res.left.getOrElse(AuditError.UnexpectedError) mustBe a[AuditError.FailedToParse]
       }
     }
 
@@ -121,7 +121,7 @@ class AuditServiceSpec
       val result = service.send(DeclarationData, createStream(someGoodCC015CJsonString))
 
       whenReady(result.value, Timeout(1.second)) {
-        _.left.get mustBe a[AuditError.UnexpectedError]
+        _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
       }
     }
 

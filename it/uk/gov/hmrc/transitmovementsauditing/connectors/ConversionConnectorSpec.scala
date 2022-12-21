@@ -53,6 +53,7 @@ import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
@@ -146,7 +147,11 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     val mockRequestBuilder = mock[RequestBuilder]
     when(mockClient.post(any())(any())).thenReturn(mockRequestBuilder)
     when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
-    when(mockRequestBuilder.withBody(any())(any(), any())).thenReturn(mockRequestBuilder)
+    when(
+      mockRequestBuilder
+        .withBody[RequestBuilder](any())(any(), any(), any())
+    )
+      .thenReturn(mockRequestBuilder)
     when(mockRequestBuilder.stream(any(), any())).thenReturn(Future.failed(error))
 
     val failingSut = new ConversionConnectorImpl(appConfig, mockClient)

@@ -39,7 +39,6 @@ import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
-import scala.collection.immutable
 import scala.concurrent.Future
 
 class StreamingParsersSpec extends AnyFreeSpec with Matchers with ScalaFutures with TestActorSystem {
@@ -69,7 +68,7 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with ScalaFutures w
     }
 
   private def generateSource(byteString: ByteString): Source[ByteString, NotUsed] =
-    Source(byteString.grouped(1024).to[immutable.Iterable])
+    Source(byteString.grouped(1024).toList)
 
   "Streaming" - {
     "from Memory" - {
