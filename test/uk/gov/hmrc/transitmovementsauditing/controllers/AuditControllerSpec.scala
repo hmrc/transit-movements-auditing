@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
@@ -106,6 +107,15 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
       when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(CONTENT_TYPE -> "application/json"))
+      status(result) mustBe Status.ACCEPTED
+      verify(mockConversionService, times(0)).toJson(any(), any())(any())
+    }
+
+    "returns 202 when auditing was successful with an Large message payload" in {
+      when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
+
+      val result = controller.post(LargeMessageSubmissionRequested)(fakeRequest.withHeaders(CONTENT_TYPE -> "application/json"))
       status(result) mustBe Status.ACCEPTED
       verify(mockConversionService, times(0)).toJson(any(), any())(any())
     }
