@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ class AuditController @Inject() (
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, _]] =
-    if (request.contentType.contains(MimeTypes.XML)) conversionService.toJson(auditType.messageType, request.body).asPresentation
+    if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined)
+      conversionService.toJson(auditType.messageType.get, request.body).asPresentation
     else EitherT.rightT(request.body)
 }
