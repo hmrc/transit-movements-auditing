@@ -6,10 +6,11 @@ object AppDependencies {
   private val hmrcPlayVersion = "7.12.0"
 
   val compile = Seq(
-    "uk.gov.hmrc"        %% "bootstrap-backend-play-28" % hmrcPlayVersion,
-    "org.typelevel"      %% "cats-core"                 % catsVersion,
-    "com.lightbend.akka" %% "akka-stream-alpakka-xml"   % "3.0.4",
-    "io.lemonlabs"       %% "scala-uri"                 % "3.6.0"
+    "uk.gov.hmrc"             %% "bootstrap-backend-play-28"   % hmrcPlayVersion,
+    "org.typelevel"           %% "cats-core"                   % catsVersion,
+    "com.lightbend.akka"      %% "akka-stream-alpakka-xml"     % "3.0.4",
+    "io.lemonlabs"            %% "scala-uri"                   % "3.6.0",
+    "uk.gov.hmrc.objectstore" %% "object-store-client-play-28" % "1.0.0"
   )
 
   val test = Seq(
