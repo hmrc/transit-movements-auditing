@@ -13,10 +13,10 @@ lazy val microservice = Project(appName, file("."))
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     scalacOptions += "-Wconf:src=routes/.*:s",
     RoutesKeys.routesImport ++= Seq(
-      "uk.gov.hmrc.transitmovementsauditing.models.Binders._"
+      "uk.gov.hmrc.transitmovementsauditing.models.Binders._",
+      "uk.gov.hmrc.transitmovementsauditing.models._"
     )
   )
-  .settings(publishingSettings: _*)
   .configs(IntegrationTest)
   .settings(integrationTestSettings(): _*)
   .settings(resolvers += Resolver.jcenterRepo)

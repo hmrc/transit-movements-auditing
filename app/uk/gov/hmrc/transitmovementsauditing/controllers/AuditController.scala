@@ -75,6 +75,8 @@ class AuditController @Inject() (
       }
   }
 
+  def postLarge(auditType: AuditType, uri: String): Action[Source[ByteString, _]] = post(auditType, Some(ObjectStoreResourceLocation(uri)))
+
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier
   ): EitherT[Future, ConversionError, Source[ByteString, _]] =
