@@ -31,9 +31,13 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
+import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,6 +48,7 @@ class AuditController @Inject() (
   cc: ControllerComponents,
   conversionService: ConversionService,
   auditService: AuditService,
+  objectStoreService: ObjectStoreService,
   appConfig: AppConfig
 )(implicit
   val materializer: Materializer
@@ -51,12 +56,14 @@ class AuditController @Inject() (
     with StreamingParsers
     with ErrorTranslator {
 
-  def post(auditType: AuditType): Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
+  def post(auditType: AuditType, uri: Option[ObjectStoreResourceLocation] = None): Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
+
     request =>
       if (appConfig.auditingEnabled) {
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
         (for {
-          jsonStream <- convertIfNecessary(auditType, request)
+          jsonStream <- getSource(auditType, uri, request)
           result     <- auditService.send(auditType, jsonStream).asPresentation
         } yield result)
           .fold(
@@ -70,8 +77,16 @@ class AuditController @Inject() (
 
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+  ): EitherT[Future, ConversionError, Source[ByteString, _]] =
     if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined)
-      conversionService.toJson(auditType.messageType.get, request.body).asPresentation
+      conversionService.toJson(auditType.messageType.get, request.body)
     else EitherT.rightT(request.body)
+
+  private def getSource(auditType: AuditType, uri: Option[ObjectStoreResourceLocation], request: Request[Source[ByteString, _]])(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    uri match {
+      case None           => convertIfNecessary(auditType, request).asPresentation
+      case Some(location) => objectStoreService.getContents(location).asPresentation
+    }
 }
