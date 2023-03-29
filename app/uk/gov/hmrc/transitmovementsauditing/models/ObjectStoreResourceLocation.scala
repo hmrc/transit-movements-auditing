@@ -23,4 +23,6 @@ object ObjectStoreResourceLocation {
   implicit lazy val ObjectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.format[ObjectStoreResourceLocation]
 }
 
-case class ObjectStoreResourceLocation(value: String) extends AnyVal
+case class ObjectStoreResourceLocation(value: String) extends AnyVal {
+  def stripRoutePrefix: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("uri/"))
+}

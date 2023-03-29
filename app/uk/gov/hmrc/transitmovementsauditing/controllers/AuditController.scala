@@ -33,7 +33,6 @@ import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
@@ -75,7 +74,8 @@ class AuditController @Inject() (
       }
   }
 
-  def postLarge(auditType: AuditType, uri: String): Action[Source[ByteString, _]] = post(auditType, Some(ObjectStoreResourceLocation(uri)))
+  def postLarge(auditType: AuditType, uri: String): Action[Source[ByteString, _]] =
+    post(auditType, Some(ObjectStoreResourceLocation(uri).stripRoutePrefix))
 
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier

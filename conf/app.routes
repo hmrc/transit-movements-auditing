@@ -1,4 +1,4 @@
 # microservice specific routes
 
-POST        /audit/:auditType                   uk.gov.hmrc.transitmovementsauditing.controllers.AuditController.post(auditType: uk.gov.hmrc.transitmovementsauditing.models.AuditType)
-POST        /audit/:auditType/uri/:uriType      uk.gov.hmrc.transitmovementsauditing.controllers.AuditController.postLarge(auditType: uk.gov.hmrc.transitmovementsauditing.models.AuditType, uriType: String)
+POST        /audit/:auditType           uk.gov.hmrc.transitmovementsauditing.controllers.AuditController.post(auditType: uk.gov.hmrc.transitmovementsauditing.models.AuditType)
+POST        /audit/:auditType/*uri      uk.gov.hmrc.transitmovementsauditing.controllers.AuditController.postLarge(auditType: uk.gov.hmrc.transitmovementsauditing.models.AuditType, uri)
