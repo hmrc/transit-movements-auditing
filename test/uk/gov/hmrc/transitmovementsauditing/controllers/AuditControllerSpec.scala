@@ -20,6 +20,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.MockitoSugar.reset
 import org.mockito.MockitoSugar.times
 import org.mockito.MockitoSugar.verify
@@ -42,6 +43,7 @@ import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
@@ -60,6 +62,13 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
     Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
   )
 
+  private val fakeJsonRequest = FakeRequest(
+    "POST",
+    "/",
+    Headers(CONTENT_TYPE -> "application/json"),
+    Source.single(ByteString("""{ "test": "123" } """))
+  )
+
   private val mockAppConfig = mock[AppConfig]
 
   private val mockAuditService      = mock[AuditService]
@@ -76,9 +85,11 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
   private val controller = new AuditController(controllerComponentWithTempFile, mockConversionService, mockAuditService, mockAppConfig)(materializer)
 
+  private val xmlStream  = Source.single(ByteString(<test>123</test>.mkString))
+  private val jsonStream = Source.single(ByteString("""{ "test": "123" } """))
+
   override def beforeEach(): Unit = {
     reset(mockConversionService)
-    reset(mockAuditService)
     reset(mockAppConfig)
     when(mockAppConfig.auditingEnabled).thenReturn(true)
   }
@@ -120,6 +131,17 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
       verify(mockConversionService, times(0)).toJson(any(), any())(any())
     }
 
+    "returns 202 when auditing was successful for trader failed upload event" in {
+      when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(jsonStream))(any())).thenReturn(EitherT.rightT(()))
+
+      val result = controller.post(TraderFailedUploadEvent)(fakeJsonRequest)
+      status(result) mustBe Status.ACCEPTED
+
+      verify(mockConversionService, times(0)).toJson(any(), any())(any())
+      verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
+    }
+
     "returns 500 when the conversion service fails" in {
       when(mockConversionService.toJson(any(), any())(any())).thenReturn(EitherT.leftT(ConversionError.UnexpectedError("test error")))
 
@@ -136,6 +158,18 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
       when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
       val result = controller.post(AmendmentAcceptance)(fakeRequest)
+      status(result) mustBe Status.INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
+    "returns 500 when the audit service fails for trader failed upload event" in {
+      when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+      when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(jsonStream))(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
+
+      val result = controller.post(TraderFailedUploadEvent)(fakeRequest)
       status(result) mustBe Status.INTERNAL_SERVER_ERROR
       contentAsJson(result) mustBe Json.obj(
         "code"    -> "INTERNAL_SERVER_ERROR",
