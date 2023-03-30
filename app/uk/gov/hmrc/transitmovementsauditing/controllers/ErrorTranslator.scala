@@ -18,9 +18,12 @@ package uk.gov.hmrc.transitmovementsauditing.controllers
 
 import cats.data.EitherT
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError.Disabled
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError.Disabled
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.FileNotFound
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.UnexpectedError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -51,6 +54,14 @@ trait ErrorTranslator {
     def convert(conversionError: ConversionError): PresentationError = conversionError match {
       case ConversionError.FailedConversion(_)     => PresentationError.internalServiceError()
       case ConversionError.UnexpectedError(_, thr) => PresentationError.internalServiceError(cause = thr)
+    }
+  }
+
+  implicit val objectStoreError = new Converter[ObjectStoreError] {
+
+    def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
+      case FileNotFound(fileLocation) => PresentationError.badRequestError(s"file not found at location: $fileLocation")
+      case UnexpectedError(ex)        => PresentationError.internalServiceError(cause = ex)
     }
   }
 

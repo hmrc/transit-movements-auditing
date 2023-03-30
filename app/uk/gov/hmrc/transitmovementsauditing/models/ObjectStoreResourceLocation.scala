@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.itbase
+package uk.gov.hmrc.transitmovementsauditing.models
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
-import org.scalatest.Suite
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
-object TestActorSystem {
-  val system: ActorSystem = ActorSystem("test")
+object ObjectStoreResourceLocation {
+  implicit lazy val ObjectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.format[ObjectStoreResourceLocation]
 }
 
-trait TestActorSystem { self: Suite =>
-  implicit val system: ActorSystem        = TestActorSystem.system
-  implicit val materializer: Materializer = Materializer(TestActorSystem.system)
+case class ObjectStoreResourceLocation(value: String) extends AnyVal {
+  def stripRoutePrefix: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("uri/"))
 }
