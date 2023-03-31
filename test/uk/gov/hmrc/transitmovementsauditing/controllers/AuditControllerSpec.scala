@@ -46,6 +46,7 @@ import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
@@ -68,6 +69,15 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
     Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
   )
 
+  private val fakeJsonRequest = FakeRequest(
+    "POST",
+    "/",
+    Headers(CONTENT_TYPE -> "application/json"),
+    Source.single(ByteString("""{ "test": "123" } """))
+  )
+
+  private val mockAppConfig = mock[AppConfig]
+
   private val emptyFakeRequest = FakeRequest(
     "POST",
     "/"
@@ -76,7 +86,6 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
   private val objectStoreSource = Source.single(ByteString(<objectStore>test</objectStore>.mkString, StandardCharsets.UTF_8))
   private val uri               = ObjectStoreResourceLocation("common-transit-convention-traders/movements/12345678")
 
-  private val mockAppConfig         = mock[AppConfig]
   private val mockAuditService      = mock[AuditService]
   private val mockConversionService = mock[ConversionService]
 
@@ -95,9 +104,11 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
     materializer
   )
 
+  private val xmlStream  = Source.single(ByteString(<test>123</test>.mkString))
+  private val jsonStream = Source.single(ByteString("""{ "test": "123" } """))
+
   override def beforeEach(): Unit = {
     reset(mockConversionService)
-    reset(mockAuditService)
     reset(mockObjectStoreService)
     reset(mockAppConfig)
     when(mockAppConfig.auditingEnabled).thenReturn(true)
@@ -144,6 +155,17 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
       }
 
+      "returns 202 when auditing was successful for trader failed upload event" in {
+        when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(jsonStream))(any())).thenReturn(EitherT.rightT(()))
+
+        val result = controller.post(TraderFailedUploadEvent)(fakeJsonRequest)
+        status(result) mustBe Status.ACCEPTED
+
+        verify(mockConversionService, times(0)).toJson(any(), any())(any())
+        verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
+      }
+
       "returns 500 when the conversion service fails" in {
         when(mockConversionService.toJson(any(), any())(any())).thenReturn(EitherT.leftT(ConversionError.UnexpectedError("test error")))
 
@@ -166,6 +188,18 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
           "message" -> "Internal server error"
         )
       }
+
+      "returns 500 when the audit service fails for trader failed upload event" in {
+        when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(jsonStream))(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
+
+        val result = controller.post(TraderFailedUploadEvent)(fakeRequest)
+        status(result) mustBe Status.INTERNAL_SERVER_ERROR
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
     }
 
     "Payload sourced from Object Store" - {
@@ -182,6 +216,19 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
         verify(mockAuditService, times(1)).send(eqTo(DeclarationData), eqTo(objectStoreSource))(any())
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
+      }
+
+      "returns 202 when auditing was successful for trader failed upload event" in {
+        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(objectStoreSource))(any())).thenReturn(EitherT.rightT(()))
+        when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
+          .thenReturn(EitherT.rightT(objectStoreSource))
+
+        val result = controller.post(TraderFailedUploadEvent, Some(uri))(fakeJsonRequest)
+        status(result) mustBe Status.ACCEPTED
+
+        verify(mockConversionService, times(0)).toJson(any(), any())(any())
+        verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), eqTo(objectStoreSource))(any())
+        verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
       }
 
       "returns a BAD_REQUEST when the file cannot be located in object store" in {
@@ -212,6 +259,5 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         )
       }
     }
-
   }
 }

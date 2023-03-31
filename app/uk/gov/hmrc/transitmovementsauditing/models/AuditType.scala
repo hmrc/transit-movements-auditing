@@ -53,7 +53,8 @@ object AuditType {
     ControlDecisionNotification,
     ForwardedIncidentNotificationToED,
     PositiveAcknowledge,
-    LargeMessageSubmissionRequested
+    LargeMessageSubmissionRequested,
+    TraderFailedUploadEvent
   )
 
   case object AmendmentAcceptance            extends AuditType("AmendmentAcceptance", transitMovementsRouter, Some(MessageType.IE004))
@@ -84,6 +85,7 @@ object AuditType {
   case object PositiveAcknowledge               extends AuditType("PositiveAcknowledge", transitMovementsRouter, Some(MessageType.IE928))
   case object RequestOnNonArrivedMovement       extends AuditType("RequestOnNonArrivedMovement", transitMovementsRouter, Some(MessageType.IE140))
   case object LargeMessageSubmissionRequested   extends AuditType("LargeMessageSubmissionRequested", commonTransitConventionTraders, None)
+  case object TraderFailedUploadEvent           extends AuditType(name = "TraderFailedUploadEvent", commonTransitConventionTraders, None)
 
   case object PresentationNotificationForThePreLodgedDeclaration
       extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, Some(MessageType.IE170))
