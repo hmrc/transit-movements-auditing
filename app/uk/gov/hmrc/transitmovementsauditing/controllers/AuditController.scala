@@ -42,6 +42,7 @@ import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.Future
@@ -95,7 +96,7 @@ class AuditController @Inject() (
     else EitherT.rightT(request.body)
 
   private def fileId() =
-    s"{UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}"
+    s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}"
 
   private def getSource(auditType: AuditType, uri: Option[ObjectStoreResourceLocation], request: Request[Source[ByteString, _]])(exceedsLimit: Boolean)(implicit
     hc: HeaderCarrier
