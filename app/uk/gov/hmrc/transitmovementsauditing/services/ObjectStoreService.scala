@@ -25,6 +25,7 @@ import com.google.inject.Inject
 import play.api.Logging
 import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import akka.stream.Materializer
@@ -46,7 +47,7 @@ trait ObjectStoreService {
     objectStoreResourceLocation: ObjectStoreResourceLocation
   )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]]
 
-  def putFile(id: String, source: Source[ByteString, _])(implicit
+  def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5]
@@ -75,14 +76,14 @@ class ObjectStoreServiceImpl @Inject() (appConfig: AppConfig)(implicit materiali
         }
     )
 
-  def putFile(id: String, source: Source[ByteString, _])(implicit
+  def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5] = EitherT {
 
     client
       .putObject(
-        path = Path.Directory("auditing").file(s"$id"),
+        path = Path.Directory("auditing").file(s"${fileId.id}"),
         content = source,
         owner = appConfig.appName,
         contentType = Some(MimeTypes.XML)

@@ -50,6 +50,7 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.Discrepancies
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
@@ -162,7 +163,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
 
         val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
-        when(mockObjectStoreService.putFile(any(), any())(any[ExecutionContext], any[HeaderCarrier]))
+        when(mockObjectStoreService.putFile(any[FileId](), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
 
         val result = controller.post(LargeMessageSubmissionRequested)(
@@ -174,7 +175,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockAuditService, times(1)).send(eqTo(LargeMessageSubmissionRequested), any())(any())
-        verify(mockObjectStoreService, times(1)).putFile(any(), any())(any(), any())
+        verify(mockObjectStoreService, times(1)).putFile(any[FileId](), any())(any(), any())
       }
 
       "returns 202 when auditing was successful for trader failed upload event" in {
@@ -261,7 +262,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectStoreSource))
         val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
-        when(mockObjectStoreService.putFile(any(), any())(any[ExecutionContext], any[HeaderCarrier]))
+        when(mockObjectStoreService.putFile(any[FileId](), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
         when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
 

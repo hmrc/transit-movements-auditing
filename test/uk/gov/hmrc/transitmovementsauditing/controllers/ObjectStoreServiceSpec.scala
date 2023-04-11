@@ -45,6 +45,7 @@ import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.FileNotFound
@@ -118,7 +119,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
     "On putting a file in object store" - {
 
       val source: Source[ByteString, _]       = Source.single(ByteString("<test>test</test>"))
-      val fileId                              = "xmlFileToStore"
+      val fileId                              = FileId("xmlFileToStore")
       val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
 
       "given a successful response, should return a Right with an Object Store Summary" in {
@@ -127,7 +128,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
 
         when(
           mockClient.putObject(
-            eqTo(Path.Directory("auditing").file(fileId)),
+            eqTo(Path.Directory("auditing").file(fileId.id)),
             eqTo(source),
             any[RetentionPeriod],
             eqTo(Some(MimeTypes.XML)),
@@ -144,7 +145,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
         }
 
         verify(mockClient, times(1)).putObject(
-          eqTo(Path.Directory("auditing").file(fileId)),
+          eqTo(Path.Directory("auditing").file(fileId.id)),
           eqTo(source),
           any[RetentionPeriod],
           eqTo(Some(MimeTypes.XML)),
@@ -161,7 +162,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
 
         when(
           mockClient.putObject(
-            eqTo(Path.Directory("auditing").file(fileId)),
+            eqTo(Path.Directory("auditing").file(fileId.id)),
             eqTo(source),
             any[RetentionPeriod],
             eqTo(Some(MimeTypes.XML)),
@@ -176,7 +177,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
         whenReady(result.value) {
           case Left(_: ObjectStoreError.UnexpectedError) =>
             verify(mockClient, times(1)).putObject(
-              eqTo(Path.Directory("auditing").file(fileId)),
+              eqTo(Path.Directory("auditing").file(fileId.id)),
               eqTo(source),
               any[RetentionPeriod],
               eqTo(Some(MimeTypes.XML)),
