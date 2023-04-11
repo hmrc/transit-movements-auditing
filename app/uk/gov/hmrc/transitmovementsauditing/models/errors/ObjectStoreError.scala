@@ -18,7 +18,7 @@ package uk.gov.hmrc.transitmovementsauditing.models.errors
 
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 
-sealed trait ObjectStoreError
+sealed trait ObjectStoreError extends Throwable
 
 object ObjectStoreError {
   case class FileNotFound(uri: ObjectStoreResourceLocation) extends ObjectStoreError
