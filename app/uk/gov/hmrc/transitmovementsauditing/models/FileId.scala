@@ -16,4 +16,4 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models
 
-case class FileId(id: String)
+case class FileId(value: String) extends AnyVal

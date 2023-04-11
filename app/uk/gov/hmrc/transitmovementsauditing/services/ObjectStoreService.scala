@@ -83,7 +83,7 @@ class ObjectStoreServiceImpl @Inject() (appConfig: AppConfig)(implicit materiali
 
     client
       .putObject(
-        path = Path.Directory("auditing").file(s"${fileId.id}"),
+        path = Path.Directory("auditing").file(s"${fileId.value}"),
         content = source,
         owner = appConfig.appName,
         contentType = Some(MimeTypes.XML)

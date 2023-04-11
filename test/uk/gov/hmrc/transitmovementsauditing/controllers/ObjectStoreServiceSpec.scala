@@ -128,7 +128,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
 
         when(
           mockClient.putObject(
-            eqTo(Path.Directory("auditing").file(fileId.id)),
+            eqTo(Path.Directory("auditing").file(fileId.value)),
             eqTo(source),
             any[RetentionPeriod],
             eqTo(Some(MimeTypes.XML)),
@@ -145,7 +145,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
         }
 
         verify(mockClient, times(1)).putObject(
-          eqTo(Path.Directory("auditing").file(fileId.id)),
+          eqTo(Path.Directory("auditing").file(fileId.value)),
           eqTo(source),
           any[RetentionPeriod],
           eqTo(Some(MimeTypes.XML)),
@@ -162,7 +162,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
 
         when(
           mockClient.putObject(
-            eqTo(Path.Directory("auditing").file(fileId.id)),
+            eqTo(Path.Directory("auditing").file(fileId.value)),
             eqTo(source),
             any[RetentionPeriod],
             eqTo(Some(MimeTypes.XML)),
@@ -177,7 +177,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
         whenReady(result.value) {
           case Left(_: ObjectStoreError.UnexpectedError) =>
             verify(mockClient, times(1)).putObject(
-              eqTo(Path.Directory("auditing").file(fileId.id)),
+              eqTo(Path.Directory("auditing").file(fileId.value)),
               eqTo(source),
               any[RetentionPeriod],
               eqTo(Some(MimeTypes.XML)),
