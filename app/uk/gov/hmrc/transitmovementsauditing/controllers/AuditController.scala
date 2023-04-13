@@ -82,7 +82,7 @@ class AuditController @Inject() (
 
   private def exceedsMessageSize(implicit request: Request[Source[ByteString, _]]): Boolean =
     request.headers
-      .get(CONTENT_LENGTH)
+      .get("ContentLength")
       .map(_.toLong > appConfig.auditMessageMaxSize)
       .getOrElse(false)
 

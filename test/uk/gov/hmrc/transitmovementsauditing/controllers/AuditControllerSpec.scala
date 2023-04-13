@@ -69,6 +69,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
   private val contentLessThanAuditLimit = "49999"
   private val contentExceedsAuditLimit  = "50001"
+  private val ContentLength             = "ContentLength" // Resorting to this as there seems to be an issue with Headers.CONTENT_LENGTH and wiremock.
 
   private val xmlStream  = Source.single(ByteString(<test>123</test>.mkString))
   private val jsonStream = Source.single(ByteString("""{ "test": "123" } """))
@@ -79,7 +80,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
   private val emptyFakeRequest = FakeRequest("POST", "/")
 
   private val fakeRequest = emptyFakeRequest
-    .withHeaders(CONTENT_TYPE -> "application/xml", CONTENT_LENGTH -> contentLessThanAuditLimit)
+    .withHeaders(CONTENT_TYPE -> "application/xml", ContentLength -> contentLessThanAuditLimit)
     .withBody(xmlStream)
 
   private val fakeJsonRequest = emptyFakeRequest
@@ -168,7 +169,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
         val result = controller.post(LargeMessageSubmissionRequested)(
           fakeRequest
-            .withHeaders(CONTENT_TYPE -> "application/json", CONTENT_LENGTH -> contentExceedsAuditLimit)
+            .withHeaders(CONTENT_TYPE -> "application/json", ContentLength -> contentExceedsAuditLimit)
         )
         status(result) mustBe Status.ACCEPTED
 
@@ -196,7 +197,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenReturn(EitherT.leftT(ConversionError.UnexpectedError("test error")))
 
-        val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(CONTENT_LENGTH -> contentLessThanAuditLimit))
+        val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(ContentLength -> contentLessThanAuditLimit))
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "INTERNAL_SERVER_ERROR",
@@ -247,7 +248,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectStoreSource))
 
-        val result = controller.post(DeclarationData, Some(uri))(emptyFakeRequest.withHeaders(Headers(CONTENT_LENGTH -> contentLessThanAuditLimit)))
+        val result = controller.post(DeclarationData, Some(uri))(emptyFakeRequest.withHeaders(Headers(ContentLength -> contentLessThanAuditLimit)))
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
@@ -266,7 +267,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
           .thenReturn(EitherT.rightT(objectSummary))
         when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
 
-        val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(CONTENT_LENGTH -> contentExceedsAuditLimit))
+        val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(ContentLength -> contentExceedsAuditLimit))
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
@@ -286,7 +287,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(TraderFailedUploadEvent, Some(uri))(
-          emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", CONTENT_LENGTH -> contentLessThanAuditLimit)
+          emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", ContentLength -> contentLessThanAuditLimit)
         )
 
         status(result) mustBe Status.ACCEPTED
