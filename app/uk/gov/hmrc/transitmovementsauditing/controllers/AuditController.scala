@@ -29,6 +29,7 @@ import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
+import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
@@ -82,7 +83,7 @@ class AuditController @Inject() (
 
   private def exceedsMessageSize(implicit request: Request[Source[ByteString, _]]): Boolean =
     request.headers
-      .get("ContentLength")
+      .get(Constants.XContentLengthHeader)
       .map(_.toLong > appConfig.auditMessageMaxSize)
       .getOrElse(false)
 
