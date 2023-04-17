@@ -18,8 +18,6 @@ package uk.gov.hmrc.transitmovementsauditing.services
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import cats.data.EitherT
 import com.fasterxml.jackson.core.JsonParseException
 import com.google.inject.ImplementedBy
@@ -37,6 +35,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResult
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
+import uk.gov.hmrc.transitmovementsauditing.Payload
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -47,15 +46,20 @@ import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuditServiceImpl])
 trait AuditService {
-  def send(auditType: AuditType, jsonStream: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, AuditError, Unit]
+
+  def send(auditType: AuditType, jsonStream: Payload)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, AuditError, Unit]
 }
 
 @Singleton
 class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer) extends AuditService {
 
-  def send(auditType: AuditType, jsonStream: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, AuditError, Unit] =
+  def send(auditType: AuditType, jsonStream: Payload)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, AuditError, Unit] =
     for {
-      messageBody <- extractBody(jsonStream)
+      messageBody <- extractMessage(jsonStream)
       jsValue     <- parseJson(messageBody)
       extendedDataEvent = createExtendedEvent(auditType, jsValue)
       result <- sendEvent(extendedDataEvent)
@@ -84,18 +88,23 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       detail = messageBody
     )
 
-  private def extractBody(stream: Source[ByteString, _]): EitherT[Future, AuditError, String] =
+  private def extractMessage(stream: Payload): EitherT[Future, AuditError, String] =
     EitherT {
-      stream
-        .reduce(
-          (cur, next) => cur ++ next
-        )
-        .map(_.utf8String)
-        .runWith(Sink.head[String])
-        .map(Right(_))
-        .recover {
-          case NonFatal(ex) => Left(AuditError.UnexpectedError(s"Error extracting body from stream", Some(ex)))
-        }
+      stream match {
+        case Right(source) =>
+          source
+            .reduce(
+              (cur, next) => cur ++ next
+            )
+            .map(_.utf8String)
+            .runWith(Sink.head[String])
+            .map(Right(_))
+            .recover {
+              case NonFatal(ex) => Left(AuditError.UnexpectedError(s"Error extracting body from stream", Some(ex)))
+            }
+        case Left(summary) => Future.successful(Right(s"""{"ObjectStoreLocation": "$summary"}"""))
+      }
+
     }
 
   private def parseJson(body: String): EitherT[Future, AuditError, JsValue] =

@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.transitmovementsauditing.controllers
 
-import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -41,12 +40,19 @@ import play.api.mvc.PlayBodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
+import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.Discrepancies
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
@@ -60,35 +66,30 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem with MockitoSugar with BeforeAndAfterEach {
+class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem with MockitoSugar with ModelGenerators with BeforeAndAfterEach {
 
-  private val fakeRequest = FakeRequest(
-    "POST",
-    "/",
-    Headers(CONTENT_TYPE -> "application/xml"),
-    Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
-  )
+  private val contentLessThanAuditLimit = "49999"
+  private val contentExceedsAuditLimit  = "50001"
 
-  private val fakeJsonRequest = FakeRequest(
-    "POST",
-    "/",
-    Headers(CONTENT_TYPE -> "application/json"),
-    Source.single(ByteString("""{ "test": "123" } """))
-  )
-
-  private val mockAppConfig = mock[AppConfig]
-
-  private val emptyFakeRequest = FakeRequest(
-    "POST",
-    "/"
-  )
+  private val xmlStream  = Source.single(ByteString(<test>123</test>.mkString))
+  private val jsonStream = Source.single(ByteString("""{ "test": "123" } """))
 
   private val objectStoreSource = Source.single(ByteString(<objectStore>test</objectStore>.mkString, StandardCharsets.UTF_8))
   private val uri               = ObjectStoreResourceLocation("common-transit-convention-traders/movements/12345678")
 
-  private val mockAuditService      = mock[AuditService]
-  private val mockConversionService = mock[ConversionService]
+  private val emptyFakeRequest = FakeRequest("POST", "/")
 
+  private val fakeRequest = emptyFakeRequest
+    .withHeaders(CONTENT_TYPE -> "application/xml", Constants.XContentLengthHeader -> contentLessThanAuditLimit)
+    .withBody(xmlStream)
+
+  private val fakeJsonRequest = emptyFakeRequest
+    .withHeaders(CONTENT_TYPE -> "application/json")
+    .withBody(jsonStream)
+
+  private val mockAppConfig          = mock[AppConfig]
+  private val mockAuditService       = mock[AuditService]
+  private val mockConversionService  = mock[ConversionService]
   private val mockObjectStoreService = mock[ObjectStoreService]
 
   private val conversionServiceXmlToJsonPartial: PartialFunction[Any, EitherT[Future, ConversionError, Source[ByteString, _]]] = {
@@ -104,12 +105,10 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
     materializer
   )
 
-  private val xmlStream  = Source.single(ByteString(<test>123</test>.mkString))
-  private val jsonStream = Source.single(ByteString("""{ "test": "123" } """))
-
   override def beforeEach(): Unit = {
     reset(mockConversionService)
     reset(mockObjectStoreService)
+    reset(mockAuditService)
     reset(mockAppConfig)
     when(mockAppConfig.auditingEnabled).thenReturn(true)
   }
@@ -122,42 +121,69 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
         reset(mockAppConfig)
         when(mockAppConfig.auditingEnabled).thenReturn(false)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.ACCEPTED
+        verify(mockAppConfig, times(0)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
       }
 
-      "returns 202 when auditing was successful with an XML payload" in {
-        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
+      "returns 202 when auditing was successful with an XML payload that does not exceed audit limit" in {
+
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+        when(mockConversionService.toJson(eqTo(MessageType.IE004), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockAuditService.send(eqTo(AmendmentAcceptance), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.ACCEPTED
-        verify(mockConversionService, times(1)).toJson(any(), any())(any())
+
+        verify(mockAppConfig, times(1)).auditMessageMaxSize
+        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), eqTo(xmlStream))(any())
+        verify(mockAuditService, times(1)).send(eqTo(AmendmentAcceptance), any())(any())
       }
 
-      "returns 202 when auditing was successful with a payload" in {
-        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
+      "returns 202 when auditing was successful with a payload that does not exceed audit limit" in {
 
-        val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(CONTENT_TYPE -> "application/json"))
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+        when(mockConversionService.toJson(eqTo(MessageType.IE013), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockAuditService.send(eqTo(DeclarationAmendment), any())(any())).thenReturn(EitherT.rightT(()))
+
+        val result = controller.post(DeclarationAmendment)(fakeRequest.withHeaders(CONTENT_TYPE -> "application/json"))
         status(result) mustBe Status.ACCEPTED
-        verify(mockConversionService, times(0)).toJson(any(), any())(any())
+
+        verify(mockAppConfig, times(1)).auditMessageMaxSize
+        verify(mockConversionService, times(0)).toJson(eqTo(MessageType.IE013), eqTo(xmlStream))(any())
+        verify(mockAuditService, times(1)).send(eqTo(DeclarationAmendment), any())(any())
       }
 
-      "returns 202 when auditing was successful with an Large message payload" in {
-        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
+      "returns 202 when auditing was successful with a payload that exceeds the audit limit" in {
 
-        val result = controller.post(LargeMessageSubmissionRequested)(fakeRequest.withHeaders(CONTENT_TYPE -> "application/json"))
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
+
+        val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
+        when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
+          .thenReturn(EitherT.rightT(objectSummary))
+
+        val result = controller.post(LargeMessageSubmissionRequested)(
+          fakeRequest
+            .withHeaders(CONTENT_TYPE -> "application/json", Constants.XContentLengthHeader -> contentExceedsAuditLimit)
+        )
         status(result) mustBe Status.ACCEPTED
+
+        verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
+        verify(mockAuditService, times(1)).send(eqTo(LargeMessageSubmissionRequested), any())(any())
+        verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
       }
 
       "returns 202 when auditing was successful for trader failed upload event" in {
+
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(jsonStream))(any())).thenReturn(EitherT.rightT(()))
+        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(Right(jsonStream)))(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(TraderFailedUploadEvent)(fakeJsonRequest)
         status(result) mustBe Status.ACCEPTED
@@ -167,19 +193,24 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
       }
 
       "returns 500 when the conversion service fails" in {
+
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenReturn(EitherT.leftT(ConversionError.UnexpectedError("test error")))
 
-        val result = controller.post(AmendmentAcceptance)(fakeRequest)
+        val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(Constants.XContentLengthHeader -> contentLessThanAuditLimit))
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+        verify(mockAuditService, times(0)).send(any(), any())(any())
       }
 
       "returns 500 when the audit service fails" in {
+
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
+        when(mockAuditService.send(eqTo(AmendmentAcceptance), any())(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
@@ -187,11 +218,15 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+
+        verify(mockAuditService, times(1)).send(eqTo(AmendmentAcceptance), any())(any())
       }
 
       "returns 500 when the audit service fails for trader failed upload event" in {
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(jsonStream))(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
+        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), any())(any()))
+          .thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
         val result = controller.post(TraderFailedUploadEvent)(fakeRequest)
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
@@ -199,39 +234,75 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+
+        verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
       }
+
     }
 
     "Payload sourced from Object Store" - {
 
-      "returns 202 when auditing was successful" in {
-        when(mockAuditService.send(eqTo(DeclarationData), eqTo(objectStoreSource))(any())).thenReturn(EitherT.rightT(()))
+      "returns 202 when auditing was successful with a message that does not exceed audit limit" in {
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+        when(mockAuditService.send(eqTo(DeclarationData), eqTo(Right(objectStoreSource)))(any())).thenReturn(EitherT.rightT(()))
         when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectStoreSource))
 
-        val result = controller.post(DeclarationData, Some(uri))(emptyFakeRequest)
-
+        val result =
+          controller.post(DeclarationData, Some(uri))(emptyFakeRequest.withHeaders(Headers(Constants.XContentLengthHeader -> contentLessThanAuditLimit)))
         status(result) mustBe Status.ACCEPTED
 
+        verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
-        verify(mockAuditService, times(1)).send(eqTo(DeclarationData), eqTo(objectStoreSource))(any())
+        verify(mockAuditService, times(1)).send(eqTo(DeclarationData), eqTo(Right(objectStoreSource)))(any())
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
+      }
+
+      "returns 202 when auditing was successful with a message that exceeds audit limit" in {
+
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+        when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
+          .thenReturn(EitherT.rightT(objectStoreSource))
+        val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
+        when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
+          .thenReturn(EitherT.rightT(objectSummary))
+        when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
+
+        val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(Constants.XContentLengthHeader -> contentExceedsAuditLimit))
+        status(result) mustBe Status.ACCEPTED
+
+        verify(mockAppConfig, times(1)).auditMessageMaxSize
+        verify(mockConversionService, times(0)).toJson(any(), any())(any())
+        verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
+        verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
+        verify(mockAuditService, times(1)).send(eqTo(Discrepancies), any())(any())
       }
 
       "returns 202 when auditing was successful for trader failed upload event" in {
-        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(objectStoreSource))(any())).thenReturn(EitherT.rightT(()))
+
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectStoreSource))
 
-        val result = controller.post(TraderFailedUploadEvent, Some(uri))(fakeJsonRequest)
+        when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.rightT(()))
+
+        val result = controller.post(TraderFailedUploadEvent, Some(uri))(
+          emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", Constants.XContentLengthHeader -> contentLessThanAuditLimit)
+        )
+
         status(result) mustBe Status.ACCEPTED
 
+        verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
-        verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), eqTo(objectStoreSource))(any())
         verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
+        verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
       }
 
       "returns a BAD_REQUEST when the file cannot be located in object store" in {
+
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.leftT(ObjectStoreError.FileNotFound(uri)))
 
@@ -243,13 +314,16 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
           "message" -> s"file not found at location: $uri",
           "code"    -> "BAD_REQUEST"
         )
+        verify(mockAuditService, times(0)).send(any(), any())(any())
 
       }
 
       "returns 500 when the audit service fails" in {
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockObjectStoreService.getContents(eqTo(uri))(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectStoreSource))
-        when(mockAuditService.send(any(), any())(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
+        when(mockAuditService.send(eqTo(AmendmentAcceptance), any())(any())).thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
         val result = controller.post(AmendmentAcceptance, Some(uri))(fakeRequest)
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
@@ -257,6 +331,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+        verify(mockAuditService, times(1)).send(any(), any())(any())
       }
     }
   }

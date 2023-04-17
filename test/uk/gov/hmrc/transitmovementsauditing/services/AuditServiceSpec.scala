@@ -88,7 +88,7 @@ class AuditServiceSpec
           when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(Success))
 
-          val result = service.send(auditType, createStream(someGoodCC015CJsonString, pieces))
+          val result = service.send(auditType, Right(createStream(someGoodCC015CJsonString, pieces)))
 
           whenReady(result.value, Timeout(1.second)) {
             result =>
@@ -103,7 +103,7 @@ class AuditServiceSpec
 
     "should return an error when the service fails to parse invalid json" in {
       val service = new AuditServiceImpl(mockAuditConnector)
-      val result  = service.send(DeclarationData, createStream(someInvalidJson))
+      val result  = service.send(DeclarationData, Right(createStream(someInvalidJson)))
 
       whenReady(result.value, Timeout(1.second)) {
         res =>
@@ -118,7 +118,7 @@ class AuditServiceSpec
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(Failure("a failure")))
 
-      val result = service.send(DeclarationData, createStream(someGoodCC015CJsonString))
+      val result = service.send(DeclarationData, Right(createStream(someGoodCC015CJsonString)))
 
       whenReady(result.value, Timeout(1.second)) {
         _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
@@ -131,7 +131,7 @@ class AuditServiceSpec
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(Disabled))
 
-      val result = service.send(DeclarationData, createStream(someGoodCC015CJsonString))
+      val result = service.send(DeclarationData, Right(createStream(someGoodCC015CJsonString)))
 
       whenReady(result.value, Timeout(1.second)) {
         _ mustBe Left(AuditError.Disabled)
@@ -144,7 +144,7 @@ class AuditServiceSpec
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(Disabled))
 
-      val result = service.send(DeclarationData, Source.empty)
+      val result = service.send(DeclarationData, Right(Source.empty))
 
       whenReady(result.value, Timeout(1.second)) {
         case Left(AuditError.UnexpectedError(message, _)) =>

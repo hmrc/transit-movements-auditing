@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.models.errors
+package uk.gov.hmrc
 
-import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 
-sealed trait ObjectStoreError extends Throwable
-
-object ObjectStoreError {
-  case class FileNotFound(uri: ObjectStoreResourceLocation) extends ObjectStoreError
-  case class UnexpectedError(thr: Option[Throwable] = None) extends ObjectStoreError
+package object transitmovementsauditing {
+  type Payload = Either[ObjectSummaryWithMd5, Source[ByteString, _]]
 }

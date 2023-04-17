@@ -16,21 +16,6 @@
 
 package uk.gov.hmrc.transitmovementsauditing.config
 
-import io.lemonlabs.uri.Url
-
-import javax.inject.Inject
-import javax.inject.Singleton
-import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
-@Singleton
-class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig) {
-
-  lazy val appName: String = config.get[String]("appName")
-
-  lazy val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-
-  lazy val converterUrl = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
-
-  lazy val auditMessageMaxSize: Long = config.get[Long]("audit-message-max-size")
+object Constants {
+  val XContentLengthHeader = "X-ContentLength"
 }

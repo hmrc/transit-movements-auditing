@@ -21,20 +21,24 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
+import com.google.inject.Inject
 import play.api.Logging
+import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
+import akka.stream.Materializer
 
-import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-
 import uk.gov.hmrc.objectstore.client.play.Implicits._
 import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
+import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
 trait ObjectStoreService {
@@ -43,10 +47,16 @@ trait ObjectStoreService {
     objectStoreResourceLocation: ObjectStoreResourceLocation
   )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]]
 
+  def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5]
 }
 
 @Singleton
-class ObjectStoreServiceImpl @Inject() (client: PlayObjectStoreClient) extends ObjectStoreService with Logging {
+class ObjectStoreServiceImpl @Inject() (appConfig: AppConfig)(implicit materializer: Materializer, client: PlayObjectStoreClient)
+    extends ObjectStoreService
+    with Logging {
 
   override def getContents(
     objectStoreResourceLocation: ObjectStoreResourceLocation
@@ -65,5 +75,27 @@ class ObjectStoreServiceImpl @Inject() (client: PlayObjectStoreClient) extends O
           case NonFatal(ex) => Left(ObjectStoreError.UnexpectedError(Some(ex)))
         }
     )
+
+  def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5] = EitherT {
+
+    client
+      .putObject(
+        path = Path.Directory("auditing").file(s"${fileId.value}"),
+        content = source,
+        owner = appConfig.appName,
+        contentType = Some(MimeTypes.XML)
+      )
+      .map {
+        objectSummary =>
+          Right(objectSummary)
+      }
+      .recover {
+        case NonFatal(thr) =>
+          Left(ObjectStoreError.UnexpectedError(Some(thr)))
+      }
+  }
 
 }

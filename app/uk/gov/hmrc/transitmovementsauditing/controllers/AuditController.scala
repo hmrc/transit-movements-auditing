@@ -29,15 +29,22 @@ import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
+import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
+import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
 
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.Future
@@ -57,12 +64,12 @@ class AuditController @Inject() (
 
   def post(auditType: AuditType, uri: Option[ObjectStoreResourceLocation] = None): Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
 
-    request =>
+    implicit request =>
       if (appConfig.auditingEnabled) {
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
-          jsonStream <- getSource(auditType, uri, request)
+          jsonStream <- getSource(auditType, uri, request)(exceedsMessageSize)
           result     <- auditService.send(auditType, jsonStream).asPresentation
         } yield result)
           .fold(
@@ -74,6 +81,12 @@ class AuditController @Inject() (
       }
   }
 
+  private def exceedsMessageSize(implicit request: Request[Source[ByteString, _]]): Boolean =
+    request.headers
+      .get(Constants.XContentLengthHeader)
+      .map(_.toLong > appConfig.auditMessageMaxSize)
+      .getOrElse(false)
+
   def postLarge(auditType: AuditType, uri: String): Action[Source[ByteString, _]] =
     post(auditType, Some(ObjectStoreResourceLocation(uri).stripRoutePrefix))
 
@@ -84,11 +97,37 @@ class AuditController @Inject() (
       conversionService.toJson(auditType.messageType.get, request.body)
     else EitherT.rightT(request.body)
 
-  private def getSource(auditType: AuditType, uri: Option[ObjectStoreResourceLocation], request: Request[Source[ByteString, _]])(implicit
+  private def fileId(): FileId =
+    FileId(s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}")
+
+  private def getSource(auditType: AuditType, uri: Option[ObjectStoreResourceLocation], request: Request[Source[ByteString, _]])(exceedsLimit: Boolean)(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
-    uri match {
-      case None           => convertIfNecessary(auditType, request).asPresentation
-      case Some(location) => objectStoreService.getContents(location).asPresentation
+  ): EitherT[Future, PresentationError, Payload] =
+    (uri, exceedsLimit) match {
+      case (None, false) => // payload in body and < auditing message limit
+        convertIfNecessary(auditType, request).asPresentation
+          .map(
+            source => Right(source): Payload
+          )
+      case (Some(uri), false) => // payload in object store and < auditing message limit
+        objectStoreService
+          .getContents(uri)
+          .asPresentation
+          .map(
+            source => Right(source): Payload
+          )
+      case (None, true) => // payload in body and too big for auditing so add to object store
+        objectStoreService
+          .putFile(fileId(), request.body)
+          .asPresentation
+          .map(
+            objSummary => Left(objSummary): Payload
+          )
+      case (Some(uri), true) => // payload in object store and exceeds auditing message limit
+        for {
+          contents   <- objectStoreService.getContents(uri).asPresentation
+          objSummary <- objectStoreService.putFile(fileId(), contents).asPresentation
+        } yield Left(objSummary): Payload
     }
+
 }
