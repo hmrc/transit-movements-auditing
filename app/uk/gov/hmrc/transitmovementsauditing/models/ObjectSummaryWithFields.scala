@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc
+package uk.gov.hmrc.transitmovementsauditing.models
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 
-package object transitmovementsauditing {
-
-  type Payload = Either[ObjectSummaryWithFields, Source[ByteString, _]]
-
-}
+case class ObjectSummaryWithFields(objectSummary: ObjectSummaryWithMd5, fields: String)
