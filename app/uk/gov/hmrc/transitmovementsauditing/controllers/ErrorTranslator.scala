@@ -20,11 +20,16 @@ import cats.data.EitherT
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError.Disabled
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.FileNotFound
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.UnexpectedError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.BadDateTime
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.NoElementFound
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.TooManyElementsFound
 
+import java.time.format.DateTimeParseException
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -62,6 +67,16 @@ trait ErrorTranslator {
     def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
       case FileNotFound(fileLocation) => PresentationError.badRequestError(s"file not found at location: $fileLocation")
       case UnexpectedError(ex)        => PresentationError.internalServiceError(cause = ex)
+    }
+  }
+
+  implicit val parseError = new Converter[ParseError] {
+
+    def convert(parseError: ParseError): PresentationError = parseError match {
+      case NoElementFound(element)                          => PresentationError.badRequestError(s"Element $element not found")
+      case TooManyElementsFound(element)                    => PresentationError.badRequestError(s"Found too many elements of type $element")
+      case BadDateTime(element, ex: DateTimeParseException) => PresentationError.badRequestError(s"Could not parse datetime for $element: ${ex.getMessage}")
+      case ParseError.UnexpectedError(ex)                   => PresentationError.internalServiceError(cause = ex)
     }
   }
 

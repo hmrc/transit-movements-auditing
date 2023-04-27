@@ -22,7 +22,6 @@ import akka.stream.alpakka.xml.ParseEvent
 import akka.stream.alpakka.xml.scaladsl.XmlParsing
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
-import play.api.libs.Files.logger
 
 import scala.concurrent.Future
 

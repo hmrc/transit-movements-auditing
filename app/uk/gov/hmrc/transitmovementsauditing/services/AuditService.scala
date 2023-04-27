@@ -17,12 +17,19 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import akka.stream.Materializer
+import akka.stream.alpakka.xml.ParseEvent
+import akka.stream.alpakka.xml.scaladsl.XmlParsing
+import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import cats.data.EitherT
+import cats.kernel.Monoid
 import com.fasterxml.jackson.core.JsonParseException
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,8 +41,13 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Failure => AuditResult
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResultSuccess}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.Payload
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.NoElementFound
+import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
+import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.concatKeyValue
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -50,10 +62,41 @@ trait AuditService {
   def send(auditType: AuditType, jsonStream: Payload)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
+
+  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[String]]
+
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, String]
 }
 
 @Singleton
-class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer) extends AuditService {
+class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer)
+    extends AuditService
+    with ElementPaths
+    with Logging {
+
+  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[String]] =
+    src
+      .via(XmlParsing.parser)
+      .via(XmlParsers.extractElement(name, path))
+      .runWith(concatKeyValue)
+
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, String] =
+    EitherT {
+      messageType match {
+        case Some(value) =>
+          Future
+            .sequence(
+              elementPaths(value.messageCode)
+                .map(
+                  row => getAdditionalField(row._1, row._2, src) // node name and its path
+                )
+            )
+            .map(
+              Monoid[Either[ParseError, String]].combineAll(_)
+            )
+        case None => Future.successful(Left(ParseError.NoElementFound(s"Unable to find $messageType")))
+      }
+    }
 
   def send(auditType: AuditType, jsonStream: Payload)(implicit
     hc: HeaderCarrier
@@ -88,7 +131,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       detail = messageBody
     )
 
-  private def extractMessage(stream: Payload): EitherT[Future, AuditError, String] =
+  private def extractMessage(stream: Payload) =
     EitherT {
       stream match {
         case Right(source) =>
@@ -102,9 +145,8 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
             .recover {
               case NonFatal(ex) => Left(AuditError.UnexpectedError(s"Error extracting body from stream", Some(ex)))
             }
-        case Left(summary) => Future.successful(Right(s"""{"ObjectStoreLocation": "$summary"}"""))
+        case Left(summary) => Future.successful(Right(s"""{"ObjectSummaryWithFields": "$summary"}"""))
       }
-
     }
 
   private def parseJson(body: String): EitherT[Future, AuditError, JsValue] =
