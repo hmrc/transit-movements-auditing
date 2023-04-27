@@ -161,6 +161,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT("(key,value)"))
         when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
 
         val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
@@ -176,6 +177,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockAuditService, times(1)).send(eqTo(LargeMessageSubmissionRequested), any())(any())
+        verify(mockAuditService, times(1)).getAdditionalFields(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
       }
 
@@ -266,6 +268,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
         when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
+        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT("(key,value)"))
         when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(Constants.XContentLengthHeader -> contentExceedsAuditLimit))
@@ -275,6 +278,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
+        verify(mockAuditService, times(1)).getAdditionalFields(any(), any())
         verify(mockAuditService, times(1)).send(eqTo(Discrepancies), any())(any())
       }
 
