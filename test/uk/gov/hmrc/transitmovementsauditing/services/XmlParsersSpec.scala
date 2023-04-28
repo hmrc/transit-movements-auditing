@@ -43,10 +43,10 @@ class XmlParserSpec
     with ScalaFutures
     with ScalaCheckDrivenPropertyChecks {
 
-  "Movement Reference Number parser" - {
+//  "Movement Reference Number parser" - {
 
-    val cc004c: NodeSeq =
-      <ncts:CC004C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+  val cc004c: NodeSeq =
+    <ncts:CC004C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
         <messageSender>message-sender-004</messageSender>
         <messageType>CC004C</messageType>
         <TransitOperation>
@@ -58,8 +58,8 @@ class XmlParserSpec
         </CustomsOfficeOfDeparture>
       </ncts:CC004C>
 
-    val cc007c: NodeSeq =
-      <ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+  val cc007c: NodeSeq =
+    <ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
         <messageSender>message-sender-1</messageSender>
         <messageType>CC007C</messageType>
         <TransitOperation>
@@ -85,7 +85,7 @@ class XmlParserSpec
         </Consignment>
       </ncts:CC007C>
 
-    val cc009c: NodeSeq = <ncts:CC009C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+  val cc009c: NodeSeq = <ncts:CC009C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
           <messageSender>message-sender-009</messageSender>
           <messageType>CC009C</messageType>
           <TransitOperation>
@@ -97,7 +97,7 @@ class XmlParserSpec
           </CustomsOfficeOfDeparture>
       </ncts:CC009C>
 
-    val cc013c: NodeSeq = <ncts:CC013C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+  val cc013c: NodeSeq = <ncts:CC013C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
       <messageSender>message-sender-013</messageSender>
       <messageType>CC013C</messageType>
       <TransitOperation>
@@ -150,7 +150,19 @@ class XmlParserSpec
       </Consignment>
     </ncts:CC013C>
 
-    val cc015c: NodeSeq = <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+  val cc014c: NodeSeq = <ncts:CC014C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+      <messageSender>message-sender-014</messageSender>
+      <messageType>CC014C</messageType>
+      <TransitOperation>
+        <LRN>LRN-014</LRN>
+        <MRN>MRN-014</MRN>
+      </TransitOperation>
+      <CustomsOfficeOfDeparture>
+        <referenceNumber>Newcastle-airport-014</referenceNumber>
+      </CustomsOfficeOfDeparture>
+    </ncts:CC014C>
+
+  val cc015c: NodeSeq = <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
           <messageSender>message-sender-015</messageSender>
           <messageType>CC015C</messageType>
           <TransitOperation>
@@ -195,13 +207,12 @@ class XmlParserSpec
           </Consignment>
         </ncts:CC015C>
 
-    implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+  "XML parsers " - {
 
     "when a valid CC004C message is provided extract all required elements" in {
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc004c)
-
-      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE004").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -224,8 +235,6 @@ class XmlParserSpec
     "when a valid CC007C message is provided extract all required elements" in {
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc007c)
-
-      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE007").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -250,8 +259,6 @@ class XmlParserSpec
     "when a valid CC009C message is provided extract all required elements" in {
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc009c)
-
-      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE009").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -302,6 +309,28 @@ class XmlParserSpec
             Right("(accessCode,guarantee-access-code-013)"),
             Right("(CustomsOfficeOfDeparture,Newcastle-airport-013)"),
             Right("(MRN,MRN-013)")
+          )
+      }
+    }
+
+    "when a valid CC014C message is provided extract all required elements" in {
+
+      val stream: Source[ParseEvent, _] = createParsingEventStream(cc014c)
+
+      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE014").map(
+        elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
+      )
+
+      val result = concurrent.Future.sequence(additionalFields)
+
+      whenReady(result) {
+        additionalParams =>
+          additionalParams mustBe List(
+            Right("(LRN,LRN-014)"),
+            Right("(messageSender,message-sender-014)"),
+            Right("(messageType,CC014C)"),
+            Right("(CustomsOfficeOfDeparture,Newcastle-airport-014)"),
+            Right("(MRN,MRN-014)")
           )
       }
     }

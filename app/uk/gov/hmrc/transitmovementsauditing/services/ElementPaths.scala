@@ -85,6 +85,7 @@ trait ElementPaths {
     ),
     "IE014" -> Map(
       "messageSender"            -> messageSenderFor("CC014C"),
+      "messageType"              -> messageTypeFor("CC014C"),
       "LRN"                      -> lrnFor("CC014C"),
       "MRN"                      -> mrnFor("CC014C"),
       "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC014C")
