@@ -45,15 +45,26 @@ class XmlParserSpec
 
   "Movement Reference Number parser" - {
 
+    val cc004c: NodeSeq =
+      <ncts:CC004C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+        <messageSender>message-sender-004</messageSender>
+        <messageType>CC004C</messageType>
+        <TransitOperation>
+          <LRN>LRN-004</LRN>
+          <MRN>MRN-004</MRN>
+        </TransitOperation>
+        <CustomsOfficeOfDeparture>
+          <referenceNumber>Newcastle-004</referenceNumber>
+        </CustomsOfficeOfDeparture>
+      </ncts:CC004C>
+
     val cc007c: NodeSeq =
       <ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
         <messageSender>message-sender-1</messageSender>
         <messageType>CC007C</messageType>
         <TransitOperation>
           <MRN>MRN-1</MRN>
-          <arrivalNotificationDateAndTime>2014-06-09T16:15:04+01:00</arrivalNotificationDateAndTime>
         </TransitOperation>
-        <!--0 to 9 repetitions:-->
         <CustomsOfficeOfDestinationActual>
           <referenceNumber>Newcastle-airport-1</referenceNumber>
         </CustomsOfficeOfDestinationActual>
@@ -66,64 +77,149 @@ class XmlParserSpec
               <identificationNumber>GB000001</identificationNumber>
             </EconomicOperator>
           </LocationOfGoods>
-          <!--0 to 9 repetitions:-->
           <Incident>
-            <!--0 to 9999 repetitions:-->
             <TransportEquipment>
-              <!--Optional:-->
               <numberOfSeals>98</numberOfSeals>
-              <!--0 to 99 repetitions:-->
             </TransportEquipment>
           </Incident>
         </Consignment>
       </ncts:CC007C>
 
-    val cc015c: NodeSeq = <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
-          <messageSender>message-sender-2</messageSender>
-          <messageType>CC015C</messageType>
+    val cc009c: NodeSeq = <ncts:CC009C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+          <messageSender>message-sender-009</messageSender>
+          <messageType>CC009C</messageType>
           <TransitOperation>
-            <LRN>LRN-2</LRN>
-            <declarationType>declaration-type-2</declarationType>
+            <LRN>LRN-009</LRN>
+            <MRN>MRN-009</MRN>
           </TransitOperation>
           <CustomsOfficeOfDeparture>
-            <referenceNumber>Newcastle-airport-2</referenceNumber>
+            <referenceNumber>Newcastle-009</referenceNumber>
+          </CustomsOfficeOfDeparture>
+      </ncts:CC009C>
+
+    val cc013c: NodeSeq = <ncts:CC013C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+      <messageSender>message-sender-013</messageSender>
+      <messageType>CC013C</messageType>
+      <TransitOperation>
+        <LRN>LRN-013</LRN>
+        <MRN>MRN-013</MRN>
+        <declarationType>declaration-type-013</declarationType>
+      </TransitOperation>
+      <CustomsOfficeOfDeparture>
+        <referenceNumber>Newcastle-airport-013</referenceNumber>
+      </CustomsOfficeOfDeparture>
+      <CustomsOfficeOfDestinationDeclared>
+        <referenceNumber>Newcastle-train-station-013</referenceNumber>
+      </CustomsOfficeOfDestinationDeclared>
+      <CustomsOfficeOfTransitDeclared>
+        <referenceNumber>Newcastle-port-013</referenceNumber>
+      </CustomsOfficeOfTransitDeclared>
+      <Guarantee>
+        <GuaranteeReference>
+          <GRN>guarantee-reference-number-013</GRN>
+          <accessCode>guarantee-access-code-013</accessCode>
+        </GuaranteeReference>
+      </Guarantee>
+      <Consignment>
+        <countryOfDispatch>UK</countryOfDispatch>
+        <countryOfDestination>IT</countryOfDestination>
+        <TransportEquipment>
+          <numberOfSeals>13</numberOfSeals>
+        </TransportEquipment>
+        <LocationOfGoods>
+          <CustomsOffice>
+            <referenceNumber>013</referenceNumber>
+          </CustomsOffice>
+          <EconomicOperator>
+            <identificationNumber>GB-013</identificationNumber>
+          </EconomicOperator>
+        </LocationOfGoods>
+        <CountryOfRoutingOfConsignment>
+          <country>ESP</country>
+        </CountryOfRoutingOfConsignment>
+        <PreviousDocument>
+          <referenceNumber>previous-document-013</referenceNumber>
+        </PreviousDocument>
+        <HouseConsignment>
+          <ConsignmentItem>
+            <Packaging>
+              <numberOfPackages>013</numberOfPackages>
+            </Packaging>
+          </ConsignmentItem>
+        </HouseConsignment>
+      </Consignment>
+    </ncts:CC013C>
+
+    val cc015c: NodeSeq = <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+          <messageSender>message-sender-015</messageSender>
+          <messageType>CC015C</messageType>
+          <TransitOperation>
+            <LRN>LRN-015</LRN>
+            <declarationType>declaration-type-015</declarationType>
+          </TransitOperation>
+          <CustomsOfficeOfDeparture>
+            <referenceNumber>Newcastle-airport-015</referenceNumber>
           </CustomsOfficeOfDeparture>
           <CustomsOfficeOfDestinationDeclared>
-            <referenceNumber>Newcastle-train-station-2</referenceNumber>
+            <referenceNumber>Newcastle-train-station-015</referenceNumber>
           </CustomsOfficeOfDestinationDeclared>
           <CustomsOfficeOfTransitDeclared>
-            <sequenceNumber>Newcastle-port-2</sequenceNumber>
+            <sequenceNumber>Newcastle-port-015</sequenceNumber>
           </CustomsOfficeOfTransitDeclared>
       <Guarantee>
         <GuaranteeReference>
-          <GRN>guarantee-reference-number-1</GRN>
-          <accessCode>guarantee-access-code-1</accessCode>
+          <GRN>guarantee-reference-number-015</GRN>
+          <accessCode>guarantee-access-code-015</accessCode>
         </GuaranteeReference>
       </Guarantee>
           <Consignment>
             <countryOfDispatch>UK</countryOfDispatch>
             <countryOfDestination>IT</countryOfDestination>
             <TransportEquipment>
-              <numberOfSeals>78</numberOfSeals>
+              <numberOfSeals>015</numberOfSeals>
             </TransportEquipment>
             <LocationOfGoods>
               <CustomsOffice>
-                <referenceNumber>56</referenceNumber>
+                <referenceNumber>015</referenceNumber>
               </CustomsOffice>
                <EconomicOperator>
-                <identificationNumber>XI1234567</identificationNumber>
+                <identificationNumber>GB015</identificationNumber>
               </EconomicOperator>
             </LocationOfGoods>
             <CountryOfRoutingOfConsignment>
               <country>CH</country>
             </CountryOfRoutingOfConsignment>
             <PreviousDocument>
-              <referenceNumber>previous-document-2</referenceNumber>
+              <referenceNumber>previous-document-015</referenceNumber>
             </PreviousDocument>
           </Consignment>
         </ncts:CC015C>
 
     implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+    "when a valid CC004C message is provided extract all required elements" in {
+
+      val stream: Source[ParseEvent, _] = createParsingEventStream(cc004c)
+
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE004").map(
+        elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
+      )
+
+      val result = concurrent.Future.sequence(additionalFields)
+
+      whenReady(result) {
+        additionalParams =>
+          additionalParams mustBe List(
+            Right("(LRN,LRN-004)"),
+            Right("(messageSender,message-sender-004)"),
+            Right("(CustomsOffice,Newcastle-004)"),
+            Right("(messageType,CC004C)"),
+            Right("(MRN,MRN-004)")
+          )
+      }
+    }
 
     "when a valid CC007C message is provided extract all required elements" in {
 
@@ -151,6 +247,65 @@ class XmlParserSpec
       }
     }
 
+    "when a valid CC009C message is provided extract all required elements" in {
+
+      val stream: Source[ParseEvent, _] = createParsingEventStream(cc009c)
+
+      implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+
+      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE009").map(
+        elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
+      )
+
+      val result = concurrent.Future.sequence(additionalFields)
+
+      whenReady(result) {
+        additionalParams =>
+          additionalParams mustBe List(
+            Right("(LRN,LRN-009)"),
+            Right("(messageSender,message-sender-009)"),
+            Right("(CustomsOffice,Newcastle-009)"),
+            Right("(messageType,CC009C)"),
+            Right("(MRN,MRN-009)")
+          )
+      }
+    }
+
+    "when a valid CC013C message is provided extract all required elements" in {
+
+      val stream: Source[ParseEvent, _] = createParsingEventStream(cc013c)
+
+      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE013").map(
+        elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
+      )
+
+      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+
+      whenReady(result) {
+        additionalParams =>
+          additionalParams mustBe List(
+            Right("(LRN,LRN-013)"),
+            Right("(declarationType,declaration-type-013)"),
+            Right("(messageSender,message-sender-013)"),
+            Right("(EconomicOperator,GB-013)"),
+            Right("(CountryOfRoutingOfConsignment,ESP)"),
+            Right("(messageType,CC013C)"),
+            Right("(numberOfPackages,013)"),
+            Right("(countryOfDispatch,UK)"),
+            Right("(countryOfDestination,IT)"),
+            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-013)"),
+            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-013)"),
+            Right("(CustomsOffice,013)"),
+            Right("(PreviousDocument,previous-document-013)"),
+            Right("(numberOfSeals,13)"),
+            Right("(GRN,guarantee-reference-number-013)"),
+            Right("(accessCode,guarantee-access-code-013)"),
+            Right("(CustomsOfficeOfDeparture,Newcastle-airport-013)"),
+            Right("(MRN,MRN-013)")
+          )
+      }
+    }
+
     "when a valid CC015C message is provided extract all required elements" in {
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
@@ -164,80 +319,23 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-2)"),
-            Right("(declarationType,declaration-type-2)"),
-            Right("(messageSender,message-sender-2)"),
-            Right("(EconomicOperator,XI1234567)"),
+            Right("(LRN,LRN-015)"),
+            Right("(declarationType,declaration-type-015)"),
+            Right("(messageSender,message-sender-015)"),
+            Right("(EconomicOperator,GB015)"),
             Right("(CountryOfRoutingOfConsignment,CH)"),
             Right("(messageType,CC015C)"),
             Right("(countryOfDispatch,UK)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-2)"),
+            Right("(CustomsOfficeOfDeparture,Newcastle-airport-015)"),
             Right("(countryOfDestination,IT)"),
-            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-2)"),
-            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-2)"),
-            Right("(CustomsOffice,56)"),
-            Right("(PreviousDocument,previous-document-2)"),
-            Right("(numberOfSeals,78)"),
-            Right("(GRN,guarantee-reference-number-1)"),
-            Right("(accessCode,guarantee-access-code-1)")
+            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-015)"),
+            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-015)"),
+            Right("(CustomsOffice,015)"),
+            Right("(PreviousDocument,previous-document-015)"),
+            Right("(numberOfSeals,015)"),
+            Right("(GRN,guarantee-reference-number-015)"),
+            Right("(accessCode,guarantee-access-code-015)")
           )
-      }
-    }
-
-    "when a valid CC015C message is provided extract messageSender element" in {
-
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
-      val paths                         = elementPaths("IE015")
-      val result                        = stream.via(XmlParsers.extractElement("messageSender", paths("messageSender"))).runWith(Sink.head)
-      whenReady(result) {
-        value =>
-          value mustBe Right("(messageSender,message-sender-2)")
-      }
-    }
-
-    "when a valid CC015C message is provided extract LRN element" in {
-
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
-      val paths                         = elementPaths("IE015")
-      val result                        = stream.via(XmlParsers.extractElement("LRN", paths("LRN"))).runWith(Sink.head)
-      whenReady(result) {
-        lrn =>
-          lrn mustBe Right("(LRN,LRN-2)")
-      }
-    }
-
-    "when a valid CC015C message is provided extract declaration type element" in {
-
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
-      val paths                         = elementPaths("IE015")
-      val result                        = stream.via(XmlParsers.extractElement("declarationType", paths("declarationType"))).runWith(Sink.head)
-      whenReady(result) {
-        declaration =>
-          declaration mustBe Right("(declarationType,declaration-type-2)")
-      }
-    }
-
-    "when a valid CC015C message is provided extract CustomsOfficeOfDeparture element" in {
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
-      val paths                         = elementPaths("IE015")
-
-      val result =
-        stream.via(XmlParsers.extractElement("CustomsOfficeOfDeparture", paths("CustomsOfficeOfDeparture"))).runWith(Sink.head)
-      whenReady(result) {
-        office =>
-          office mustBe Right("(CustomsOfficeOfDeparture,Newcastle-airport-2)")
-      }
-    }
-
-    "when a valid CC015C message is provided extract CustomsOfficeOfDestinationDeclared element" in {
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
-      val paths                         = elementPaths("IE015")
-
-      val result =
-        stream.via(XmlParsers.extractElement("CustomsOfficeOfDestinationDeclared", paths("CustomsOfficeOfDestinationDeclared"))).runWith(Sink.head)
-      whenReady(result) {
-        office =>
-          office mustBe Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-2)")
       }
     }
 

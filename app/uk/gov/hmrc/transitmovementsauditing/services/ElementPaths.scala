@@ -18,27 +18,35 @@ package uk.gov.hmrc.transitmovementsauditing.services
 
 trait ElementPaths {
 
-  def messageSenderFor(message: String)                      = message :: "messageSender" :: Nil
-  def messageTypeFor(message: String)                        = message :: "messageType" :: Nil
-  def lrnFor(message: String)                                = message :: "TransitOperation" :: "LRN" :: Nil
-  def mrnFor(message: String)                                = message :: "TransitOperation" :: "MRN" :: Nil
-  def declarationTypeFor(message: String)                    = message :: "TransitOperation" :: "declarationType" :: Nil
-  def customsOfficeOfDepartureFor(message: String)           = message :: "CustomsOfficeOfDeparture" :: "referenceNumber" :: Nil
-  def customsOfficeOfDestinationDeclaredFor(message: String) = message :: "CustomsOfficeOfDestinationDeclared" :: "referenceNumber" :: Nil
-  def customsOfficeOfTransitDeclaredFor(message: String)     = message :: "CustomsOfficeOfTransitDeclared" :: "sequenceNumber" :: Nil
-  def customsOfficeOfDestinationActualFor(message: String)   = message :: "CustomsOfficeOfDestinationActual" :: "referenceNumber" :: Nil
-  def countryOfDispatchFor(message: String)                  = message :: "Consignment" :: "countryOfDispatch" :: Nil
-  def countryOfDestinationFor(message: String)               = message :: "Consignment" :: "countryOfDestination" :: Nil
-  def numberOfSealsFor(message: String)                      = message :: "Consignment" :: "TransportEquipment" :: "numberOfSeals" :: Nil
-  def numberOfSealsForCC007C                                 = "CC007C" :: "Consignment" :: "Incident" :: "TransportEquipment" :: "numberOfSeals" :: Nil
-  def customsOfficeFor(message: String)                      = message :: "Consignment" :: "LocationOfGoods" :: "CustomsOffice" :: "referenceNumber" :: Nil
-  def countryOfRoutingOfConsignmentFor(message: String)      = message :: "Consignment" :: "CountryOfRoutingOfConsignment" :: "country" :: Nil
-  def previousDocumentFor(message: String)                   = message :: "Consignment" :: "PreviousDocument" :: "referenceNumber" :: Nil
-  def grnFor(message: String)                                = message :: "Guarantee" :: "GuaranteeReference" :: "GRN" :: Nil
-  def accessCodeFor(message: String)                         = message :: "Guarantee" :: "GuaranteeReference" :: "accessCode" :: Nil
-  def economicOperatorFor(message: String)                   = message :: "Consignment" :: "LocationOfGoods" :: "EconomicOperator" :: "identificationNumber" :: Nil
+  def messageSenderFor(message: String)                                      = message :: "messageSender" :: Nil
+  def messageTypeFor(message: String)                                        = message :: "messageType" :: Nil
+  def lrnFor(message: String)                                                = message :: "TransitOperation" :: "LRN" :: Nil
+  def mrnFor(message: String)                                                = message :: "TransitOperation" :: "MRN" :: Nil
+  def declarationTypeFor(message: String)                                    = message :: "TransitOperation" :: "declarationType" :: Nil
+  def customsOfficeOfDepartureFor(message: String)                           = message :: "CustomsOfficeOfDeparture" :: "referenceNumber" :: Nil
+  def customsOfficeOfDestinationDeclaredFor(message: String)                 = message :: "CustomsOfficeOfDestinationDeclared" :: "referenceNumber" :: Nil
+  def customsOfficeOfTransitDeclaredFor(message: String, numberType: String) = message :: "CustomsOfficeOfTransitDeclared" :: numberType :: Nil
+  def customsOfficeOfDestinationActualFor(message: String)                   = message :: "CustomsOfficeOfDestinationActual" :: "referenceNumber" :: Nil
+  def countryOfDispatchFor(message: String)                                  = message :: "Consignment" :: "countryOfDispatch" :: Nil
+  def countryOfDestinationFor(message: String)                               = message :: "Consignment" :: "countryOfDestination" :: Nil
+  def numberOfSealsFor(message: String)                                      = message :: "Consignment" :: "TransportEquipment" :: "numberOfSeals" :: Nil
+  def numberOfSealsForCC007C                                                 = "CC007C" :: "Consignment" :: "Incident" :: "TransportEquipment" :: "numberOfSeals" :: Nil
+  def customsOfficeFor(message: String)                                      = message :: "Consignment" :: "LocationOfGoods" :: "CustomsOffice" :: "referenceNumber" :: Nil
+  def countryOfRoutingOfConsignmentFor(message: String)                      = message :: "Consignment" :: "CountryOfRoutingOfConsignment" :: "country" :: Nil
+  def previousDocumentFor(message: String)                                   = message :: "Consignment" :: "PreviousDocument" :: "referenceNumber" :: Nil
+  def grnFor(message: String)                                                = message :: "Guarantee" :: "GuaranteeReference" :: "GRN" :: Nil
+  def accessCodeFor(message: String)                                         = message :: "Guarantee" :: "GuaranteeReference" :: "accessCode" :: Nil
+  def economicOperatorFor(message: String)                                   = message :: "Consignment" :: "LocationOfGoods" :: "EconomicOperator" :: "identificationNumber" :: Nil
+  def numberOfPackagesFor(message: String)                                   = message :: "Consignment" :: "HouseConsignment" :: "ConsignmentItem" :: "Packaging" :: "numberOfPackages" :: Nil
 
   val elementPaths: Map[String, Map[String, Seq[String]]] = Map( //TODO: Check all
+    "IE004" -> Map(
+      "messageSender" -> messageSenderFor("CC004C"),
+      "messageType"   -> messageTypeFor("CC004C"),
+      "MRN"           -> mrnFor("CC004C"),
+      "LRN"           -> lrnFor("CC004C"),
+      "CustomsOffice" -> customsOfficeOfDepartureFor("CC004C")
+    ),
     "IE007" -> Map(
       "messageSender"                    -> messageSenderFor("CC007C"),
       "messageType"                      -> messageTypeFor("CC007C"),
@@ -48,12 +56,32 @@ trait ElementPaths {
       "numberOfSeals"                    -> numberOfSealsForCC007C,
       "CustomsOfficeOfDestinationActual" -> customsOfficeOfDestinationActualFor("CC007C")
     ),
+    "IE009" -> Map(
+      "messageSender" -> messageSenderFor("CC009C"),
+      "messageType"   -> messageTypeFor("CC009C"),
+      "MRN"           -> mrnFor("CC009C"),
+      "LRN"           -> lrnFor("CC009C"),
+      "CustomsOffice" -> customsOfficeOfDepartureFor("CC009C")
+    ),
     "IE013" -> Map(
       "messageSender"                      -> messageSenderFor("CC013C"),
+      "messageType"                        -> messageTypeFor("CC013C"),
       "LRN"                                -> lrnFor("CC013C"),
+      "MRN"                                -> mrnFor("CC013C"),
       "declarationType"                    -> declarationTypeFor("CC013C"),
       "CustomsOfficeOfDeparture"           -> customsOfficeOfDepartureFor("CC013C"),
-      "CustomsOfficeOfDestinationDeclared" -> customsOfficeOfDestinationDeclaredFor("CC013C")
+      "CustomsOfficeOfDestinationDeclared" -> customsOfficeOfDestinationDeclaredFor("CC013C"),
+      "CustomsOfficeOfTransitDeclared"     -> customsOfficeOfTransitDeclaredFor("CC013C", "referenceNumber"),
+      "countryOfDispatch"                  -> countryOfDispatchFor("CC013C"),
+      "countryOfDestination"               -> countryOfDestinationFor("CC013C"),
+      "numberOfSeals"                      -> numberOfSealsFor("CC013C"),
+      "CustomsOffice"                      -> customsOfficeFor("CC013C"),
+      "EconomicOperator"                   -> economicOperatorFor("CC013C"),
+      "CountryOfRoutingOfConsignment"      -> countryOfRoutingOfConsignmentFor("CC013C"),
+      "PreviousDocument"                   -> previousDocumentFor("CC013C"),
+      "GRN"                                -> grnFor("CC013C"),
+      "accessCode"                         -> accessCodeFor("CC013C"),
+      "numberOfPackages"                   -> numberOfPackagesFor("CC013C")
     ),
     "IE014" -> Map(
       "messageSender"            -> messageSenderFor("CC014C"),
@@ -68,7 +96,7 @@ trait ElementPaths {
       "declarationType"                    -> declarationTypeFor("CC015C"),
       "CustomsOfficeOfDeparture"           -> customsOfficeOfDepartureFor("CC015C"),
       "CustomsOfficeOfDestinationDeclared" -> customsOfficeOfDestinationDeclaredFor("CC015C"),
-      "CustomsOfficeOfTransitDeclared"     -> customsOfficeOfTransitDeclaredFor("CC015C"),
+      "CustomsOfficeOfTransitDeclared"     -> customsOfficeOfTransitDeclaredFor("CC015C", "sequenceNumber"),
       "countryOfDispatch"                  -> countryOfDispatchFor("CC015C"),
       "countryOfDestination"               -> countryOfDestinationFor("CC015C"),
       "numberOfSeals"                      -> numberOfSealsFor("CC015C"),
