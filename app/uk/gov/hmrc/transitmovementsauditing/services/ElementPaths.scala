@@ -27,17 +27,20 @@ trait ElementPaths {
   def customsOfficeOfDestinationDeclaredFor(message: String)                 = message :: "CustomsOfficeOfDestinationDeclared" :: "referenceNumber" :: Nil
   def customsOfficeOfTransitDeclaredFor(message: String, numberType: String) = message :: "CustomsOfficeOfTransitDeclared" :: numberType :: Nil
   def customsOfficeOfDestinationActualFor(message: String)                   = message :: "CustomsOfficeOfDestinationActual" :: "referenceNumber" :: Nil
-  def countryOfDispatchFor(message: String)                                  = message :: "Consignment" :: "countryOfDispatch" :: Nil
-  def countryOfDestinationFor(message: String)                               = message :: "Consignment" :: "countryOfDestination" :: Nil
-  def numberOfSealsFor(message: String)                                      = message :: "Consignment" :: "TransportEquipment" :: "numberOfSeals" :: Nil
-  def numberOfSealsForCC007C                                                 = "CC007C" :: "Consignment" :: "Incident" :: "TransportEquipment" :: "numberOfSeals" :: Nil
-  def customsOfficeFor(message: String)                                      = message :: "Consignment" :: "LocationOfGoods" :: "CustomsOffice" :: "referenceNumber" :: Nil
-  def countryOfRoutingOfConsignmentFor(message: String)                      = message :: "Consignment" :: "CountryOfRoutingOfConsignment" :: "country" :: Nil
-  def previousDocumentFor(message: String)                                   = message :: "Consignment" :: "PreviousDocument" :: "referenceNumber" :: Nil
-  def grnFor(message: String)                                                = message :: "Guarantee" :: "GuaranteeReference" :: "GRN" :: Nil
-  def accessCodeFor(message: String)                                         = message :: "Guarantee" :: "GuaranteeReference" :: "accessCode" :: Nil
-  def economicOperatorFor(message: String)                                   = message :: "Consignment" :: "LocationOfGoods" :: "EconomicOperator" :: "identificationNumber" :: Nil
-  def numberOfPackagesFor(message: String)                                   = message :: "Consignment" :: "HouseConsignment" :: "ConsignmentItem" :: "Packaging" :: "numberOfPackages" :: Nil
+
+  def customsOfficeOfExitForTransitDeclaredFor(message: String) =
+    message :: "CustomsOfficeOfExitForTransitDeclared" :: "referenceNumber" :: Nil
+  def countryOfDispatchFor(message: String)             = message :: "Consignment" :: "countryOfDispatch" :: Nil
+  def countryOfDestinationFor(message: String)          = message :: "Consignment" :: "countryOfDestination" :: Nil
+  def numberOfSealsFor(message: String)                 = message :: "Consignment" :: "TransportEquipment" :: "numberOfSeals" :: Nil
+  def numberOfSealsForCC007C                            = "CC007C" :: "Consignment" :: "Incident" :: "TransportEquipment" :: "numberOfSeals" :: Nil
+  def customsOfficeFor(message: String)                 = message :: "Consignment" :: "LocationOfGoods" :: "CustomsOffice" :: "referenceNumber" :: Nil
+  def countryOfRoutingOfConsignmentFor(message: String) = message :: "Consignment" :: "CountryOfRoutingOfConsignment" :: "country" :: Nil
+  def previousDocumentFor(message: String)              = message :: "Consignment" :: "PreviousDocument" :: "referenceNumber" :: Nil
+  def grnFor(message: String)                           = message :: "Guarantee" :: "GuaranteeReference" :: "GRN" :: Nil
+  def accessCodeFor(message: String)                    = message :: "Guarantee" :: "GuaranteeReference" :: "accessCode" :: Nil
+  def economicOperatorFor(message: String)              = message :: "Consignment" :: "LocationOfGoods" :: "EconomicOperator" :: "identificationNumber" :: Nil
+  def numberOfPackagesFor(message: String)              = message :: "Consignment" :: "HouseConsignment" :: "ConsignmentItem" :: "Packaging" :: "numberOfPackages" :: Nil
 
   val elementPaths: Map[String, Map[String, Seq[String]]] = Map( //TODO: Check all
     "IE004" -> Map(
@@ -107,6 +110,22 @@ trait ElementPaths {
       "PreviousDocument"                   -> previousDocumentFor("CC015C"),
       "GRN"                                -> grnFor("CC015C"),
       "accessCode"                         -> accessCodeFor("CC015C")
+    ),
+    "IE017" -> Map(
+      "messageSender"                         -> messageSenderFor("CC017C"),
+      "messageType"                           -> messageTypeFor("CC017C"),
+      "MRN"                                   -> mrnFor("CC017C"),
+      "declarationType"                       -> declarationTypeFor("CC017C"),
+      "CustomsOfficeOfDeparture"              -> customsOfficeOfDepartureFor("CC017C"),
+      "CustomsOfficeOfDestinationDeclared"    -> customsOfficeOfDestinationDeclaredFor("CC017C"),
+      "CustomsOfficeOfTransitDeclared"        -> customsOfficeOfTransitDeclaredFor("CC017C", "referenceNumber"),
+      "CustomsOfficeOfExitForTransitDeclared" -> customsOfficeOfExitForTransitDeclaredFor("CC017C"),
+      "countryOfDispatch"                     -> countryOfDispatchFor("CC017C"),
+      "countryOfDestination"                  -> countryOfDestinationFor("CC017C"),
+      "numberOfSeals"                         -> numberOfSealsFor("CC017C"),
+      "CountryOfRoutingOfConsignment"         -> countryOfRoutingOfConsignmentFor("CC017C"),
+      "PreviousDocument"                      -> previousDocumentFor("CC017C"),
+      "numberOfPackages"                      -> numberOfPackagesFor("CC017C")
     ),
     "IE044" -> Map(
       "messageSender" -> messageSenderFor("CC044C")

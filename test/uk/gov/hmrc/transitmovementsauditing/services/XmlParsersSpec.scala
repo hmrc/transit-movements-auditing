@@ -43,8 +43,6 @@ class XmlParserSpec
     with ScalaFutures
     with ScalaCheckDrivenPropertyChecks {
 
-//  "Movement Reference Number parser" - {
-
   val cc004c: NodeSeq =
     <ncts:CC004C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
         <messageSender>message-sender-004</messageSender>
@@ -207,6 +205,48 @@ class XmlParserSpec
           </Consignment>
         </ncts:CC015C>
 
+  val cc017c: NodeSeq = <ncts:CC017C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+    <messageSender>message-sender-017</messageSender>
+    <messageType>CC017C</messageType>
+    <TransitOperation>
+      <MRN>MRN-017</MRN>
+      <declarationType>declaration-type-017</declarationType>
+    </TransitOperation>
+    <CustomsOfficeOfDeparture>
+      <referenceNumber>Newcastle-airport-017</referenceNumber>
+    </CustomsOfficeOfDeparture>
+    <CustomsOfficeOfDestinationDeclared>
+      <referenceNumber>Newcastle-train-station-017</referenceNumber>
+    </CustomsOfficeOfDestinationDeclared>
+    <CustomsOfficeOfTransitDeclared>
+      <referenceNumber>Newcastle-port-017</referenceNumber>
+    </CustomsOfficeOfTransitDeclared>
+    <CustomsOfficeOfExitForTransitDeclared>
+      <referenceNumber>Dover-port-017</referenceNumber>
+    </CustomsOfficeOfExitForTransitDeclared>
+    <Consignment>
+      <countryOfDispatch>UK</countryOfDispatch>
+      <countryOfDestination>FR</countryOfDestination>
+      <TransportEquipment>
+        <numberOfSeals>017</numberOfSeals>
+      </TransportEquipment>
+      <CountryOfRoutingOfConsignment>
+        <country>NL</country>
+      </CountryOfRoutingOfConsignment>
+      <PreviousDocument>
+        <referenceNumber>previous-document-017</referenceNumber>
+      </PreviousDocument>
+      <HouseConsignment>
+        <countryOfDispatch>UK</countryOfDispatch>
+        <ConsignmentItem>
+          <Packaging>
+            <numberOfPackages>017</numberOfPackages>
+          </Packaging>
+        </ConsignmentItem>
+      </HouseConsignment>
+    </Consignment>
+  </ncts:CC017C>
+
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
   "XML parsers " - {
 
@@ -364,6 +404,37 @@ class XmlParserSpec
             Right("(numberOfSeals,015)"),
             Right("(GRN,guarantee-reference-number-015)"),
             Right("(accessCode,guarantee-access-code-015)")
+          )
+      }
+    }
+
+    "when a valid CC017C message is provided extract all required elements" in {
+
+      val stream: Source[ParseEvent, _] = createParsingEventStream(cc017c)
+
+      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE017").map(
+        elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
+      )
+
+      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+
+      whenReady(result) {
+        additionalParams =>
+          additionalParams mustBe List(
+            Right("(declarationType,declaration-type-017)"),
+            Right("(messageSender,message-sender-017)"),
+            Right("(CountryOfRoutingOfConsignment,NL)"),
+            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-017)"),
+            Right("(numberOfPackages,017)"),
+            Right("(countryOfDispatch,UK)"),
+            Right("(countryOfDestination,FR)"),
+            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-017)"),
+            Right("(CustomsOfficeOfExitForTransitDeclared,Dover-port-017)"),
+            Right("(messageType,CC017C)"),
+            Right("(PreviousDocument,previous-document-017)"),
+            Right("(numberOfSeals,017)"),
+            Right("(CustomsOfficeOfDeparture,Newcastle-airport-017)"),
+            Right("(MRN,MRN-017)")
           )
       }
     }
