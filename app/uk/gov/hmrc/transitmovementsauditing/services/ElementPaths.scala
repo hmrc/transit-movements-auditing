@@ -127,6 +127,44 @@ trait ElementPaths {
       "PreviousDocument"                      -> previousDocumentFor("CC017C"),
       "numberOfPackages"                      -> numberOfPackagesFor("CC017C")
     ),
+    "IE019" -> Map(
+      "messageSender"            -> messageSenderFor("CC019C"),
+      "messageType"              -> messageTypeFor("CC019C"),
+      "MRN"                      -> mrnFor("CC019C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC019C")
+    ),
+    "IE022" -> Map(
+      "messageSender"            -> messageSenderFor("CC022C"),
+      "messageType"              -> messageTypeFor("CC022C"),
+      "MRN"                      -> mrnFor("CC022C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC022C")
+    ),
+    "IE023" -> Map(
+      "messageSender"            -> messageSenderFor("CC023C"),
+      "messageType"              -> messageTypeFor("CC023C"),
+      "MRN"                      -> mrnFor("CC023C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC023C")
+    ),
+    "IE025" -> Map(
+      "messageSender"                    -> messageSenderFor("CC025C"),
+      "messageType"                      -> messageTypeFor("CC025C"),
+      "MRN"                              -> mrnFor("CC025C"),
+      "CustomsOfficeOfDestinationActual" -> customsOfficeOfDestinationActualFor("CC025C"),
+      "numberOfPackages"                 -> numberOfPackagesFor("CC025C")
+    ),
+    "IE028" -> Map(
+      "messageSender" -> messageSenderFor("CC028C"),
+      "messageType"   -> messageTypeFor("CC028C"),
+      "MRN"           -> mrnFor("CC028C"),
+      "LRN"           -> lrnFor("CC028C"),
+      "CustomsOffice" -> customsOfficeOfDepartureFor("CC028C")
+    ),
+    "IE035" -> Map(
+      "messageSender" -> messageSenderFor("CC035C"),
+      "messageType"   -> messageTypeFor("CC035C"),
+      "MRN"           -> mrnFor("CC035C"),
+      "CustomsOffice" -> customsOfficeOfDepartureFor("CC035C")
+    ),
     "IE044" -> Map(
       "messageSender" -> messageSenderFor("CC044C")
     ),

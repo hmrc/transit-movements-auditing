@@ -127,7 +127,6 @@ class AuditController @Inject() (
         } yield ObjectSummaryWithFields(objSummary, fields)).map(
           summaryWithFields => Left(summaryWithFields)
         )
-
       case (Some(uri), true) =>
         logger.info("Payload in object store and > auditing message limit")
         for {
