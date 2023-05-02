@@ -39,7 +39,6 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.Disabled
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.Failure
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType

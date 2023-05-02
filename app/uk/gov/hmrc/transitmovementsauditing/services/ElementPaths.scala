@@ -22,11 +22,15 @@ trait ElementPaths {
   def messageTypeFor(message: String)                                        = message :: "messageType" :: Nil
   def lrnFor(message: String)                                                = message :: "TransitOperation" :: "LRN" :: Nil
   def mrnFor(message: String)                                                = message :: "TransitOperation" :: "MRN" :: Nil
+  def lrnHeaderFor(message: String)                                          = message :: "Header" :: "LRN" :: Nil
+  def mrnHeaderFor(message: String)                                          = message :: "Header" :: "MRN" :: Nil
   def declarationTypeFor(message: String)                                    = message :: "TransitOperation" :: "declarationType" :: Nil
   def customsOfficeOfDepartureFor(message: String)                           = message :: "CustomsOfficeOfDeparture" :: "referenceNumber" :: Nil
+  def customsOfficeOfDestinationFor(message: String)                         = message :: "CustomsOfficeOfDestination" :: "referenceNumber" :: Nil
   def customsOfficeOfDestinationDeclaredFor(message: String)                 = message :: "CustomsOfficeOfDestinationDeclared" :: "referenceNumber" :: Nil
   def customsOfficeOfTransitDeclaredFor(message: String, numberType: String) = message :: "CustomsOfficeOfTransitDeclared" :: numberType :: Nil
   def customsOfficeOfDestinationActualFor(message: String)                   = message :: "CustomsOfficeOfDestinationActual" :: "referenceNumber" :: Nil
+  def customsOfficeOfExitFor(message: String)                                = message :: "CustomsOfficeOfExit" :: "referenceNumber" :: Nil
 
   def customsOfficeOfExitForTransitDeclaredFor(message: String) =
     message :: "CustomsOfficeOfExitForTransitDeclared" :: "referenceNumber" :: Nil
@@ -38,6 +42,7 @@ trait ElementPaths {
   def countryOfRoutingOfConsignmentFor(message: String) = message :: "Consignment" :: "CountryOfRoutingOfConsignment" :: "country" :: Nil
   def previousDocumentFor(message: String)              = message :: "Consignment" :: "PreviousDocument" :: "referenceNumber" :: Nil
   def grnFor(message: String)                           = message :: "Guarantee" :: "GuaranteeReference" :: "GRN" :: Nil
+  def grnForRef(message: String)                        = message :: "GuaranteeReference" :: "GRN" :: Nil
   def accessCodeFor(message: String)                    = message :: "Guarantee" :: "GuaranteeReference" :: "accessCode" :: Nil
   def economicOperatorFor(message: String)              = message :: "Consignment" :: "LocationOfGoods" :: "EconomicOperator" :: "identificationNumber" :: Nil
   def numberOfPackagesFor(message: String)              = message :: "Consignment" :: "HouseConsignment" :: "ConsignmentItem" :: "Packaging" :: "numberOfPackages" :: Nil
@@ -159,24 +164,164 @@ trait ElementPaths {
       "LRN"           -> lrnFor("CC028C"),
       "CustomsOffice" -> customsOfficeOfDepartureFor("CC028C")
     ),
+    "IE029" -> Map(
+      "messageSender"                         -> messageSenderFor("CC029C"),
+      "messageType"                           -> messageTypeFor("CC029C"),
+      "LRN"                                   -> lrnFor("CC029C"),
+      "MRN"                                   -> mrnFor("CC029C"),
+      "declarationType"                       -> declarationTypeFor("CC029C"),
+      "CustomsOfficeOfDeparture"              -> customsOfficeOfDepartureFor("CC029C"),
+      "CustomsOfficeOfDestinationDeclared"    -> customsOfficeOfDestinationDeclaredFor("CC029C"),
+      "CustomsOfficeOfTransitDeclared"        -> customsOfficeOfTransitDeclaredFor("CC029C", "referenceNumber"),
+      "CustomsOfficeOfExitForTransitDeclared" -> customsOfficeOfExitForTransitDeclaredFor("CC029C"),
+      "countryOfDispatch"                     -> countryOfDispatchFor("CC029C"),
+      "countryOfDestination"                  -> countryOfDestinationFor("CC029C"),
+      "numberOfSeals"                         -> numberOfSealsFor("CC029C"),
+      "CustomsOffice"                         -> customsOfficeFor("CC029C"),
+      "EconomicOperator"                      -> economicOperatorFor("CC029C"),
+      "CountryOfRoutingOfConsignment"         -> countryOfRoutingOfConsignmentFor("CC029C"),
+      "PreviousDocument"                      -> previousDocumentFor("CC029C"),
+      "GRN"                                   -> grnFor("CC029C"),
+      "accessCode"                            -> accessCodeFor("CC029C"),
+      "numberOfPackages"                      -> numberOfPackagesFor("CC029C")
+    ),
     "IE035" -> Map(
       "messageSender" -> messageSenderFor("CC035C"),
       "messageType"   -> messageTypeFor("CC035C"),
       "MRN"           -> mrnFor("CC035C"),
       "CustomsOffice" -> customsOfficeOfDepartureFor("CC035C")
     ),
-    "IE044" -> Map(
-      "messageSender" -> messageSenderFor("CC044C")
+    "IE040" -> Map(
+      "messageSender" -> messageSenderFor("CC040C"),
+      "messageType"   -> messageTypeFor("CC040C"),
+      "MRN"           -> mrnFor("CC040C")
     ),
-    "IE170" -> Map(
-      "messageSender"            -> messageSenderFor("CC170C"),
-      "LRN"                      -> lrnFor("CC170C"),
-      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC170C")
+    "IE042" -> Map(
+      "messageSender"              -> messageSenderFor("CC042C"),
+      "messageType"                -> messageTypeFor("CC042C"),
+      "MRN"                        -> mrnFor("CC042C"),
+      "CustomsOfficeOfExit"        -> customsOfficeOfExitFor("CC042C"),
+      "CustomsOfficeOfDeparture"   -> customsOfficeOfDepartureFor("CC042C"),
+      "CustomsOfficeOfDestination" -> customsOfficeOfDestinationFor("CC042C")
+    ),
+    "IE043" -> Map(
+      "messageSender"                    -> messageSenderFor("CC043C"),
+      "messageType"                      -> messageTypeFor("CC043C"),
+      "MRN"                              -> mrnFor("CC043C"),
+      "countryOfDestination"             -> countryOfDestinationFor("CC043C"),
+      "numberOfSeals"                    -> numberOfSealsFor("CC043C"),
+      "numberOfPackages"                 -> numberOfPackagesFor("CC043C"),
+      "CustomsOfficeOfDestinationActual" -> customsOfficeOfDestinationActualFor("CC043C"),
+      "PreviousDocument"                 -> previousDocumentFor("CC043C"),
+      "declarationType"                  -> declarationTypeFor("CC043C")
+    ),
+    "IE044" -> Map(
+      "messageSender"                    -> messageSenderFor("CC044C"),
+      "messageType"                      -> messageTypeFor("CC044C"),
+      "MRN"                              -> mrnFor("CC044C"),
+      "CustomsOfficeOfDestinationActual" -> customsOfficeOfDestinationActualFor("CC044C"),
+      "numberOfSeals"                    -> numberOfSealsFor("CC044C"),
+      "numberOfPackages"                 -> numberOfPackagesFor("CC044C")
+    ),
+    "IE045" -> Map(
+      "messageSender"            -> messageSenderFor("CC045C"),
+      "messageType"              -> messageTypeFor("CC045C"),
+      "MRN"                      -> mrnFor("CC045C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC045C")
+    ),
+    "IE048" -> Map(
+      "messageSender"              -> messageSenderFor("CC048C"),
+      "messageType"                -> messageTypeFor("CC048C"),
+      "MRN"                        -> mrnFor("CC048C"),
+      "CustomsOfficeOfDestination" -> customsOfficeOfDestinationFor("CC048C")
+    ),
+    "IE051" -> Map(
+      "messageSender"            -> messageSenderFor("CC051C"),
+      "messageType"              -> messageTypeFor("CC051C"),
+      "MRN"                      -> mrnFor("CC051C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC051C")
+    ),
+    "IE055" -> Map(
+      "messageSender"            -> messageSenderFor("CC055C"),
+      "messageType"              -> messageTypeFor("CC055C"),
+      "MRN"                      -> mrnFor("CC055C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC055C")
+    ),
+    "IE056" -> Map(
+      "messageSender"            -> messageSenderFor("CC056C"),
+      "messageType"              -> messageTypeFor("CC056C"),
+      "MRN"                      -> mrnFor("CC056C"),
+      "LRN"                      -> lrnFor("CC056C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC056C")
+    ),
+    "IE057" -> Map(
+      "messageSender"                    -> messageSenderFor("CC057C"),
+      "messageType"                      -> messageTypeFor("CC057C"),
+      "MRN"                              -> mrnFor("CC057C"),
+      "CustomsOfficeOfDestinationActual" -> customsOfficeOfDestinationActualFor("CC057C")
+    ),
+    "IE060" -> Map(
+      "messageSender"            -> messageSenderFor("CC060C"),
+      "messageType"              -> messageTypeFor("CC060C"),
+      "MRN"                      -> mrnFor("CC060C"),
+      "LRN"                      -> lrnFor("CC060C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC060C")
+    ),
+    "IE140" -> Map(
+      "messageSender"            -> messageSenderFor("CC140C"),
+      "messageType"              -> messageTypeFor("CC140C"),
+      "MRN"                      -> mrnFor("CC140C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC140C")
     ),
     "IE141" -> Map(
       "messageSender"                    -> messageSenderFor("CC141C"),
+      "messageType"                      -> messageTypeFor("CC141C"),
       "MRN"                              -> mrnFor("CC141C"),
       "CustomsOfficeOfDestinationActual" -> customsOfficeOfDestinationActualFor("CC141C")
+    ),
+    "IE170" -> Map(
+      "messageSender"            -> messageSenderFor("CC170C"),
+      "messageType"              -> messageTypeFor("CC170C"),
+      "LRN"                      -> lrnFor("CC170C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC170C"),
+      "EconomicOperator"         -> economicOperatorFor("CC170C"),
+      "CustomsOffice"            -> customsOfficeFor("CC170C"),
+      "numberOfSeals"            -> numberOfSealsFor("CC170C")
+    ),
+    "IE182" -> Map(
+      "messageSender"            -> messageSenderFor("CC182C"),
+      "messageType"              -> messageTypeFor("CC182C"),
+      "MRN"                      -> mrnFor("CC182C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC182C")
+    ),
+    "IE190" -> Map(
+      "messageSender"            -> messageSenderFor("CC190C"),
+      "messageType"              -> messageTypeFor("CC190C"),
+      "LRN"                      -> lrnFor("CC190C"),
+      "MRN"                      -> mrnFor("CC190C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC190C"),
+      "EconomicOperator"         -> economicOperatorFor("CC190C"),
+      "CustomsOffice"            -> customsOfficeFor("CC190C"),
+      "CustomsOfficeOfExit"      -> customsOfficeOfExitFor("CC190C")
+    ),
+    "IE191" -> Map(
+      "messageSender"            -> messageSenderFor("CC191C"),
+      "messageType"              -> messageTypeFor("CC191C"),
+      "LRN"                      -> lrnFor("CC191C"),
+      "MRN"                      -> mrnFor("CC191C"),
+      "CustomsOfficeOfDeparture" -> customsOfficeOfDepartureFor("CC191C"),
+      "CustomsOfficeOfExit"      -> customsOfficeOfExitFor("CC191C")
+    ),
+    "IE228" -> Map(
+      "messageSender" -> messageSenderFor("CC228C"),
+      "messageType"   -> messageTypeFor("CC228C"),
+      "GRN"           -> grnForRef("CC228C")
+    ),
+    "IE906" -> Map(
+      "messageSender" -> messageSenderFor("CC906C"),
+      "messageType"   -> messageTypeFor("CC906C"),
+      "LRN"           -> lrnHeaderFor("CC906C"),
+      "MRN"           -> mrnHeaderFor("CC906C")
     )
   )
 }
