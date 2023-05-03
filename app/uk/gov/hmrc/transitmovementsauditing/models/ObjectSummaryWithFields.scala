@@ -16,6 +16,22 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models
 
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
+import play.api.libs.json.Writes
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 
-case class ObjectSummaryWithFields(objectSummary: ObjectSummaryWithMd5, fields: String)
+case class ObjectSummaryWithFields(objectSummary: ObjectSummaryWithMd5, fields: (String, String))
+
+object ObjectSummaryWithFields {
+
+  implicit val objectSummaryWithFieldsWrites = new Writes[ObjectSummaryWithFields] {
+
+    override def writes(o: ObjectSummaryWithFields): JsValue = Json.obj(
+      "objectSummary"    -> o.objectSummary.toString,
+      "additionalFields" -> o.fields
+    )
+  }
+
+}

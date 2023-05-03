@@ -27,11 +27,11 @@ trait XmlParsingServiceHelpers {
 
   implicit class FlowOps[A](value: Flow[ParseEvent, String, NotUsed]) {
 
-    def single(element: String): Flow[ParseEvent, ParseResult[String], NotUsed] =
-      value.fold[Either[ParseError, String]](Left(ParseError.NoElementFound(element)))(
+    def single(element: String): Flow[ParseEvent, ParseResult[(String, String)], NotUsed] =
+      value.fold[Either[ParseError, (String, String)]](Left(ParseError.NoElementFound(element)))(
         (current, next) =>
           current match {
-            case Left(ParseError.NoElementFound(_)) => Right(s"($element,$next)") // return name of the element its value
+            case Left(ParseError.NoElementFound(_)) => Right((element, next)) // return name of the element its value
           }
       )
 

@@ -657,7 +657,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc004c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE004").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE004").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -666,11 +666,11 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-004)"),
-            Right("(messageSender,message-sender-004)"),
-            Right("(CustomsOffice,Newcastle-004)"),
-            Right("(messageType,CC004C)"),
-            Right("(MRN,MRN-004)")
+            Right(("LRN", "LRN-004")),
+            Right(("messageSender", "message-sender-004")),
+            Right(("CustomsOffice", "Newcastle-004")),
+            Right(("messageType", "CC004C")),
+            Right(("MRN", "MRN-004"))
           )
       }
     }
@@ -679,7 +679,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc007c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE007").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE007").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -688,13 +688,13 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-1)"),
-            Right("(EconomicOperator,GB000001)"),
-            Right("(CustomsOffice,Newcastle-1)"),
-            Right("(messageType,CC007C)"),
-            Right("(CustomsOfficeOfDestinationActual,Newcastle-airport-1)"),
-            Right("(numberOfSeals,98)"),
-            Right("(MRN,MRN-1)")
+            Right(("messageSender", "message-sender-1")),
+            Right(("EconomicOperator", "GB000001")),
+            Right(("CustomsOffice", "Newcastle-1")),
+            Right(("messageType", "CC007C")),
+            Right(("CustomsOfficeOfDestinationActual", "Newcastle-airport-1")),
+            Right(("numberOfSeals", "98")),
+            Right(("MRN", "MRN-1"))
           )
       }
     }
@@ -703,7 +703,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc009c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE009").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE009").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -712,11 +712,11 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-009)"),
-            Right("(messageSender,message-sender-009)"),
-            Right("(CustomsOffice,Newcastle-009)"),
-            Right("(messageType,CC009C)"),
-            Right("(MRN,MRN-009)")
+            Right(("LRN", "LRN-009")),
+            Right(("messageSender", "message-sender-009")),
+            Right(("CustomsOffice", "Newcastle-009")),
+            Right(("messageType", "CC009C")),
+            Right(("MRN", "MRN-009"))
           )
       }
     }
@@ -725,33 +725,33 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc013c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE013").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE013").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-013)"),
-            Right("(declarationType,declaration-type-013)"),
-            Right("(messageSender,message-sender-013)"),
-            Right("(EconomicOperator,GB-013)"),
-            Right("(CountryOfRoutingOfConsignment,ESP)"),
-            Right("(messageType,CC013C)"),
-            Right("(numberOfPackages,013)"),
-            Right("(countryOfDispatch,UK)"),
-            Right("(countryOfDestination,IT)"),
-            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-013)"),
-            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-013)"),
-            Right("(CustomsOffice,013)"),
-            Right("(PreviousDocument,previous-document-013)"),
-            Right("(numberOfSeals,13)"),
-            Right("(GRN,guarantee-reference-number-013)"),
-            Right("(accessCode,guarantee-access-code-013)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-013)"),
-            Right("(MRN,MRN-013)")
+            Right(("LRN", "LRN-013")),
+            Right(("declarationType", "declaration-type-013")),
+            Right(("messageSender", "message-sender-013")),
+            Right(("EconomicOperator", "GB-013")),
+            Right(("CountryOfRoutingOfConsignment", "ESP")),
+            Right(("messageType", "CC013C")),
+            Right(("numberOfPackages", "013")),
+            Right(("countryOfDispatch", "UK")),
+            Right(("countryOfDestination", "IT")),
+            Right(("CustomsOfficeOfTransitDeclared", "Newcastle-port-013")),
+            Right(("CustomsOfficeOfDestinationDeclared", "Newcastle-train-station-013")),
+            Right(("CustomsOffice", "013")),
+            Right(("PreviousDocument", "previous-document-013")),
+            Right(("numberOfSeals", "13")),
+            Right(("GRN", "guarantee-reference-number-013")),
+            Right(("accessCode", "guarantee-access-code-013")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-013")),
+            Right(("MRN", "MRN-013"))
           )
       }
     }
@@ -760,7 +760,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc014c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE014").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE014").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -769,11 +769,11 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-014)"),
-            Right("(messageSender,message-sender-014)"),
-            Right("(messageType,CC014C)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-014)"),
-            Right("(MRN,MRN-014)")
+            Right(("LRN", "LRN-014")),
+            Right(("messageSender", "message-sender-014")),
+            Right(("messageType", "CC014C")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-014")),
+            Right(("MRN", "MRN-014"))
           )
       }
     }
@@ -782,31 +782,31 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE015").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE015").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-015)"),
-            Right("(declarationType,declaration-type-015)"),
-            Right("(messageSender,message-sender-015)"),
-            Right("(EconomicOperator,GB015)"),
-            Right("(CountryOfRoutingOfConsignment,CH)"),
-            Right("(messageType,CC015C)"),
-            Right("(countryOfDispatch,UK)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-015)"),
-            Right("(countryOfDestination,IT)"),
-            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-015)"),
-            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-015)"),
-            Right("(CustomsOffice,015)"),
-            Right("(PreviousDocument,previous-document-015)"),
-            Right("(numberOfSeals,015)"),
-            Right("(GRN,guarantee-reference-number-015)"),
-            Right("(accessCode,guarantee-access-code-015)")
+            Right(("LRN", "LRN-015")),
+            Right(("declarationType", "declaration-type-015")),
+            Right(("messageSender", "message-sender-015")),
+            Right(("EconomicOperator", "GB015")),
+            Right(("CountryOfRoutingOfConsignment", "CH")),
+            Right(("messageType", "CC015C")),
+            Right(("countryOfDispatch", "UK")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-015")),
+            Right(("countryOfDestination", "IT")),
+            Right(("CustomsOfficeOfTransitDeclared", "Newcastle-port-015")),
+            Right(("CustomsOfficeOfDestinationDeclared", "Newcastle-train-station-015")),
+            Right(("CustomsOffice", "015")),
+            Right(("PreviousDocument", "previous-document-015")),
+            Right(("numberOfSeals", "015")),
+            Right(("GRN", "guarantee-reference-number-015")),
+            Right(("accessCode", "guarantee-access-code-015"))
           )
       }
     }
@@ -815,29 +815,29 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc017c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE017").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE017").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(declarationType,declaration-type-017)"),
-            Right("(messageSender,message-sender-017)"),
-            Right("(CountryOfRoutingOfConsignment,NL)"),
-            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-017)"),
-            Right("(numberOfPackages,017)"),
-            Right("(countryOfDispatch,UK)"),
-            Right("(countryOfDestination,FR)"),
-            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-017)"),
-            Right("(CustomsOfficeOfExitForTransitDeclared,Dover-port-017)"),
-            Right("(messageType,CC017C)"),
-            Right("(PreviousDocument,previous-document-017)"),
-            Right("(numberOfSeals,017)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-017)"),
-            Right("(MRN,MRN-017)")
+            Right(("declarationType", "declaration-type-017")),
+            Right(("messageSender", "message-sender-017")),
+            Right(("CountryOfRoutingOfConsignment", "NL")),
+            Right(("CustomsOfficeOfDestinationDeclared", "Newcastle-train-station-017")),
+            Right(("numberOfPackages", "017")),
+            Right(("countryOfDispatch", "UK")),
+            Right(("countryOfDestination", "FR")),
+            Right(("CustomsOfficeOfTransitDeclared", "Newcastle-port-017")),
+            Right(("CustomsOfficeOfExitForTransitDeclared", "Dover-port-017")),
+            Right(("messageType", "CC017C")),
+            Right(("PreviousDocument", "previous-document-017")),
+            Right(("numberOfSeals", "017")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-017")),
+            Right(("MRN", "MRN-017"))
           )
       }
     }
@@ -846,7 +846,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc019c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE019").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE019").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -855,10 +855,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-019)"),
-            Right("(messageType,CC019C)"),
-            Right("(MRN,MRN-019)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-019)")
+            Right(("messageSender", "message-sender-019")),
+            Right(("messageType", "CC019C")),
+            Right(("MRN", "MRN-019")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-019"))
           )
       }
     }
@@ -867,7 +867,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc022c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE022").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE022").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -876,10 +876,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-022)"),
-            Right("(messageType,CC022C)"),
-            Right("(MRN,MRN-022)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-022)")
+            Right(("messageSender", "message-sender-022")),
+            Right(("messageType", "CC022C")),
+            Right(("MRN", "MRN-022")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-022"))
           )
       }
     }
@@ -888,7 +888,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc023c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE023").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE023").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -897,10 +897,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-023)"),
-            Right("(messageType,CC023C)"),
-            Right("(MRN,MRN-023)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-023)")
+            Right(("messageSender", "message-sender-023")),
+            Right(("messageType", "CC023C")),
+            Right(("MRN", "MRN-023")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-023"))
           )
       }
     }
@@ -909,7 +909,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc025c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE025").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE025").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -918,11 +918,11 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-025)"),
-            Right("(messageType,CC025C)"),
-            Right("(MRN,MRN-025)"),
-            Right("(CustomsOfficeOfDestinationActual,Newcastle-airport-025)"),
-            Right("(numberOfPackages,025)")
+            Right(("messageSender", "message-sender-025")),
+            Right(("messageType", "CC025C")),
+            Right(("MRN", "MRN-025")),
+            Right(("CustomsOfficeOfDestinationActual", "Newcastle-airport-025")),
+            Right(("numberOfPackages", "025"))
           )
       }
     }
@@ -931,7 +931,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc028c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE028").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE028").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -940,11 +940,11 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-028)"),
-            Right("(messageSender,message-sender-028)"),
-            Right("(CustomsOffice,Newcastle-airport-028)"),
-            Right("(messageType,CC028C)"),
-            Right("(MRN,MRN-028)")
+            Right(("LRN", "LRN-028")),
+            Right(("messageSender", "message-sender-028")),
+            Right(("CustomsOffice", "Newcastle-airport-028")),
+            Right(("messageType", "CC028C")),
+            Right(("MRN", "MRN-028"))
           )
       }
     }
@@ -953,34 +953,34 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc029c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE029").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE029").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-029)"),
-            Right("(declarationType,declaration-type-029)"),
-            Right("(messageSender,message-sender-029)"),
-            Right("(EconomicOperator,GB029)"),
-            Right("(CountryOfRoutingOfConsignment,DE)"),
-            Right("(numberOfPackages,029)"),
-            Right("(countryOfDispatch,UK)"),
-            Right("(countryOfDestination,IT)"),
-            Right("(CustomsOfficeOfTransitDeclared,Newcastle-port-029)"),
-            Right("(CustomsOfficeOfDestinationDeclared,Newcastle-train-station-029)"),
-            Right("(CustomsOffice,029)"),
-            Right("(CustomsOfficeOfExitForTransitDeclared,Dover-port-029)"),
-            Right("(messageType,CC029C)"),
-            Right("(PreviousDocument,previous-document-029)"),
-            Right("(numberOfSeals,029)"),
-            Right("(GRN,guarantee-reference-number-029)"),
-            Right("(accessCode,guarantee-access-code-029)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-029)"),
-            Right("(MRN,MRN-029)")
+            Right(("LRN", "LRN-029")),
+            Right(("declarationType", "declaration-type-029")),
+            Right(("messageSender", "message-sender-029")),
+            Right(("EconomicOperator", "GB029")),
+            Right(("CountryOfRoutingOfConsignment", "DE")),
+            Right(("numberOfPackages", "029")),
+            Right(("countryOfDispatch", "UK")),
+            Right(("countryOfDestination", "IT")),
+            Right(("CustomsOfficeOfTransitDeclared", "Newcastle-port-029")),
+            Right(("CustomsOfficeOfDestinationDeclared", "Newcastle-train-station-029")),
+            Right(("CustomsOffice", "029")),
+            Right(("CustomsOfficeOfExitForTransitDeclared", "Dover-port-029")),
+            Right(("messageType", "CC029C")),
+            Right(("PreviousDocument", "previous-document-029")),
+            Right(("numberOfSeals", "029")),
+            Right(("GRN", "guarantee-reference-number-029")),
+            Right(("accessCode", "guarantee-access-code-029")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-029")),
+            Right(("MRN", "MRN-029"))
           )
       }
     }
@@ -989,7 +989,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc035c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE035").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE035").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -998,10 +998,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-035)"),
-            Right("(messageType,CC035C)"),
-            Right("(MRN,MRN-035)"),
-            Right("(CustomsOffice,Newcastle-airport-035)")
+            Right(("messageSender", "message-sender-035")),
+            Right(("messageType", "CC035C")),
+            Right(("MRN", "MRN-035")),
+            Right(("CustomsOffice", "Newcastle-airport-035"))
           )
       }
     }
@@ -1010,7 +1010,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc040c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE040").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE040").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1019,9 +1019,9 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-040)"),
-            Right("(messageType,CC040C)"),
-            Right("(MRN,MRN-040)")
+            Right(("messageSender", "message-sender-040")),
+            Right(("messageType", "CC040C")),
+            Right(("MRN", "MRN-040"))
           )
       }
     }
@@ -1030,7 +1030,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc042c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE042").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE042").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1039,12 +1039,12 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(CustomsOfficeOfDestination,Paris-042)"),
-            Right("(messageSender,message-sender-042)"),
-            Right("(messageType,CC042C)"),
-            Right("(CustomsOfficeOfExit,Dover-port-042)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-042)"),
-            Right("(MRN,MRN-042)")
+            Right(("CustomsOfficeOfDestination", "Paris-042")),
+            Right(("messageSender", "message-sender-042")),
+            Right(("messageType", "CC042C")),
+            Right(("CustomsOfficeOfExit", "Dover-port-042")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-042")),
+            Right(("MRN", "MRN-042"))
           )
       }
     }
@@ -1053,24 +1053,24 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc043c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE043").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE043").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(declarationType,declaration-type-043)"),
-            Right("(messageSender,message-sender-043)"),
-            Right("(messageType,CC043C)"),
-            Right("(MRN,MRN-043)"),
-            Right("(countryOfDestination,RO)"),
-            Right("(CustomsOfficeOfDestinationActual,Newcastle-airport-043)"),
-            Right("(numberOfPackages,043)"),
-            Right("(PreviousDocument,previous-document-043)"),
-            Right("(numberOfSeals,043)")
+            Right(("declarationType", "declaration-type-043")),
+            Right(("messageSender", "message-sender-043")),
+            Right(("messageType", "CC043C")),
+            Right(("MRN", "MRN-043")),
+            Right(("countryOfDestination", "RO")),
+            Right(("CustomsOfficeOfDestinationActual", "Newcastle-airport-043")),
+            Right(("numberOfPackages", "043")),
+            Right(("PreviousDocument", "previous-document-043")),
+            Right(("numberOfSeals", "043"))
           )
       }
     }
@@ -1079,21 +1079,21 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc044c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE044").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE044").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-044)"),
-            Right("(messageType,CC044C)"),
-            Right("(numberOfSeals,044)"),
-            Right("(MRN,MRN-044)"),
-            Right("(CustomsOfficeOfDestinationActual,Newcastle-airport-044)"),
-            Right("(numberOfPackages,044)")
+            Right(("messageSender", "message-sender-044")),
+            Right(("messageType", "CC044C")),
+            Right(("numberOfSeals", "044")),
+            Right(("MRN", "MRN-044")),
+            Right(("CustomsOfficeOfDestinationActual", "Newcastle-airport-044")),
+            Right(("numberOfPackages", "044"))
           )
       }
     }
@@ -1102,7 +1102,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc045c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE045").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE045").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1111,10 +1111,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-045)"),
-            Right("(messageType,CC045C)"),
-            Right("(MRN,MRN-045)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-045)")
+            Right(("messageSender", "message-sender-045")),
+            Right(("messageType", "CC045C")),
+            Right(("MRN", "MRN-045")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-045"))
           )
       }
     }
@@ -1123,7 +1123,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc048c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE048").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE048").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1132,10 +1132,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-048)"),
-            Right("(messageType,CC048C)"),
-            Right("(MRN,MRN-048)"),
-            Right("(CustomsOfficeOfDestination,Paris-048)")
+            Right(("messageSender", "message-sender-048")),
+            Right(("messageType", "CC048C")),
+            Right(("MRN", "MRN-048")),
+            Right(("CustomsOfficeOfDestination", "Paris-048"))
           )
       }
     }
@@ -1144,7 +1144,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc051c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE051").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE051").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1153,10 +1153,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-051)"),
-            Right("(messageType,CC051C)"),
-            Right("(MRN,MRN-051)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-051)")
+            Right(("messageSender", "message-sender-051")),
+            Right(("messageType", "CC051C")),
+            Right(("MRN", "MRN-051")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-051"))
           )
       }
     }
@@ -1165,7 +1165,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc055c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE055").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE055").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1174,10 +1174,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-055)"),
-            Right("(messageType,CC055C)"),
-            Right("(MRN,MRN-055)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-055)")
+            Right(("messageSender", "message-sender-055")),
+            Right(("messageType", "CC055C")),
+            Right(("MRN", "MRN-055")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-055"))
           )
       }
     }
@@ -1186,7 +1186,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc056c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE056").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE056").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1195,11 +1195,11 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-056)"),
-            Right("(messageSender,message-sender-056)"),
-            Right("(messageType,CC056C)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-056)"),
-            Right("(MRN,MRN-056)")
+            Right(("LRN", "LRN-056")),
+            Right(("messageSender", "message-sender-056")),
+            Right(("messageType", "CC056C")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-056")),
+            Right(("MRN", "MRN-056"))
           )
       }
     }
@@ -1208,7 +1208,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc057c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE057").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE057").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1217,10 +1217,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-057)"),
-            Right("(messageType,CC057C)"),
-            Right("(MRN,MRN-057)"),
-            Right("(CustomsOfficeOfDestinationActual,Newcastle-airport-057)")
+            Right(("messageSender", "message-sender-057")),
+            Right(("messageType", "CC057C")),
+            Right(("MRN", "MRN-057")),
+            Right(("CustomsOfficeOfDestinationActual", "Newcastle-airport-057"))
           )
       }
     }
@@ -1229,7 +1229,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc060c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE060").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE060").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1238,11 +1238,11 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-060)"),
-            Right("(messageSender,message-sender-060)"),
-            Right("(messageType,CC060C)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-060)"),
-            Right("(MRN,MRN-060)")
+            Right(("LRN", "LRN-060")),
+            Right(("messageSender", "message-sender-060")),
+            Right(("messageType", "CC060C")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-060")),
+            Right(("MRN", "MRN-060"))
           )
       }
     }
@@ -1251,7 +1251,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc140c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE140").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE140").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1260,10 +1260,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-140)"),
-            Right("(messageType,CC140C)"),
-            Right("(MRN,MRN-140)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-140)")
+            Right(("messageSender", "message-sender-140")),
+            Right(("messageType", "CC140C")),
+            Right(("MRN", "MRN-140")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-140"))
           )
       }
     }
@@ -1272,7 +1272,7 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc141c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE141").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE141").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
@@ -1281,10 +1281,10 @@ class XmlParserSpec
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-141)"),
-            Right("(messageType,CC141C)"),
-            Right("(MRN,MRN-141)"),
-            Right("(CustomsOfficeOfDestinationActual,Newcastle-airport-141)")
+            Right(("messageSender", "message-sender-141")),
+            Right(("messageType", "CC141C")),
+            Right(("MRN", "MRN-141")),
+            Right(("CustomsOfficeOfDestinationActual", "Newcastle-airport-141"))
           )
       }
     }
@@ -1293,22 +1293,22 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc170c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE170").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE170").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-170)"),
-            Right("(messageSender,message-sender-170)"),
-            Right("(EconomicOperator,GB170)"),
-            Right("(CustomsOffice,170)"),
-            Right("(messageType,CC170C)"),
-            Right("(numberOfSeals,170)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-170)")
+            Right(("LRN", "LRN-170")),
+            Right(("messageSender", "message-sender-170")),
+            Right(("EconomicOperator", "GB170")),
+            Right(("CustomsOffice", "170")),
+            Right(("messageType", "CC170C")),
+            Right(("numberOfSeals", "170")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-170"))
           )
       }
     }
@@ -1317,19 +1317,19 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc182c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE182").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE182").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-182)"),
-            Right("(messageType,CC182C)"),
-            Right("(MRN,MRN-182)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-182)")
+            Right(("messageSender", "message-sender-182")),
+            Right(("messageType", "CC182C")),
+            Right(("MRN", "MRN-182")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-182"))
           )
       }
     }
@@ -1338,23 +1338,23 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc190c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE190").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE190").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-190)"),
-            Right("(messageSender,message-sender-190)"),
-            Right("(EconomicOperator,GB190)"),
-            Right("(CustomsOffice,190)"),
-            Right("(messageType,CC190C)"),
-            Right("(CustomsOfficeOfExit,Dover-port-190)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-190)"),
-            Right("(MRN,MRN-190)")
+            Right(("LRN", "LRN-190")),
+            Right(("messageSender", "message-sender-190")),
+            Right(("EconomicOperator", "GB190")),
+            Right(("CustomsOffice", "190")),
+            Right(("messageType", "CC190C")),
+            Right(("CustomsOfficeOfExit", "Dover-port-190")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-190")),
+            Right(("MRN", "MRN-190"))
           )
       }
     }
@@ -1363,21 +1363,21 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc191c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE191").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE191").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(LRN,LRN-191)"),
-            Right("(messageSender,message-sender-191)"),
-            Right("(messageType,CC191C)"),
-            Right("(CustomsOfficeOfExit,Dover-port-191)"),
-            Right("(CustomsOfficeOfDeparture,Newcastle-airport-191)"),
-            Right("(MRN,MRN-191)")
+            Right(("LRN", "LRN-191")),
+            Right(("messageSender", "message-sender-191")),
+            Right(("messageType", "CC191C")),
+            Right(("CustomsOfficeOfExit", "Dover-port-191")),
+            Right(("CustomsOfficeOfDeparture", "Newcastle-airport-191")),
+            Right(("MRN", "MRN-191"))
           )
       }
     }
@@ -1386,18 +1386,18 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc228c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE228").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE228").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-228)"),
-            Right("(messageType,CC228C)"),
-            Right("(GRN,guarantee-reference-number-228)")
+            Right(("messageSender", "message-sender-228")),
+            Right(("messageType", "CC228C")),
+            Right(("GRN", "guarantee-reference-number-228"))
           )
       }
     }
@@ -1406,19 +1406,19 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, _] = createParsingEventStream(cc906c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[String]]] = elementPaths("IE906").map(
+      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE906").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[String]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
           additionalParams mustBe List(
-            Right("(messageSender,message-sender-906)"),
-            Right("(messageType,CC906C)"),
-            Right("(LRN,LRN-906)"),
-            Right("(MRN,MRN-906)")
+            Right(("messageSender", "message-sender-906")),
+            Right(("messageType", "CC906C")),
+            Right(("LRN", "LRN-906")),
+            Right(("MRN", "MRN-906"))
           )
       }
     }

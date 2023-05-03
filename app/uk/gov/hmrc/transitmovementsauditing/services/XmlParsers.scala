@@ -27,7 +27,7 @@ import scala.concurrent.Future
 
 object XmlParsers extends XmlParsingServiceHelpers {
 
-  def extractElement(name: String, path: Seq[String])(implicit mat: Materializer): Flow[ParseEvent, ParseResult[String], NotUsed] =
+  def extractElement(name: String, path: Seq[String])(implicit mat: Materializer): Flow[ParseEvent, ParseResult[(String, String)], NotUsed] =
     XmlParsing
       .subtree(path) // path
       .collect {
@@ -35,12 +35,12 @@ object XmlParsers extends XmlParsingServiceHelpers {
       }
       .single(name)
 
-  val concatKeyValue: Sink[ParseResult[String], Future[ParseResult[String]]] = Sink.reduce[ParseResult[String]](
+  val concatKeyValue: Sink[ParseResult[(String, String)], Future[ParseResult[(String, String)]]] = Sink.reduce[ParseResult[(String, String)]](
     (k, v) =>
       k.flatMap(
         key =>
           v.map {
-            value => s"($key,$value)"
+            value => (key._1, value._1) // ??
           }
       )
   )

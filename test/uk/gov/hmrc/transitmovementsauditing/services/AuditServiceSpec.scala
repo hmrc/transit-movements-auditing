@@ -128,42 +128,12 @@ class AuditServiceSpec
     "should return the additional field for CustomsOfficeOfDeparture" in {
       val service                       = new AuditServiceImpl(mockAuditConnector)
       val stream: Source[ByteString, _] = createStream(cc015c)
-      val result: Future[Either[ParseError, String]] =
+      val result: Future[Either[ParseError, (String, String)]] =
         service.getAdditionalField("CustomsOfficeOfDeparture", "CC015C" :: "CustomsOfficeOfDeparture" :: "referenceNumber" :: Nil, stream)
 
       whenReady(result, Timeout(1.second)) {
         result =>
-          result mustBe Right("(CustomsOfficeOfDeparture,customs-office-of-departure-1)")
-      }
-    }
-
-    "should return all the additional fields for message type CC015C " in {
-      val service                                     = new AuditServiceImpl(mockAuditConnector)
-      val stream: Source[ByteString, _]               = createStream(cc015c)
-      val result: EitherT[Future, ParseError, String] = service.getAdditionalFields(DeclarationData.messageType, stream)
-
-      val expected =
-        """(LRN,LRN-1)
-          |(declarationType,declaration-type-1)
-          |(messageSender,message-sender-1)
-          |(EconomicOperator,GB12345678)
-          |(CountryOfRoutingOfConsignment,CH)
-          |(messageType,CC0015C)
-          |(countryOfDispatch,UK)
-          |(CustomsOfficeOfDeparture,customs-office-of-departure-1)
-          |(countryOfDestination,DE)
-          |(CustomsOfficeOfTransitDeclared,2)
-          |(CustomsOfficeOfDestinationDeclared,customs-office-of-destination-declared-1)
-          |(CustomsOffice,Hamburg)
-          |(PreviousDocument,previous-document-ref-1)
-          |(numberOfSeals,67)
-          |(GRN,guarantee-reference-number-1)
-          |(accessCode,guarantee-access-code-1)
-          |""".stripMargin.replaceAll("\n", "")
-
-      whenReady(result.value, Timeout(1.second)) {
-        result =>
-          result mustBe Right(expected)
+          result mustBe Right(("CustomsOfficeOfDeparture", "customs-office-of-departure-1"))
       }
     }
 

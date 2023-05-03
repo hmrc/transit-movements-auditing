@@ -63,9 +63,9 @@ trait AuditService {
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
 
-  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[String]]
+  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]]
 
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, String]
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, (String, String)]
 }
 
 @Singleton
@@ -74,13 +74,13 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
     with ElementPaths
     with Logging {
 
-  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[String]] =
+  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]] =
     src
       .via(XmlParsing.parser)
       .via(XmlParsers.extractElement(name, path))
       .runWith(concatKeyValue)
 
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, String] =
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, (String, String)] =
     EitherT {
       messageType match {
         case Some(value) =>
@@ -92,7 +92,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
                 )
             )
             .map(
-              Monoid[Either[ParseError, String]].combineAll(_)
+              Monoid[Either[ParseError, (String, String)]].combineAll(_)
             )
         case None => Future.successful(Left(ParseError.NoElementFound(s"Unable to find $messageType")))
       }

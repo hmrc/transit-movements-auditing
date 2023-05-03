@@ -161,7 +161,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT("(key,value)"))
+        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(("key", "value")))
         when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
 
         val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
@@ -268,7 +268,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
         when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
-        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT("(key,value)"))
+        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(("key", "value")))
         when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(Constants.XContentLengthHeader -> contentExceedsAuditLimit))

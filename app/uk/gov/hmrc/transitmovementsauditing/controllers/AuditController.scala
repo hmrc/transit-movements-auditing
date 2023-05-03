@@ -32,10 +32,10 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
-import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
+import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.Payload
@@ -49,7 +49,6 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-
 import scala.concurrent.Future
 
 @Singleton()
