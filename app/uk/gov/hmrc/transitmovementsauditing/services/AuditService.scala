@@ -17,14 +17,11 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import akka.stream.Materializer
-import akka.stream.alpakka.xml.ParseEvent
 import akka.stream.alpakka.xml.scaladsl.XmlParsing
-import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
-import cats.kernel.Monoid
 import com.fasterxml.jackson.core.JsonParseException
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
@@ -45,7 +42,6 @@ import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.Payload
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.NoElementFound
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.concatKeyValue
 
@@ -65,7 +61,7 @@ trait AuditService {
 
   def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]]
 
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, (String, String)]
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]]
 }
 
 @Singleton
@@ -80,20 +76,21 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       .via(XmlParsers.extractElement(name, path))
       .runWith(concatKeyValue)
 
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, (String, String)] =
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]] =
     EitherT {
       messageType match {
         case Some(value) =>
           Future
             .sequence(
               elementPaths(value.messageCode)
-                .map(
-                  row => getAdditionalField(row._1, row._2, src) // node name and its path
-                )
+                .map {
+                  row =>
+                    getAdditionalField(row._1, row._2, src) // node name and its path
+                }
             )
-            .map(
-              Monoid[Either[ParseError, (String, String)]].combineAll(_)
-            )
+            .map {
+              keyValuePairs => Right(keyValuePairs.toSeq)
+            }
         case None => Future.successful(Left(ParseError.NoElementFound(s"Unable to find $messageType")))
       }
     }

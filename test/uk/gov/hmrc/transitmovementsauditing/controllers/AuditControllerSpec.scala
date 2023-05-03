@@ -57,16 +57,25 @@ import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
+import uk.gov.hmrc.transitmovementsauditing.services.XmlParsingServiceHelpers
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem with MockitoSugar with ModelGenerators with BeforeAndAfterEach {
+class AuditControllerSpec
+    extends AnyFreeSpec
+    with XmlParsingServiceHelpers
+    with Matchers
+    with TestActorSystem
+    with MockitoSugar
+    with ModelGenerators
+    with BeforeAndAfterEach {
 
   private val contentLessThanAuditLimit = "49999"
   private val contentExceedsAuditLimit  = "50001"
@@ -161,7 +170,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(("key", "value")))
+        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(Seq(Right[ParseError, (String, String)](("key", "value")))))
         when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
 
         val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
@@ -268,7 +277,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
         when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
-        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(("key", "value")))
+        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(Seq(Right[ParseError, (String, String)](("key", "value")))))
         when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(Constants.XContentLengthHeader -> contentExceedsAuditLimit))

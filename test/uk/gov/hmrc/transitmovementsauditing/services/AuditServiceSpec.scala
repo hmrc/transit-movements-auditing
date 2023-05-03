@@ -45,6 +45,7 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
+import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -134,6 +135,37 @@ class AuditServiceSpec
       whenReady(result, Timeout(1.second)) {
         result =>
           result mustBe Right(("CustomsOfficeOfDeparture", "customs-office-of-departure-1"))
+      }
+    }
+
+    "should return all the additional fields for message type CC015C " in {
+      val service                                                                 = new AuditServiceImpl(mockAuditConnector)
+      val stream: Source[ByteString, _]                                           = createStream(cc015c)
+      val result: EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]] = service.getAdditionalFields(DeclarationData.messageType, stream)
+
+      val expected =
+        List(
+          Right("LRN", "LRN-1"),
+          Right("declarationType", "declaration-type-1"),
+          Right("messageSender", "message-sender-1"),
+          Right("EconomicOperator", "GB12345678"),
+          Right("CountryOfRoutingOfConsignment", "CH"),
+          Right("messageType", "CC0015C"),
+          Right("countryOfDispatch", "UK"),
+          Right("CustomsOfficeOfDeparture", "customs-office-of-departure-1"),
+          Right("countryOfDestination", "DE"),
+          Right("CustomsOfficeOfTransitDeclared", "2"),
+          Right("CustomsOfficeOfDestinationDeclared", "customs-office-of-destination-declared-1"),
+          Right("CustomsOffice", "Hamburg"),
+          Right("PreviousDocument", "previous-document-ref-1"),
+          Right("numberOfSeals", "67"),
+          Right("GRN", "guarantee-reference-number-1"),
+          Right("accessCode", "guarantee-access-code-1")
+        )
+
+      whenReady(result.value, Timeout(1.second)) {
+        result =>
+          result mustBe Right(expected)
       }
     }
 

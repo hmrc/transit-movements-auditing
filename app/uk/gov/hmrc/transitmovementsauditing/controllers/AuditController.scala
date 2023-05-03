@@ -123,7 +123,7 @@ class AuditController @Inject() (
         (for {
           fields     <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
           objSummary <- objectStoreService.putFile(fileId(), request.body).asPresentation
-        } yield ObjectSummaryWithFields(objSummary, Seq(fields))).map(
+        } yield ObjectSummaryWithFields(objSummary, fields)).map(
           summaryWithFields => Left(summaryWithFields)
         )
       case (Some(uri), true) =>
@@ -132,7 +132,7 @@ class AuditController @Inject() (
           contents   <- objectStoreService.getContents(uri).asPresentation
           fields     <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
           objSummary <- objectStoreService.putFile(fileId(), contents).asPresentation
-        } yield Left(ObjectSummaryWithFields(objSummary, Seq(fields)))
+        } yield Left(ObjectSummaryWithFields(objSummary, fields))
     }
 
 }
