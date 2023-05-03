@@ -22,7 +22,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Writes
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 
-case class ObjectSummaryWithFields(objectSummary: ObjectSummaryWithMd5, fields: (String, String))
+case class ObjectSummaryWithFields(objectSummary: ObjectSummaryWithMd5, fields: Seq[(String, String)])
 
 object ObjectSummaryWithFields {
 
