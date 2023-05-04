@@ -82,15 +82,14 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
         case Some(value) =>
           Future
             .sequence(
-              elementPaths(value.messageCode)
-                .map {
-                  row =>
-                    getAdditionalField(row._1, row._2, src) // node name and its path
-                }
+              elementPaths(value.messageCode).map {
+                row =>
+                  getAdditionalField(row._1, row._2, src) // node name and its path
+              }.toSeq
             )
-            .map {
-              keyValuePairs => Right(keyValuePairs.toSeq)
-            }
+            .map(
+              keyValuePairs => Right(keyValuePairs)
+            )
         case None => Future.successful(Left(ParseError.NoElementFound(s"Unable to find $messageType")))
       }
     }

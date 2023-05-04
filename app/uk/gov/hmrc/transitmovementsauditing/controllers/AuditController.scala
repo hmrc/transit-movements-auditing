@@ -121,18 +121,24 @@ class AuditController @Inject() (
       case (None, true) =>
         logger.info("Payload in body and > auditing message limit")
         (for {
-          fields     <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+          parseResults <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+          keyValuePairs = parseResults.collect {
+            case Right(pair) => pair
+          }
           objSummary <- objectStoreService.putFile(fileId(), request.body).asPresentation
-        } yield ObjectSummaryWithFields(objSummary, fields)).map(
+        } yield ObjectSummaryWithFields(objSummary, keyValuePairs)).map {
           summaryWithFields => Left(summaryWithFields)
-        )
+        }
       case (Some(uri), true) =>
         logger.info("Payload in object store and > auditing message limit")
         for {
-          contents   <- objectStoreService.getContents(uri).asPresentation
-          fields     <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+          contents     <- objectStoreService.getContents(uri).asPresentation
+          parseResults <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+          keyValuePairs = parseResults.collect {
+            case Right(pair) => pair
+          }
           objSummary <- objectStoreService.putFile(fileId(), contents).asPresentation
-        } yield Left(ObjectSummaryWithFields(objSummary, fields))
+        } yield Left(ObjectSummaryWithFields(objSummary, keyValuePairs))
     }
 
 }

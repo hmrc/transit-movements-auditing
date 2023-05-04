@@ -16,14 +16,12 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models
 
-import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.Writes
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
-case class ObjectSummaryWithFields(objectSummary: ObjectSummaryWithMd5, fields: Seq[ParseResult[(String, String)]])
+case class ObjectSummaryWithFields(objectSummary: ObjectSummaryWithMd5, fields: Seq[(String, String)])
 
 object ObjectSummaryWithFields {
 
@@ -31,7 +29,7 @@ object ObjectSummaryWithFields {
 
     override def writes(o: ObjectSummaryWithFields): JsValue = Json.obj(
       "objectSummary"    -> o.objectSummary.toString,
-      "additionalFields" -> o.fields.mkString("{", ":", "}")
+      "additionalFields" -> o.fields.toString()
     )
   }
 
