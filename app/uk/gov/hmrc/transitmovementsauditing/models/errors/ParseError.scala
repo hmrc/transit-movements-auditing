@@ -25,4 +25,5 @@ object ParseError {
   case class TooManyElementsFound(element: String)                           extends ParseError
   case class BadDateTime(element: String, exception: DateTimeParseException) extends ParseError
   case class UnexpectedError(caughtException: Option[Throwable] = None)      extends ParseError
+  case object IgnoreElement                                                  extends ParseError
 }

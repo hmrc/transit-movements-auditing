@@ -31,9 +31,9 @@ trait XmlParsingServiceHelpers {
       value.fold[Either[ParseError, (String, String)]](Left(ParseError.NoElementFound(element)))(
         (current, next) =>
           current match {
-            case Left(ParseError.NoElementFound(_)) => Right((element, next)) // return name of the element its value
+            case Left(ParseError.NoElementFound(_)) => Right((element, next))
+            case _                                  => Left(ParseError.IgnoreElement)
           }
       )
-
   }
 }

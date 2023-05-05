@@ -22,6 +22,7 @@ import akka.util.ByteString
 import cats.data.EitherT
 import play.api.Logging
 import play.api.http.MimeTypes
+import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import play.api.mvc.Action
@@ -59,13 +60,14 @@ class AuditController @Inject() (
   objectStoreService: ObjectStoreService,
   appConfig: AppConfig
 )(implicit
-  val materializer: Materializer
+  val materializer: Materializer,
+  val temporaryFileCreator: TemporaryFileCreator
 ) extends BackendController(cc)
     with StreamingParsers
     with ErrorTranslator
     with Logging {
 
-  def post(auditType: AuditType, uri: Option[ObjectStoreResourceLocation] = None): Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
+  def post(auditType: AuditType, uri: Option[ObjectStoreResourceLocation] = None): Action[Source[ByteString, _]] = Action.streamFromFile {
 
     implicit request =>
       if (appConfig.auditingEnabled) {

@@ -26,6 +26,7 @@ import org.mockito.MockitoSugar.times
 import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -74,6 +75,7 @@ class AuditControllerSpec
     with Matchers
     with TestActorSystem
     with MockitoSugar
+//    with ScalaFutures
     with ModelGenerators
     with BeforeAndAfterEach {
 
@@ -107,11 +109,14 @@ class AuditControllerSpec
 
   val errorHandler = new DefaultHttpErrorHandler(HttpErrorConfig(showDevErrors = false, None), None, None)
 
+  implicit val temporaryFileCreator = SingletonTemporaryFileCreator
+
   val controllerComponentWithTempFile: ControllerComponents =
     stubControllerComponents(playBodyParsers = PlayBodyParsers(SingletonTemporaryFileCreator, errorHandler)(materializer))
 
   private val controller = new AuditController(controllerComponentWithTempFile, mockConversionService, mockAuditService, mockObjectStoreService, mockAppConfig)(
-    materializer
+    materializer,
+    temporaryFileCreator
   )
 
   override def beforeEach(): Unit = {
@@ -141,14 +146,14 @@ class AuditControllerSpec
       "returns 202 when auditing was successful with an XML payload that does not exceed audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
-        when(mockConversionService.toJson(eqTo(MessageType.IE004), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockConversionService.toJson(eqTo(MessageType.IE004), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
         when(mockAuditService.send(eqTo(AmendmentAcceptance), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
-        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), eqTo(xmlStream))(any())
+        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), any())(any())
         verify(mockAuditService, times(1)).send(eqTo(AmendmentAcceptance), any())(any())
       }
 
@@ -170,7 +175,16 @@ class AuditControllerSpec
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(Seq(Right[ParseError, (String, String)](("key", "value")))))
+        when(mockAuditService.getAdditionalFields(any(), any()))
+          .thenReturn(
+            EitherT.rightT(
+              Seq(
+                Right[ParseError, (String, String)]("key1", "value1"),
+                Right[ParseError, (String, String)]("key2", "value2"),
+                Right[ParseError, (String, String)]("key3", "value3")
+              )
+            )
+          )
         when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
 
         val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
@@ -194,7 +208,7 @@ class AuditControllerSpec
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(Right(jsonStream)))(any())).thenReturn(EitherT.rightT(()))
+        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(TraderFailedUploadEvent)(fakeJsonRequest)
         status(result) mustBe Status.ACCEPTED
