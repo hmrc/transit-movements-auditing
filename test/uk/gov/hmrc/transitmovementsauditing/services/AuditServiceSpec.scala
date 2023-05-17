@@ -17,8 +17,6 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import cats.data.EitherT
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
@@ -44,8 +42,6 @@ import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
-import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -66,51 +62,6 @@ class AuditServiceSpec
 
   private val mockAuditConnector: AuditConnector = mock[AuditConnector]
 
-  private val cc015c: NodeSeq = <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
-    <messageSender>message-sender-1</messageSender>
-    <messageType>CC0015C</messageType>
-    <TransitOperation>
-      <LRN>LRN-1</LRN>
-      <declarationType>declaration-type-1</declarationType>
-    </TransitOperation>
-    <CustomsOfficeOfDeparture>
-      <referenceNumber>customs-office-of-departure-1</referenceNumber>
-    </CustomsOfficeOfDeparture>
-    <CustomsOfficeOfDestinationDeclared>
-      <referenceNumber>customs-office-of-destination-declared-1</referenceNumber>
-    </CustomsOfficeOfDestinationDeclared>
-    <CustomsOfficeOfTransitDeclared>
-      <sequenceNumber>2</sequenceNumber>
-    </CustomsOfficeOfTransitDeclared>
-    <Guarantee>
-      <GuaranteeReference>
-        <GRN>guarantee-reference-number-1</GRN>
-        <accessCode>guarantee-access-code-1</accessCode>
-      </GuaranteeReference>
-    </Guarantee>
-    <Consignment>
-      <countryOfDispatch>UK</countryOfDispatch>
-      <countryOfDestination>DE</countryOfDestination>
-      <TransportEquipment>
-        <numberOfSeals>67</numberOfSeals>
-      </TransportEquipment>
-      <LocationOfGoods>
-        <CustomsOffice>
-          <referenceNumber>Hamburg</referenceNumber>
-        </CustomsOffice>
-        <EconomicOperator>
-          <identificationNumber>GB12345678</identificationNumber>
-        </EconomicOperator>
-      </LocationOfGoods>
-      <CountryOfRoutingOfConsignment>
-        <country>CH</country>
-      </CountryOfRoutingOfConsignment>
-      <PreviousDocument>
-        <referenceNumber>previous-document-ref-1</referenceNumber>
-      </PreviousDocument>
-    </Consignment>
-  </ncts:CC015C>
-
   private val someGoodCC015CJson =
     Json.obj("messageSender" -> "sender")
 
@@ -125,49 +76,6 @@ class AuditServiceSpec
     reset(mockAuditConnector)
 
   "Audit service" - {
-
-    "should return the additional field for CustomsOfficeOfDeparture" in {
-      val service                       = new AuditServiceImpl(mockAuditConnector)
-      val stream: Source[ByteString, _] = createStream(cc015c)
-      val result: Future[Either[ParseError, (String, String)]] =
-        service.getAdditionalField("CustomsOfficeOfDeparture", "CC015C" :: "CustomsOfficeOfDeparture" :: "referenceNumber" :: Nil, stream)
-
-      whenReady(result, Timeout(1.second)) {
-        result =>
-          result mustBe Right(("CustomsOfficeOfDeparture", "customs-office-of-departure-1"))
-      }
-    }
-
-    "should return all the additional fields for message type CC015C " in {
-      val service                                                                 = new AuditServiceImpl(mockAuditConnector)
-      val stream: Source[ByteString, _]                                           = createStream(cc015c)
-      val result: EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]] = service.getAdditionalFields(DeclarationData.messageType, stream)
-
-      val expected =
-        List(
-          Right("LRN", "LRN-1"),
-          Right("declarationType", "declaration-type-1"),
-          Right("messageSender", "message-sender-1"),
-          Right("EconomicOperator", "GB12345678"),
-          Right("CountryOfRoutingOfConsignment", "CH"),
-          Right("messageType", "CC0015C"),
-          Right("countryOfDispatch", "UK"),
-          Right("CustomsOfficeOfDeparture", "customs-office-of-departure-1"),
-          Right("countryOfDestination", "DE"),
-          Right("CustomsOfficeOfTransitDeclared", "2"),
-          Right("CustomsOfficeOfDestinationDeclared", "customs-office-of-destination-declared-1"),
-          Right("CustomsOffice", "Hamburg"),
-          Right("PreviousDocument", "previous-document-ref-1"),
-          Right("numberOfSeals", "67"),
-          Right("GRN", "guarantee-reference-number-1"),
-          Right("accessCode", "guarantee-access-code-1")
-        )
-
-      whenReady(result.value, Timeout(1.second)) {
-        result =>
-          result mustBe Right(expected)
-      }
-    }
 
     "should successfully send message to audit connector" - AuditType.values.foreach {
       auditType =>

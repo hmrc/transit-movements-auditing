@@ -47,7 +47,7 @@ trait ElementPaths {
   def economicOperatorFor(message: String)              = message :: "Consignment" :: "LocationOfGoods" :: "EconomicOperator" :: "identificationNumber" :: Nil
   def numberOfPackagesFor(message: String)              = message :: "Consignment" :: "HouseConsignment" :: "ConsignmentItem" :: "Packaging" :: "numberOfPackages" :: Nil
 
-  val elementPaths: Map[String, Map[String, Seq[String]]] = Map( //TODO: Check all
+  val elementPaths: Map[String, Map[String, Seq[String]]] = Map(
     "IE004" -> Map(
       "messageSender" -> messageSenderFor("CC004C"),
       "messageType"   -> messageTypeFor("CC004C"),

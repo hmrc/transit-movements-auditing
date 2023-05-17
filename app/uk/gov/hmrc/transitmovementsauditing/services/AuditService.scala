@@ -17,10 +17,7 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import akka.stream.Materializer
-import akka.stream.alpakka.xml.scaladsl.XmlParsing
 import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import cats.data.EitherT
 import com.fasterxml.jackson.core.JsonParseException
 import com.google.inject.ImplementedBy
@@ -38,12 +35,8 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Failure => AuditResult
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResultSuccess}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.Payload
-import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
-import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.concatKeyValue
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -59,40 +52,10 @@ trait AuditService {
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
 
-  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]]
-
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]]
 }
 
 @Singleton
-class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer)
-    extends AuditService
-    with ElementPaths
-    with Logging {
-
-  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]] =
-    src
-      .via(XmlParsing.parser)
-      .via(XmlParsers.extractElement(name, path))
-      .runWith(concatKeyValue)
-
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]] =
-    EitherT {
-      messageType match {
-        case Some(value) =>
-          Future
-            .sequence(
-              elementPaths(value.messageCode).map {
-                row =>
-                  getAdditionalField(row._1, row._2, src) // node name and its path
-              }.toSeq
-            )
-            .map(
-              keyValuePairs => Right(keyValuePairs)
-            )
-        case None => Future.successful(Left(ParseError.NoElementFound(s"Unable to find $messageType")))
-      }
-    }
+class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer) extends AuditService with Logging {
 
   def send(auditType: AuditType, jsonStream: Payload)(implicit
     hc: HeaderCarrier

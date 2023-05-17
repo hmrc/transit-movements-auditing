@@ -59,6 +59,7 @@ import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
+import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
@@ -75,7 +76,6 @@ class AuditControllerSpec
     with Matchers
     with TestActorSystem
     with MockitoSugar
-//    with ScalaFutures
     with ModelGenerators
     with BeforeAndAfterEach {
 
@@ -98,10 +98,11 @@ class AuditControllerSpec
     .withHeaders(CONTENT_TYPE -> "application/json")
     .withBody(jsonStream)
 
-  private val mockAppConfig          = mock[AppConfig]
-  private val mockAuditService       = mock[AuditService]
-  private val mockConversionService  = mock[ConversionService]
-  private val mockObjectStoreService = mock[ObjectStoreService]
+  private val mockAppConfig           = mock[AppConfig]
+  private val mockAuditService        = mock[AuditService]
+  private val mockConversionService   = mock[ConversionService]
+  private val mockObjectStoreService  = mock[ObjectStoreService]
+  private val mockFieldParsingService = mock[FieldParsingService]
 
   private val conversionServiceXmlToJsonPartial: PartialFunction[Any, EitherT[Future, ConversionError, Source[ByteString, _]]] = {
     case _ => EitherT.rightT(Source.single(ByteString(Json.stringify(Json.obj("dummy" -> "dummy")))))
@@ -114,7 +115,14 @@ class AuditControllerSpec
   val controllerComponentWithTempFile: ControllerComponents =
     stubControllerComponents(playBodyParsers = PlayBodyParsers(SingletonTemporaryFileCreator, errorHandler)(materializer))
 
-  private val controller = new AuditController(controllerComponentWithTempFile, mockConversionService, mockAuditService, mockObjectStoreService, mockAppConfig)(
+  private val controller = new AuditController(
+    controllerComponentWithTempFile,
+    mockConversionService,
+    mockAuditService,
+    mockObjectStoreService,
+    mockFieldParsingService,
+    mockAppConfig
+  )(
     materializer,
     temporaryFileCreator
   )
@@ -175,7 +183,7 @@ class AuditControllerSpec
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.getAdditionalFields(any(), any()))
+        when(mockFieldParsingService.getAdditionalFields(any(), any()))
           .thenReturn(
             EitherT.rightT(
               Seq(
@@ -200,7 +208,7 @@ class AuditControllerSpec
         verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockAuditService, times(1)).send(eqTo(LargeMessageSubmissionRequested), any())(any())
-        verify(mockAuditService, times(1)).getAdditionalFields(any(), any())
+        verify(mockFieldParsingService, times(1)).getAdditionalFields(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
       }
 
@@ -291,7 +299,8 @@ class AuditControllerSpec
         val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
         when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
-        when(mockAuditService.getAdditionalFields(any(), any())).thenReturn(EitherT.rightT(Seq(Right[ParseError, (String, String)](("key", "value")))))
+        when(mockFieldParsingService.getAdditionalFields(any(), any()))
+          .thenReturn(EitherT.rightT(Seq(Right[ParseError, (String, String)](("key", "value")))))
         when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(Constants.XContentLengthHeader -> contentExceedsAuditLimit))
@@ -301,7 +310,7 @@ class AuditControllerSpec
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
-        verify(mockAuditService, times(1)).getAdditionalFields(any(), any())
+        verify(mockFieldParsingService, times(2)).getAdditionalFields(any(), any())
         verify(mockAuditService, times(1)).send(eqTo(Discrepancies), any())(any())
       }
 

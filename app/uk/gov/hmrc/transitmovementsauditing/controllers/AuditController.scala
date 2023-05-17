@@ -43,6 +43,7 @@ import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
+import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
 
 import java.time.Instant
 import java.time.ZoneOffset
@@ -58,6 +59,7 @@ class AuditController @Inject() (
   conversionService: ConversionService,
   auditService: AuditService,
   objectStoreService: ObjectStoreService,
+  FieldParsingService: FieldParsingService,
   appConfig: AppConfig
 )(implicit
   val materializer: Materializer,
@@ -123,7 +125,7 @@ class AuditController @Inject() (
       case (None, true) =>
         logger.info("Payload in body and > auditing message limit")
         (for {
-          parseResults <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+          parseResults <- FieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
           keyValuePairs = parseResults.collect {
             case Right(pair) => pair
           }
@@ -135,7 +137,7 @@ class AuditController @Inject() (
         logger.info("Payload in object store and > auditing message limit")
         for {
           contents     <- objectStoreService.getContents(uri).asPresentation
-          parseResults <- auditService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+          parseResults <- FieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
           keyValuePairs = parseResults.collect {
             case Right(pair) => pair
           }
