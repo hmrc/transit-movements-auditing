@@ -47,6 +47,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import scala.xml.NodeSeq
 
 class AuditServiceSpec
     extends AnyFreeSpec

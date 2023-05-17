@@ -26,6 +26,7 @@ import org.mockito.MockitoSugar.times
 import org.mockito.MockitoSugar.verify
 import org.mockito.MockitoSugar.when
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -57,16 +58,26 @@ import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
+import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
+import uk.gov.hmrc.transitmovementsauditing.services.XmlParsingServiceHelpers
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem with MockitoSugar with ModelGenerators with BeforeAndAfterEach {
+class AuditControllerSpec
+    extends AnyFreeSpec
+    with XmlParsingServiceHelpers
+    with Matchers
+    with TestActorSystem
+    with MockitoSugar
+    with ModelGenerators
+    with BeforeAndAfterEach {
 
   private val contentLessThanAuditLimit = "49999"
   private val contentExceedsAuditLimit  = "50001"
@@ -87,10 +98,11 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
     .withHeaders(CONTENT_TYPE -> "application/json")
     .withBody(jsonStream)
 
-  private val mockAppConfig          = mock[AppConfig]
-  private val mockAuditService       = mock[AuditService]
-  private val mockConversionService  = mock[ConversionService]
-  private val mockObjectStoreService = mock[ObjectStoreService]
+  private val mockAppConfig           = mock[AppConfig]
+  private val mockAuditService        = mock[AuditService]
+  private val mockConversionService   = mock[ConversionService]
+  private val mockObjectStoreService  = mock[ObjectStoreService]
+  private val mockFieldParsingService = mock[FieldParsingService]
 
   private val conversionServiceXmlToJsonPartial: PartialFunction[Any, EitherT[Future, ConversionError, Source[ByteString, _]]] = {
     case _ => EitherT.rightT(Source.single(ByteString(Json.stringify(Json.obj("dummy" -> "dummy")))))
@@ -98,11 +110,21 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
   val errorHandler = new DefaultHttpErrorHandler(HttpErrorConfig(showDevErrors = false, None), None, None)
 
+  implicit val temporaryFileCreator = SingletonTemporaryFileCreator
+
   val controllerComponentWithTempFile: ControllerComponents =
     stubControllerComponents(playBodyParsers = PlayBodyParsers(SingletonTemporaryFileCreator, errorHandler)(materializer))
 
-  private val controller = new AuditController(controllerComponentWithTempFile, mockConversionService, mockAuditService, mockObjectStoreService, mockAppConfig)(
-    materializer
+  private val controller = new AuditController(
+    controllerComponentWithTempFile,
+    mockConversionService,
+    mockAuditService,
+    mockObjectStoreService,
+    mockFieldParsingService,
+    mockAppConfig
+  )(
+    materializer,
+    temporaryFileCreator
   )
 
   override def beforeEach(): Unit = {
@@ -132,14 +154,14 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
       "returns 202 when auditing was successful with an XML payload that does not exceed audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
-        when(mockConversionService.toJson(eqTo(MessageType.IE004), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockConversionService.toJson(eqTo(MessageType.IE004), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
         when(mockAuditService.send(eqTo(AmendmentAcceptance), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
-        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), eqTo(xmlStream))(any())
+        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), any())(any())
         verify(mockAuditService, times(1)).send(eqTo(AmendmentAcceptance), any())(any())
       }
 
@@ -161,6 +183,16 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
+        when(mockFieldParsingService.getAdditionalFields(any(), any()))
+          .thenReturn(
+            EitherT.rightT(
+              Seq(
+                Right[ParseError, (String, String)]("key1", "value1"),
+                Right[ParseError, (String, String)]("key2", "value2"),
+                Right[ParseError, (String, String)]("key3", "value3")
+              )
+            )
+          )
         when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
 
         val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
@@ -176,6 +208,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockAuditService, times(1)).send(eqTo(LargeMessageSubmissionRequested), any())(any())
+        verify(mockFieldParsingService, times(1)).getAdditionalFields(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
       }
 
@@ -183,7 +216,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), eqTo(Right(jsonStream)))(any())).thenReturn(EitherT.rightT(()))
+        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(TraderFailedUploadEvent)(fakeJsonRequest)
         status(result) mustBe Status.ACCEPTED
@@ -266,6 +299,8 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
         when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
+        when(mockFieldParsingService.getAdditionalFields(any(), any()))
+          .thenReturn(EitherT.rightT(Seq(Right[ParseError, (String, String)](("key", "value")))))
         when(mockAuditService.send(eqTo(Discrepancies), any())(any())).thenReturn(EitherT.rightT(()))
 
         val result = controller.post(Discrepancies, Some(uri))(emptyFakeRequest.withHeaders(Constants.XContentLengthHeader -> contentExceedsAuditLimit))
@@ -275,6 +310,7 @@ class AuditControllerSpec extends AnyFreeSpec with Matchers with TestActorSystem
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockObjectStoreService, times(1)).getContents(eqTo(uri))(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
+        verify(mockFieldParsingService, times(2)).getAdditionalFields(any(), any())
         verify(mockAuditService, times(1)).send(eqTo(Discrepancies), any())(any())
       }
 

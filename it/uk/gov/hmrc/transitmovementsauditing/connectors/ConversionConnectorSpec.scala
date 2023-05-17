@@ -53,7 +53,6 @@ import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
@@ -50,10 +51,11 @@ trait AuditService {
   def send(auditType: AuditType, jsonStream: Payload)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
+
 }
 
 @Singleton
-class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer) extends AuditService {
+class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer) extends AuditService with Logging {
 
   def send(auditType: AuditType, jsonStream: Payload)(implicit
     hc: HeaderCarrier
@@ -88,7 +90,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       detail = messageBody
     )
 
-  private def extractMessage(stream: Payload): EitherT[Future, AuditError, String] =
+  private def extractMessage(stream: Payload) =
     EitherT {
       stream match {
         case Right(source) =>
@@ -102,9 +104,8 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
             .recover {
               case NonFatal(ex) => Left(AuditError.UnexpectedError(s"Error extracting body from stream", Some(ex)))
             }
-        case Left(summary) => Future.successful(Right(s"""{"ObjectStoreLocation": "$summary"}"""))
+        case Left(summary) => Future.successful(Right(s"""{"ObjectSummaryWithFields": "$summary"}"""))
       }
-
     }
 
   private def parseJson(body: String): EitherT[Future, AuditError, JsValue] =

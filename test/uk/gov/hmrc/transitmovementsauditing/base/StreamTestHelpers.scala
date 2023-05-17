@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.transitmovementsauditing.base
 
+import akka.stream.alpakka.xml.ParseEvent
+import akka.stream.alpakka.xml.scaladsl.XmlParsing
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 
@@ -37,4 +39,7 @@ trait StreamTestHelpers {
       Source.fromIterator(
         () => string.grouped(pieces).map(ByteString(_, StandardCharsets.UTF_8))
       )
+
+  def createParsingEventStream(node: NodeSeq): Source[ParseEvent, _] =
+    createStream(node).via(XmlParsing.parser)
 }

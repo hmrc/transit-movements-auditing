@@ -18,8 +18,10 @@ package uk.gov.hmrc
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
+import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
 
 package object transitmovementsauditing {
-  type Payload = Either[ObjectSummaryWithMd5, Source[ByteString, _]]
+
+  type Payload = Either[ObjectSummaryWithFields, Source[ByteString, _]]
+
 }
