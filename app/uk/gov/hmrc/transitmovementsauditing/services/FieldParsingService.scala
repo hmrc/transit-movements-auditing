@@ -22,6 +22,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
+import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
@@ -41,7 +42,7 @@ trait FieldParsingService {
 }
 
 @Singleton
-class FieldParsingServiceImpl(implicit ec: ExecutionContext, materializer: Materializer) extends FieldParsingService with ElementPaths with Logging {
+class FieldParsingServiceImpl @Inject() (implicit ec: ExecutionContext, materializer: Materializer) extends FieldParsingService with ElementPaths with Logging {
 
   def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]] =
     src
