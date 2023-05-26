@@ -43,10 +43,6 @@ import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
 trait ObjectStoreService {
 
-  def getContents(
-    objectStoreResourceLocation: ObjectStoreResourceLocation
-  )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]]
-
   def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
@@ -57,24 +53,6 @@ trait ObjectStoreService {
 class ObjectStoreServiceImpl @Inject() (appConfig: AppConfig)(implicit materializer: Materializer, client: PlayObjectStoreClient)
     extends ObjectStoreService
     with Logging {
-
-  override def getContents(
-    objectStoreResourceLocation: ObjectStoreResourceLocation
-  )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]] =
-    EitherT(
-      client
-        .getObject[Source[ByteString, NotUsed]](
-          Path.File(objectStoreResourceLocation.value),
-          "common-transit-convention-traders"
-        )
-        .flatMap {
-          case Some(source) => Future.successful(Right(source.content))
-          case _            => Future.successful(Left(ObjectStoreError.FileNotFound(objectStoreResourceLocation)))
-        }
-        .recover {
-          case NonFatal(ex) => Left(ObjectStoreError.UnexpectedError(Some(ex)))
-        }
-    )
 
   def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
     ec: ExecutionContext,
