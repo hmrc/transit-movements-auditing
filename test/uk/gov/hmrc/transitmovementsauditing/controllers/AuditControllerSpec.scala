@@ -35,14 +35,24 @@ import play.api.http.Status
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
+import play.api.mvc.ActionBuilder
+import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import play.api.mvc.DefaultActionBuilder
 import play.api.mvc.PlayBodyParsers
+import play.api.mvc.Request
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.internalauth.client.IAAction
+import uk.gov.hmrc.internalauth.client.Predicate
+import uk.gov.hmrc.internalauth.client.Resource
+import uk.gov.hmrc.internalauth.client.ResourceLocation
+import uk.gov.hmrc.internalauth.client.ResourceType
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
@@ -94,6 +104,16 @@ class AuditControllerSpec
   private val mockObjectStoreService  = mock[ObjectStoreService]
   private val mockFieldParsingService = mock[FieldParsingService]
 
+  object TestInternalAuthActionProvider extends InternalAuthActionProvider {
+
+    override def apply(predicate: Predicate)(implicit ec: ExecutionContext): ActionBuilder[Request, AnyContent] =
+      predicate match {
+        case Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE")) =>
+          DefaultActionBuilder(stubControllerComponents().parsers.anyContent)(ec)
+        case _ => fail("Predicate is not as expected")
+      }
+  }
+
   private val conversionServiceXmlToJsonPartial: PartialFunction[Any, EitherT[Future, ConversionError, Source[ByteString, _]]] = {
     case _ => EitherT.rightT(Source.single(ByteString(Json.stringify(Json.obj("dummy" -> "dummy")))))
   }
@@ -111,6 +131,7 @@ class AuditControllerSpec
     mockAuditService,
     mockObjectStoreService,
     mockFieldParsingService,
+    TestInternalAuthActionProvider,
     mockAppConfig
   )(
     materializer,

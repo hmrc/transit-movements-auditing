@@ -28,11 +28,17 @@ import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.internalauth.client.IAAction
+import uk.gov.hmrc.internalauth.client.Predicate
+import uk.gov.hmrc.internalauth.client.Resource
+import uk.gov.hmrc.internalauth.client.ResourceLocation
+import uk.gov.hmrc.internalauth.client.ResourceType
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
@@ -58,7 +64,8 @@ class AuditController @Inject() (
   conversionService: ConversionService,
   auditService: AuditService,
   objectStoreService: ObjectStoreService,
-  FieldParsingService: FieldParsingService,
+  fieldParsingService: FieldParsingService,
+  internalAuth: InternalAuthActionProvider,
   appConfig: AppConfig
 )(implicit
   val materializer: Materializer,
@@ -68,7 +75,9 @@ class AuditController @Inject() (
     with ErrorTranslator
     with Logging {
 
-  def post(auditType: AuditType): Action[Source[ByteString, _]] = Action.streamFromFile {
+  private val predicate = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
+
+  def post(auditType: AuditType): Action[Source[ByteString, _]] = internalAuth(predicate).streamFromFile {
 
     implicit request =>
       if (appConfig.auditingEnabled) {
@@ -109,7 +118,7 @@ class AuditController @Inject() (
     if (exceedsLimit) {
       logger.info("Payload in body and > auditing message limit")
       (for {
-        parseResults <- FieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+        parseResults <- fieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
         keyValuePairs = parseResults.collect {
           case Right(pair) => pair
         }

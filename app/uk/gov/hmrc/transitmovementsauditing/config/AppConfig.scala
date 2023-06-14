@@ -33,4 +33,6 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
   lazy val converterUrl = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
 
   lazy val auditMessageMaxSize: Long = config.get[Long]("audit-message-max-size")
+
+  lazy val internalAuthEnabled: Boolean = config.get[Boolean]("services.internal-auth.enabled")
 }
