@@ -24,26 +24,25 @@ import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
-import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
-import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
-import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
 import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
+import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
 
 import java.time.Instant
 import java.time.ZoneOffset
@@ -69,14 +68,14 @@ class AuditController @Inject() (
     with ErrorTranslator
     with Logging {
 
-  def post(auditType: AuditType, uri: Option[ObjectStoreResourceLocation] = None): Action[Source[ByteString, _]] = Action.streamFromFile {
+  def post(auditType: AuditType): Action[Source[ByteString, _]] = Action.streamFromFile {
 
     implicit request =>
       if (appConfig.auditingEnabled) {
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
-          stream <- getSource(auditType, uri, request)(exceedsMessageSize)
+          stream <- getSource(auditType, request)(exceedsMessageSize)
           result <- auditService.send(auditType, stream).asPresentation
         } yield result)
           .fold(
@@ -91,11 +90,7 @@ class AuditController @Inject() (
   private def exceedsMessageSize(implicit request: Request[Source[ByteString, _]]): Boolean =
     request.headers
       .get(Constants.XContentLengthHeader)
-      .map(_.toLong > appConfig.auditMessageMaxSize)
-      .getOrElse(false)
-
-  def postLarge(auditType: AuditType, uri: String): Action[Source[ByteString, _]] =
-    post(auditType, Some(ObjectStoreResourceLocation(uri).stripRoutePrefix))
+      .exists(_.toLong > appConfig.auditMessageMaxSize)
 
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier
@@ -108,41 +103,24 @@ class AuditController @Inject() (
   private def fileId(): FileId =
     FileId(s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}")
 
-  private def getSource(auditType: AuditType, uri: Option[ObjectStoreResourceLocation], request: Request[Source[ByteString, _]])(exceedsLimit: Boolean)(implicit
+  private def getSource(auditType: AuditType, request: Request[Source[ByteString, _]])(exceedsLimit: Boolean)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Payload] =
-    (uri, exceedsLimit) match {
-      case (None, false) =>
-        logger.info("Payload in body and < auditing message limit")
-        convertIfNecessary(auditType, request).asPresentation
-          .map(Right(_))
-      case (Some(uri), false) =>
-        logger.info("Payload in object store and < auditing message limit")
-        val contents = objectStoreService
-          .getContents(uri)
-          .asPresentation
-        contents.map(Right(_))
-      case (None, true) =>
-        logger.info("Payload in body and > auditing message limit")
-        (for {
-          parseResults <- FieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
-          keyValuePairs = parseResults.collect {
-            case Right(pair) => pair
-          }
-          objSummary <- objectStoreService.putFile(fileId(), request.body).asPresentation
-        } yield ObjectSummaryWithFields(objSummary, keyValuePairs)).map {
-          summaryWithFields => Left(summaryWithFields)
+    if (exceedsLimit) {
+      logger.info("Payload in body and > auditing message limit")
+      (for {
+        parseResults <- FieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+        keyValuePairs = parseResults.collect {
+          case Right(pair) => pair
         }
-      case (Some(uri), true) =>
-        logger.info("Payload in object store and > auditing message limit")
-        for {
-          contents     <- objectStoreService.getContents(uri).asPresentation
-          parseResults <- FieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
-          keyValuePairs = parseResults.collect {
-            case Right(pair) => pair
-          }
-          objSummary <- objectStoreService.putFile(fileId(), contents).asPresentation
-        } yield Left(ObjectSummaryWithFields(objSummary, keyValuePairs))
+        objSummary <- objectStoreService.putFile(fileId(), request.body).asPresentation
+      } yield ObjectSummaryWithFields(objSummary, keyValuePairs)).map {
+        summaryWithFields => Left(summaryWithFields)
+      }
+    } else {
+      logger.info("Payload in body and < auditing message limit")
+      convertIfNecessary(auditType, request).asPresentation
+        .map(Right(_))
     }
 
 }

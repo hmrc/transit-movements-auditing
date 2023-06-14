@@ -64,11 +64,15 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
       val newSource = sut.toJson(messageType, source)
+      val sink = newSource.flatMap(
+        x => EitherT.right[ConversionError](x.runWith(Sink.head))
+      )
 
-      whenReady(newSource.value.flatMap(_.right.get.runWith(Sink.head))) {
-        result =>
+      whenReady(sink.value) {
+        case Right(result) =>
           Json.parse(result.utf8String) mustBe Json.obj("dummy" -> "dummy")
           monitor.isCompleted mustBe true
+        case _ => fail("Failed to get a source")
       }
     }
   }
@@ -101,7 +105,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
           monitor.isCompleted mustBe true
           result match {
             case Left(ConversionError.FailedConversion("error")) => ()
-            case Left(ConversionError.FailedConversion(x))       => fail(s"""Incorrect messsage: got "$x", should be "error".""")
+            case Left(ConversionError.FailedConversion(x))       => fail(s"""Incorrect message: got "$x", should be "error".""")
             case _                                               => fail("Incorrect response")
           }
       }
@@ -130,13 +134,13 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
 
         val newSource = sut.toJson(messageType, source)
 
-        whenReady(newSource.value) {
-          result =>
-            monitor.isCompleted mustBe true
-            result match {
-              case Left(ConversionError.UnexpectedError(_, Some(UpstreamErrorResponse(_, 500, _, _)))) => ()
-              case _                                                                                   => fail("Incorrect response")
-            }
+        whenReady(
+          monitor.flatMap(
+            _ => newSource.value
+          )
+        ) {
+          case Left(ConversionError.UnexpectedError(_, Some(UpstreamErrorResponse(_, 500, _, _)))) => ()
+          case _                                                                                   => fail("Incorrect response")
         }
       }
     }

@@ -74,48 +74,6 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
 
   "ObjectStoreService" - {
 
-    "on retrieving the object" - {
-
-      "should return the file contents" in {
-        val metadata = ObjectMetadata("", 0, Md5Hash(""), Instant.now(), Map.empty[String, String])
-        val obj      = Option[Object[Source[ByteString, NotUsed]]](Object.apply(File(filePath.value), Source.single(ByteString(fileContents)), metadata))
-
-        when(mockClient.getObject[Source[ByteString, NotUsed]](eqTo(File(filePath.value)), any())(any(), any()))
-          .thenReturn(Future.successful(obj))
-
-        val sut    = new ObjectStoreServiceImpl(appConfig)
-        val result = sut.getContents(filePath).value
-
-        whenReady(result) {
-          _ mustBe Right(obj.get.content)
-        }
-
-      }
-
-      "should return an error when the file is not found in object store" in {
-        when(mockClient.getObject[Source[ByteString, NotUsed]](any[File](), any())(any(), any())).thenReturn(Future.successful(None))
-        val sut    = new ObjectStoreServiceImpl(appConfig)
-        val result = sut.getContents(filePath).value
-
-        whenReady(result) {
-          case Left(FileNotFound(fileName)) => succeed
-          case reason                       => fail(s"Expected Left(FileNotFound), got $reason")
-        }
-      }
-
-      "should return an error when there is a problem getting an object from object store" in {
-        when(mockClient.getObject[Source[ByteString, NotUsed]](any[File](), any())(any(), any()))
-          .thenReturn(Future.failed(UpstreamErrorResponse("failed", INTERNAL_SERVER_ERROR)))
-        val sut    = new ObjectStoreServiceImpl(appConfig)
-        val result = sut.getContents(filePath).value
-
-        whenReady(result) {
-          case Left(UnexpectedError(fileName)) => succeed
-          case reason                          => fail(s"Expected an UnexpectedError, got $reason")
-        }
-      }
-    }
-
     "On putting a file in object store" - {
 
       val source: Source[ByteString, _]       = Source.single(ByteString("<test>test</test>"))
