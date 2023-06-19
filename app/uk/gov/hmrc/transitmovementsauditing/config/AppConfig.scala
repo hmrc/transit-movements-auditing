@@ -34,5 +34,5 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
 
   lazy val auditMessageMaxSize: Long = config.get[Long]("audit-message-max-size")
 
-  lazy val internalAuthEnabled: Boolean = config.get[Boolean]("services.internal-auth.enabled")
+  lazy val internalAuthEnabled: Boolean = config.get[Boolean]("microservice.services.internal-auth.enabled")
 }

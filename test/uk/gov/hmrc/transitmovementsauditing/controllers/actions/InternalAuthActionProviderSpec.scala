@@ -54,7 +54,7 @@ class InternalAuthActionProviderSpec extends AnyFreeSpec with Matchers with Mock
         val mockBackendAuthComponents = mock[BackendAuthComponents]
         when(mockBackendAuthComponents.authorizedAction(any[Predicate], eqTo(EmptyRetrieval), any(), any())).thenReturn(mockActionBuilder)
 
-        val samplePermission = Predicate.Permission(Resource(ResourceType("ctc-guarantee-balance-router"), ResourceLocation("balance")), IAAction("READ"))
+        val samplePermission = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
         val sut              = new InternalAuthActionProviderImpl(appConfig, mockBackendAuthComponents, stubControllerComponents())
 
         sut(samplePermission) mustBe a[DefaultActionBuilder]
@@ -73,7 +73,7 @@ class InternalAuthActionProviderSpec extends AnyFreeSpec with Matchers with Mock
         val mockBackendAuthComponents = mock[BackendAuthComponents]
         when(mockBackendAuthComponents.authorizedAction(any[Predicate], eqTo(EmptyRetrieval), any(), any())).thenReturn(mockActionBuilder)
 
-        val samplePermission = Predicate.Permission(Resource(ResourceType("ctc-guarantee-balance-router"), ResourceLocation("balance")), IAAction("READ"))
+        val samplePermission = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
         val sut              = new InternalAuthActionProviderImpl(appConfig, mockBackendAuthComponents, stubControllerComponents())
 
         sut(samplePermission) mustBe mockActionBuilder
