@@ -16,6 +16,14 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models
 
+import play.api.libs.json.Format
+import play.api.libs.json.JsError
+import play.api.libs.json.JsString
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.Json
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
+
 sealed abstract class MessageType(val messageCode: String) extends Product with Serializable
 
 object MessageType {
@@ -73,4 +81,17 @@ object MessageType {
     IE928,
     IE140
   )
+
+  def findByCode(code: String): Option[MessageType] =
+    values.find(_.messageCode == code)
+
+  implicit val messageTypeReads: Reads[MessageType] = Reads {
+    case JsString(value) => findByCode(value).map(JsSuccess(_)).getOrElse(JsError())
+    case _               => JsError()
+  }
+
+  implicit val messageTypeWrites: Writes[MessageType] = Writes {
+    obj => JsString(obj.messageCode)
+  }
+
 }

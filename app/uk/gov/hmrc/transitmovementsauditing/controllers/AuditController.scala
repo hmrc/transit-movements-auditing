@@ -41,6 +41,7 @@ import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.Details
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
@@ -77,7 +78,11 @@ class AuditController @Inject() (
 
   private val predicate = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
 
-  def post(auditType: AuditType): Action[Source[ByteString, _]] = internalAuth(predicate).streamFromFile {
+  def post(auditType: AuditType): Action[_] =
+  if (auditType.messageType.isDefined) postMessageTypeAudit(auditType)
+  else postStatusAudit(auditType)
+
+  def postMessageTypeAudit(auditType: AuditType): Action[Source[ByteString, _]] = internalAuth(predicate).streamFromFile {
 
     implicit request =>
       if (appConfig.auditingEnabled) {
@@ -95,6 +100,12 @@ class AuditController @Inject() (
         Future.successful(Accepted)
       }
   }
+
+  def postStatusAudit(auditType: AuditType): Action[Details] =
+    internalAuth(predicate).async(parse.json[Details]) {
+      implicit request =>
+        Future.successful(Accepted)
+    }
 
   private def exceedsMessageSize(implicit request: Request[Source[ByteString, _]]): Boolean =
     request.headers
