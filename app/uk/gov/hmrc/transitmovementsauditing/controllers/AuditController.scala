@@ -17,16 +17,19 @@
 package uk.gov.hmrc.transitmovementsauditing.controllers
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsError
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
+import play.api.mvc.Result
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.internalauth.client.IAAction
 import uk.gov.hmrc.internalauth.client.Predicate
@@ -58,6 +61,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 @Singleton()
 class AuditController @Inject() (
@@ -78,33 +82,59 @@ class AuditController @Inject() (
 
   private val predicate = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
 
-  def post(auditType: AuditType): Action[_] =
-  if (auditType.messageType.isDefined) postMessageTypeAudit(auditType)
-  else postStatusAudit(auditType)
-
-  def postMessageTypeAudit(auditType: AuditType): Action[Source[ByteString, _]] = internalAuth(predicate).streamFromFile {
-
-    implicit request =>
-      if (appConfig.auditingEnabled) {
-        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
-        (for {
-          stream <- getSource(auditType, request)(exceedsMessageSize)
-          result <- auditService.send(auditType, stream).asPresentation
-        } yield result)
-          .fold(
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            _ => Accepted
-          )
-      } else {
-        Future.successful(Accepted)
-      }
-  }
-
-  def postStatusAudit(auditType: AuditType): Action[Details] =
-    internalAuth(predicate).async(parse.json[Details]) {
+  def post(auditType: AuditType): Action[Source[ByteString, _]] =
+    internalAuth(predicate).streamFromFile {
       implicit request =>
-        Future.successful(Accepted)
+        if (auditType.messageType.isDefined) postMessageTypeAudit(auditType)
+        else postStatusAudit(auditType)
+    }
+
+  def postMessageTypeAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+    if (appConfig.auditingEnabled) {
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+      (for {
+        stream <- getSource(auditType, request)(exceedsMessageSize)
+        result <- auditService.send(auditType, stream).asPresentation
+      } yield result)
+        .fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          _ => Accepted
+        )
+    } else {
+      Future.successful(Accepted)
+    }
+
+  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+    (for {
+      string  <- extractBody(request.body)
+      details <- parseDetails(string)
+    } yield Accepted)
+      .valueOr(
+        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+      )
+
+  private def parseDetails(body: String): EitherT[Future, PresentationError, Details] =
+    Json
+      .parse(body)
+      .validate[Details]
+      .map(
+        x => EitherT.rightT[Future, PresentationError](x)
+      )
+      .recoverTotal {
+        err: JsError => EitherT.leftT(PresentationError.badRequestError(s"Could not parse: $err"))
+      }
+
+  private def extractBody(stream: Source[ByteString, _]): EitherT[Future, PresentationError, String] =
+    EitherT {
+      stream
+        .reduce(_ ++ _)
+        .map(_.utf8String)
+        .runWith(Sink.head)
+        .map(Right.apply)
+        .recover {
+          case NonFatal(ex) => Left(PresentationError.internalServiceError(cause = Some(ex)))
+        }
     }
 
   private def exceedsMessageSize(implicit request: Request[Source[ByteString, _]]): Boolean =

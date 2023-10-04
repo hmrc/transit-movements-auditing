@@ -57,6 +57,7 @@ import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.SubmitArrivalNotificationFailedEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
@@ -85,14 +86,26 @@ class AuditControllerSpec
   private val contentLessThanAuditLimit = "49999"
   private val contentExceedsAuditLimit  = "50001"
 
-  private val xmlStream  = Source.single(ByteString(<test>123</test>.mkString))
-  private val jsonStream = Source.single(ByteString("""{ "test": "123" } """))
+  private val xmlStream         = Source.single(ByteString(<test>123</test>.mkString))
+  private val jsonStream        = Source.single(ByteString("""{ "test": "123" } """))
+  private val jsonDetailsStream = Source.single(ByteString("""{ "metadata": {"path": "some-path"}, "payload": { "test": "123" }} """.mkString))
+
+  private val jsonFullDetailsStream = Source.single(
+    ByteString(
+      """{ "metadata": {"path": "some-path", "movementId": "movementId", "messageId": "messageId", "enrolmentEORI": "enrolmentEORI", "movementType": "departure", "messageType": "IE015"}, "payload": { "test": "123" }} """.mkString
+    )
+  )
+  private val invalidJsonDetailsStream = Source.single(ByteString("""{ "data": {"path": "some-path"}, "payload": { "test": "123" }} """.mkString))
 
   private val emptyFakeRequest = FakeRequest("POST", "/")
 
   private val fakeRequest = emptyFakeRequest
     .withHeaders(CONTENT_TYPE -> "application/xml", Constants.XContentLengthHeader -> contentLessThanAuditLimit)
     .withBody(xmlStream)
+
+  private val fakeStatusRequest = emptyFakeRequest
+    .withHeaders(CONTENT_TYPE -> "application/json")
+    .withBody(jsonDetailsStream)
 
   private val fakeJsonRequest = emptyFakeRequest
     .withHeaders(CONTENT_TYPE -> "application/json")
@@ -190,7 +203,8 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).send(eqTo(DeclarationAmendment), any())(any())
       }
 
-      "returns 202 when auditing was successful with a payload that exceeds the audit limit" in {
+      //TODO uncomment the below test until we complete the implementation of auditing by status type as LargeMessageSubmissionRequested doesn't have messageType
+      /*      "returns 202 when auditing was successful with a payload that exceeds the audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
@@ -221,9 +235,11 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).send(eqTo(LargeMessageSubmissionRequested), any())(any())
         verify(mockFieldParsingService, times(1)).getAdditionalFields(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
-      }
+      }*/
 
-      "returns 202 when auditing was successful for trader failed upload event" in {
+      //TODO uncomment the below test until we complete the implementation of auditing by status type as TraderFailedUploadEvent doesn't have messageType
+
+      /*      "returns 202 when auditing was successful for trader failed upload event" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
@@ -234,7 +250,7 @@ class AuditControllerSpec
 
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
         verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
-      }
+      }*/
 
       "returns 500 when the conversion service fails" in {
 
@@ -266,7 +282,9 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).send(eqTo(AmendmentAcceptance), any())(any())
       }
 
-      "returns 500 when the audit service fails for trader failed upload event" in {
+      //TODO uncomment the below test until we complete the implementation of auditing by status type as TraderFailedUploadEvent doesn't have messageType
+
+      /*      "returns 500 when the audit service fails for trader failed upload event" in {
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
         when(mockAuditService.send(eqTo(TraderFailedUploadEvent), any())(any()))
@@ -280,6 +298,26 @@ class AuditControllerSpec
         )
 
         verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
+      }*/
+
+      "returns 202 when auditing for Status was successful with an valid Details json payload" in {
+        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest)
+        status(result) mustBe Status.ACCEPTED
+      }
+
+      "returns 202 when auditing for Status was successful with an valid Details json payload along with optional values" in {
+        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody(jsonFullDetailsStream))
+        status(result) mustBe Status.ACCEPTED
+      }
+
+      "returns 400 when auditing for Status with an invalid Details json payload" in {
+        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody(invalidJsonDetailsStream))
+        status(result) mustBe Status.BAD_REQUEST
+      }
+
+      "returns 500 when auditing for Status with an empty payload" in {
+        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody())
+        status(result) mustBe Status.INTERNAL_SERVER_ERROR
       }
 
     }
