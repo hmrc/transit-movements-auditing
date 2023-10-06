@@ -41,6 +41,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
@@ -109,7 +110,7 @@ class AuditController @Inject() (
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    val auditSource = request.headers.get("X-Audit-Source") match {
+    val auditSource = request.headers.get(XAuditSourceHeader) match {
       case Some(value) => value
       case None        => auditType.source
     }

@@ -52,6 +52,7 @@ import uk.gov.hmrc.internalauth.client.ResourceType
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
@@ -362,7 +363,7 @@ class AuditControllerSpec
           mockAuditService.sendStatusTypeEvent(eqTo(details), eqTo("SubmitArrivalNotificationFailedEvent"), eqTo("test"))(any())
         ).thenReturn(EitherT.rightT(()))
 
-        val request = emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", "X-Audit-Source" -> "test").withBody(jsonDetailsStream)
+        val request = emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", XAuditSourceHeader -> "test").withBody(jsonDetailsStream)
         val result  = controller.post(SubmitArrivalNotificationFailedEvent)(request)
         status(result) mustBe Status.ACCEPTED
 
