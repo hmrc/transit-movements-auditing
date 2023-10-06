@@ -30,6 +30,7 @@ import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -40,6 +41,7 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.Details
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 
@@ -71,6 +73,23 @@ class AuditServiceSpec
     """{
       |  "messageSender":
       |}""".stripMargin
+
+  private val someValidDetailsJson =
+    """
+      |{
+      |    "metadata": {
+      |        "path": "some-path",
+      |        "movementId": "movementId",
+      |        "messageId": "messageId",
+      |        "enrolmentEORI": "enrolmentEORI",
+      |        "movementType": "departure",
+      |        "messageType": "IE015"
+      |    },
+      |    "payload": {
+      |            "messageSender": "sender"
+      |    }
+      |}
+      |""".stripMargin
 
   override def beforeEach: Unit =
     reset(mockAuditConnector)
@@ -152,6 +171,64 @@ class AuditServiceSpec
           message mustBe "Error extracting body from stream"
         case x => fail(s"Did not get a Left from an unexpected exception - got $x")
       }
+    }
+
+    "status audit" - {
+      "should successfully send message to audit connector" - AuditType.values.foreach {
+        auditType =>
+          s"${auditType.name} to ${auditType.source}" in {
+            reset(mockAuditConnector)
+            val service                                   = new AuditServiceImpl(mockAuditConnector)
+            val captor: ArgumentCaptor[ExtendedDataEvent] = ArgumentCaptor.forClass(classOf[ExtendedDataEvent])
+
+            when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
+              .thenReturn(Future.successful(Success))
+
+            val details = Json.parse(someValidDetailsJson).validate[Details].get
+
+            val result = service.sendStatusTypeEvent(details, auditType.name, auditType.source)
+
+            whenReady(result.value, Timeout(1.second)) {
+              result =>
+                result mustBe Right(())
+                val extendedDataEvent = captor.getValue
+                extendedDataEvent.auditType mustBe auditType.name
+                extendedDataEvent.auditSource mustBe auditType.source
+                extendedDataEvent.detail mustBe someGoodCC015CJson
+            }
+          }
+      }
+
+      "should return an error when the connector reports a failure" in {
+        val service = new AuditServiceImpl(mockAuditConnector)
+
+        when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(Failure("a failure")))
+
+        val details = Json.parse(someValidDetailsJson).validate[Details].get
+
+        val result = service.sendStatusTypeEvent(details, "SubmitDeclarationFailedEvent", "common-transit-convention-traders")
+
+        whenReady(result.value, Timeout(1.second)) {
+          _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
+        }
+      }
+
+      "should return an error when the connector reports that auditing is disabled" in {
+        val service = new AuditServiceImpl(mockAuditConnector)
+
+        when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(Disabled))
+
+        val details = Json.parse(someValidDetailsJson).validate[Details].get
+
+        val result = service.sendStatusTypeEvent(details, "SubmitDeclarationFailedEvent", "common-transit-convention-traders")
+
+        whenReady(result.value, Timeout(1.second)) {
+          _ mustBe Left(AuditError.Disabled)
+        }
+      }
+
     }
   }
 

@@ -17,10 +17,11 @@
 package uk.gov.hmrc.transitmovementsauditing.models
 
 import play.api.libs.json.JsObject
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
 object Details {
   implicit lazy val detailsFormat: OFormat[Details] = Json.format[Details]
 }
-case class Details(metadata: Metadata, payload: Option[JsObject])
+case class Details(metadata: Metadata, payload: Option[JsValue])

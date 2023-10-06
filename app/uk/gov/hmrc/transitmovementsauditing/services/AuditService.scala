@@ -24,6 +24,7 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
@@ -35,6 +36,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Failure => AuditResult
 import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Success => AuditResultSuccess}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.Details
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.Payload
 
@@ -52,6 +54,10 @@ trait AuditService {
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
 
+  def sendStatusTypeEvent(details: Details, auditName: String, auditSource: String)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, AuditError, Unit]
+
 }
 
 @Singleton
@@ -65,6 +71,13 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       jsValue     <- parseJson(messageBody)
       extendedDataEvent = createExtendedEvent(auditType, jsValue)
       result <- sendEvent(extendedDataEvent)
+    } yield result
+
+  def sendStatusTypeEvent(details: Details, auditName: String, auditSource: String)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, AuditError, Unit] =
+    for {
+      result <- sendEvent(createExtendedEventForStatusAudit(auditName, auditSource, details.payload.get))
     } yield result
 
   private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, AuditError, Unit] = {
@@ -86,6 +99,14 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
     ExtendedDataEvent(
       auditSource = auditType.source,
       auditType = auditType.name,
+      tags = hc.toAuditTags(),
+      detail = messageBody
+    )
+
+  private def createExtendedEventForStatusAudit(auditName: String, auditSource: String, messageBody: JsValue)(implicit hc: HeaderCarrier): ExtendedDataEvent =
+    ExtendedDataEvent(
+      auditSource = auditSource,
+      auditType = auditName,
       tags = hc.toAuditTags(),
       detail = messageBody
     )

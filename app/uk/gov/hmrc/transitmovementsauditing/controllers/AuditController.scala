@@ -105,14 +105,25 @@ class AuditController @Inject() (
       Future.successful(Accepted)
     }
 
-  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] = {
+
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+    val auditSource = request.headers.get("X-Audit-Source") match {
+      case Some(value) => value
+      case None        => auditType.source
+    }
+
     (for {
       string  <- extractBody(request.body)
       details <- parseDetails(string)
-    } yield Accepted)
-      .valueOr(
-        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+      result  <- auditService.sendStatusTypeEvent(details, auditType.name, auditSource).asPresentation
+    } yield result)
+      .fold(
+        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+        _ => Accepted
       )
+  }
 
   private def parseDetails(body: String): EitherT[Future, PresentationError, Details] =
     Json
