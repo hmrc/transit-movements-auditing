@@ -30,7 +30,6 @@ import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -49,7 +48,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.xml.NodeSeq
 
 class AuditServiceSpec
     extends AnyFreeSpec
@@ -75,21 +73,7 @@ class AuditServiceSpec
       |}""".stripMargin
 
   private val someValidDetailsJson =
-    """
-      |{
-      |    "metadata": {
-      |        "path": "some-path",
-      |        "movementId": "movementId",
-      |        "messageId": "messageId",
-      |        "enrolmentEORI": "enrolmentEORI",
-      |        "movementType": "departure",
-      |        "messageType": "IE015"
-      |    },
-      |    "payload": {
-      |            "messageSender": "sender"
-      |    }
-      |}
-      |""".stripMargin
+    """{"metadata":{"path":"some-path","movementId":"movementId","messageId":"messageId","enrolmentEORI":"enrolmentEORI","movementType":"departure","messageType":"IE015"},"payload":{"messageSender":"sender1"}}""".stripMargin
 
   override def beforeEach: Unit =
     reset(mockAuditConnector)
@@ -194,7 +178,7 @@ class AuditServiceSpec
                 val extendedDataEvent = captor.getValue
                 extendedDataEvent.auditType mustBe auditType.name
                 extendedDataEvent.auditSource mustBe auditType.source
-                extendedDataEvent.detail mustBe someGoodCC015CJson
+                extendedDataEvent.detail.toString mustBe someValidDetailsJson
             }
           }
       }

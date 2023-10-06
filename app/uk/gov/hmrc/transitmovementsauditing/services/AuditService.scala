@@ -76,7 +76,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit] =
     for {
-      result <- sendEvent(createExtendedEventForStatusAudit(auditName, auditSource, details.payload))
+      result <- sendEvent(createExtendedEventForStatusAudit(auditName, auditSource, details))
     } yield result
 
   private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, AuditError, Unit] = {
@@ -102,14 +102,14 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       detail = messageBody
     )
 
-  private def createExtendedEventForStatusAudit(auditName: String, auditSource: String, messageBody: Option[JsValue])(implicit
+  private def createExtendedEventForStatusAudit(auditName: String, auditSource: String, messageBody: Details)(implicit
     hc: HeaderCarrier
   ): ExtendedDataEvent =
     ExtendedDataEvent(
       auditSource = auditSource,
       auditType = auditName,
       tags = hc.toAuditTags(),
-      detail = messageBody.getOrElse(Json.obj())
+      detail = Json.toJson(messageBody)
     )
 
   private def extractMessage(stream: Payload) =
