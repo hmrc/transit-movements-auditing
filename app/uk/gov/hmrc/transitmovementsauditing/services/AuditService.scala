@@ -24,7 +24,6 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
-import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
@@ -77,7 +76,7 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit] =
     for {
-      result <- sendEvent(createExtendedEventForStatusAudit(auditName, auditSource, details.payload.get))
+      result <- sendEvent(createExtendedEventForStatusAudit(auditName, auditSource, details.payload))
     } yield result
 
   private def sendEvent(extendedDataEvent: ExtendedDataEvent): EitherT[Future, AuditError, Unit] = {
@@ -103,12 +102,14 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       detail = messageBody
     )
 
-  private def createExtendedEventForStatusAudit(auditName: String, auditSource: String, messageBody: JsValue)(implicit hc: HeaderCarrier): ExtendedDataEvent =
+  private def createExtendedEventForStatusAudit(auditName: String, auditSource: String, messageBody: Option[JsValue])(implicit
+    hc: HeaderCarrier
+  ): ExtendedDataEvent =
     ExtendedDataEvent(
       auditSource = auditSource,
       auditType = auditName,
       tags = hc.toAuditTags(),
-      detail = messageBody
+      detail = messageBody.getOrElse(Json.obj())
     )
 
   private def extractMessage(stream: Payload) =
