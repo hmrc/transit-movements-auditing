@@ -110,10 +110,7 @@ class AuditController @Inject() (
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    val auditSource = request.headers.get(XAuditSourceHeader) match {
-      case Some(value) => value
-      case None        => auditType.source
-    }
+    val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
 
     (for {
       string  <- extractBody(request.body)
