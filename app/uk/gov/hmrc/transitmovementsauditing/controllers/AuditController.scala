@@ -146,6 +146,10 @@ class AuditController @Inject() (
       )
   }
 
+  //TODO: combine parseObj and parseDetails??
+  //      e.g. private def parseXX[A](body: String): EitherT[Future, PresentationError, A]= ???
+  //      requires an implicit reads for the validate!
+
   private def parseObj(body: String): EitherT[Future, PresentationError, JsObject] =
     Json
       .parse(body)

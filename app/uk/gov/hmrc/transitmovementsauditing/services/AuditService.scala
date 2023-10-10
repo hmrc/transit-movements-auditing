@@ -53,6 +53,7 @@ trait AuditService {
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
 
+  // TODO: still required??
   def send(auditType: AuditType, jsonStream: Payload)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
