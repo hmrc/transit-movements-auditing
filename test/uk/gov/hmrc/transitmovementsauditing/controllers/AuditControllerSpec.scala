@@ -52,6 +52,7 @@ import uk.gov.hmrc.internalauth.client.ResourceType
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
@@ -59,8 +60,15 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendmen
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.SubmitArrivalNotificationFailedEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
+import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
+import uk.gov.hmrc.transitmovementsauditing.models.Details
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
@@ -96,6 +104,14 @@ class AuditControllerSpec
     )
   )
   private val invalidJsonDetailsStream = Source.single(ByteString("""{ "data": {"path": "some-path"}, "payload": { "test": "123" }} """.mkString))
+
+  private val someGoodCC015CJson = Json.obj("test" -> "123")
+
+  private val metadata: Metadata =
+    Metadata("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
+  private val someValidFullDetails = Details(metadata, Some(someGoodCC015CJson))
+
+  private val someValidDetails = Details(Metadata("some-path", None, None, None, None, None), Some(someGoodCC015CJson))
 
   private val emptyFakeRequest = FakeRequest("POST", "/")
 
@@ -237,20 +253,20 @@ class AuditControllerSpec
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
       }*/
 
-      //TODO uncomment the below test until we complete the implementation of auditing by status type as TraderFailedUploadEvent doesn't have messageType
+      "returns 202 when auditing was successful for trader failed upload event" in {
 
-      /*      "returns 202 when auditing was successful for trader failed upload event" in {
+        when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("TraderFailedUploadEvent"), eqTo("common-transit-convention-traders"))(any()))
+          .thenReturn(EitherT.rightT(()))
 
-        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
-        when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), any())(any())).thenReturn(EitherT.rightT(()))
-
-        val result = controller.post(TraderFailedUploadEvent)(fakeJsonRequest)
+        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
         status(result) mustBe Status.ACCEPTED
 
-        verify(mockConversionService, times(0)).toJson(any(), any())(any())
-        verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
-      }*/
+        verify(mockAuditService, times(1)).sendStatusTypeEvent(
+          eqTo(someValidDetails),
+          eqTo("TraderFailedUploadEvent"),
+          eqTo("common-transit-convention-traders")
+        )(any())
+      }
 
       "returns 500 when the conversion service fails" in {
 
@@ -282,32 +298,74 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).send(eqTo(AmendmentAcceptance), any())(any())
       }
 
-      //TODO uncomment the below test until we complete the implementation of auditing by status type as TraderFailedUploadEvent doesn't have messageType
-
-      /*      "returns 500 when the audit service fails for trader failed upload event" in {
-        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
-        when(mockConversionService.toJson(any(), eqTo(xmlStream))(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        when(mockAuditService.send(eqTo(TraderFailedUploadEvent), any())(any()))
+      "returns 500 when the audit service fails for trader failed upload event" in {
+        when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("TraderFailedUploadEvent"), eqTo("common-transit-convention-traders"))(any()))
           .thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
-        val result = controller.post(TraderFailedUploadEvent)(fakeRequest)
+        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
 
-        verify(mockAuditService, times(1)).send(eqTo(TraderFailedUploadEvent), any())(any())
-      }*/
+        verify(mockAuditService, times(1)).sendStatusTypeEvent(
+          eqTo(someValidDetails),
+          eqTo("TraderFailedUploadEvent"),
+          eqTo("common-transit-convention-traders")
+        )(any())
+      }
 
       "returns 202 when auditing for Status was successful with an valid Details json payload" in {
-        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest)
+        when(
+          mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("SubmitArrivalNotificationFailedEvent"), eqTo("common-transit-convention-traders"))(
+            any()
+          )
+        ).thenReturn(EitherT.rightT(()))
+
+        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
         status(result) mustBe Status.ACCEPTED
+
+        verify(mockAuditService, times(1)).sendStatusTypeEvent(
+          eqTo(someValidDetails),
+          eqTo("SubmitArrivalNotificationFailedEvent"),
+          eqTo("common-transit-convention-traders")
+        )(any())
       }
 
       "returns 202 when auditing for Status was successful with an valid Details json payload along with optional values" in {
+        when(
+          mockAuditService.sendStatusTypeEvent(
+            eqTo(someValidFullDetails),
+            eqTo("SubmitArrivalNotificationFailedEvent"),
+            eqTo("common-transit-convention-traders")
+          )(any())
+        ).thenReturn(EitherT.rightT(()))
+
         val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody(jsonFullDetailsStream))
         status(result) mustBe Status.ACCEPTED
+
+        verify(mockAuditService, times(1)).sendStatusTypeEvent(
+          eqTo(someValidFullDetails),
+          eqTo("SubmitArrivalNotificationFailedEvent"),
+          eqTo("common-transit-convention-traders")
+        )(any())
+      }
+
+      "returns 202 when auditing for Status was successful when audit source header is passed" in {
+        when(
+          mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("SubmitArrivalNotificationFailedEvent"), eqTo("test"))(any())
+        ).thenReturn(EitherT.rightT(()))
+
+        val request = emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", XAuditSourceHeader -> "test").withBody(jsonDetailsStream)
+        val result  = controller.post(SubmitArrivalNotificationFailedEvent)(request)
+        status(result) mustBe Status.ACCEPTED
+
+        verify(mockAuditService, times(1)).sendStatusTypeEvent(
+          eqTo(someValidDetails),
+          eqTo("SubmitArrivalNotificationFailedEvent"),
+          eqTo("test")
+        )(any())
       }
 
       "returns 400 when auditing for Status with an invalid Details json payload" in {

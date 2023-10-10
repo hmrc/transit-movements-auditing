@@ -18,4 +18,5 @@ package uk.gov.hmrc.transitmovementsauditing.config
 
 object Constants {
   val XContentLengthHeader = "X-ContentLength"
+  val XAuditSourceHeader   = "X-Audit-Source"
 }

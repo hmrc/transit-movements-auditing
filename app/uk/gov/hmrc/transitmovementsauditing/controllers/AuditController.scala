@@ -41,6 +41,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
@@ -105,14 +106,22 @@ class AuditController @Inject() (
       Future.successful(Accepted)
     }
 
-  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] = {
+
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+    val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
+
     (for {
       string  <- extractBody(request.body)
       details <- parseDetails(string)
-    } yield Accepted)
-      .valueOr(
-        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+      result  <- auditService.sendStatusTypeEvent(details, auditType.name, auditSource).asPresentation
+    } yield result)
+      .fold(
+        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+        _ => Accepted
       )
+  }
 
   private def parseDetails(body: String): EitherT[Future, PresentationError, Details] =
     Json

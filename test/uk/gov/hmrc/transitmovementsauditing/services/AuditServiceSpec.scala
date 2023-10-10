@@ -40,14 +40,20 @@ import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.Details
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
+import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
+import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.xml.NodeSeq
 
 class AuditServiceSpec
     extends AnyFreeSpec
@@ -71,6 +77,10 @@ class AuditServiceSpec
     """{
       |  "messageSender":
       |}""".stripMargin
+
+  private val metadata: Metadata =
+    Metadata("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
+  private val someValidDetails = Details(metadata, Some(someGoodCC015CJson))
 
   override def beforeEach: Unit =
     reset(mockAuditConnector)
@@ -152,6 +162,58 @@ class AuditServiceSpec
           message mustBe "Error extracting body from stream"
         case x => fail(s"Did not get a Left from an unexpected exception - got $x")
       }
+    }
+
+    "status audit" - {
+      "should successfully send message to audit connector" - AuditType.values.foreach {
+        auditType =>
+          s"${auditType.name} to ${auditType.source}" in {
+            reset(mockAuditConnector)
+            val service                                   = new AuditServiceImpl(mockAuditConnector)
+            val captor: ArgumentCaptor[ExtendedDataEvent] = ArgumentCaptor.forClass(classOf[ExtendedDataEvent])
+
+            when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
+              .thenReturn(Future.successful(Success))
+
+            val result = service.sendStatusTypeEvent(someValidDetails, auditType.name, auditType.source)
+
+            whenReady(result.value, Timeout(1.second)) {
+              result =>
+                result mustBe Right(())
+                val extendedDataEvent = captor.getValue
+                extendedDataEvent.auditType mustBe auditType.name
+                extendedDataEvent.auditSource mustBe auditType.source
+                Json.parse(extendedDataEvent.detail.toString()).validate[Details].get mustBe someValidDetails
+            }
+          }
+      }
+
+      "should return an error when the connector reports a failure" in {
+        val service = new AuditServiceImpl(mockAuditConnector)
+
+        when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(Failure("a failure")))
+
+        val result = service.sendStatusTypeEvent(someValidDetails, "SubmitDeclarationFailedEvent", "common-transit-convention-traders")
+
+        whenReady(result.value, Timeout(1.second)) {
+          _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
+        }
+      }
+
+      "should return an error when the connector reports that auditing is disabled" in {
+        val service = new AuditServiceImpl(mockAuditConnector)
+
+        when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(Disabled))
+
+        val result = service.sendStatusTypeEvent(someValidDetails, "SubmitDeclarationFailedEvent", "common-transit-convention-traders")
+
+        whenReady(result.value, Timeout(1.second)) {
+          _ mustBe Left(AuditError.Disabled)
+        }
+      }
+
     }
   }
 
