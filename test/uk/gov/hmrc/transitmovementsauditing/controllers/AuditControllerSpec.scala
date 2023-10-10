@@ -58,6 +58,7 @@ import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.SubmitArrivalNotificationFailedEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
@@ -246,8 +247,7 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())
       }
 
-      //TODO uncomment the below test until we complete the implementation of auditing by status type as LargeMessageSubmissionRequested doesn't have messageType
-      /*      "returns 202 when auditing was successful with a payload that exceeds the audit limit" in {
+      "returns 202 when auditing was successful with a payload that exceeds the audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockConversionService.toJson(any(), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
@@ -261,13 +261,13 @@ class AuditControllerSpec
               )
             )
           )
-        when(mockAuditService.send(eqTo(LargeMessageSubmissionRequested), any())(any())).thenReturn(EitherT.rightT(()))
+        when(mockAuditService.sendMessageTypeEvent(eqTo(DeclarationData), any())(any())).thenReturn(EitherT.rightT(()))
 
         val objectSummary = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
         when(mockObjectStoreService.putFile(FileId(any()), any())(any[ExecutionContext], any[HeaderCarrier]))
           .thenReturn(EitherT.rightT(objectSummary))
 
-        val result = controller.post(LargeMessageSubmissionRequested)(
+        val result = controller.post(DeclarationData)(
           fakeRequest
             .withHeaders(CONTENT_TYPE -> "application/json", Constants.XContentLengthHeader -> contentExceedsAuditLimit)
         )
@@ -275,10 +275,10 @@ class AuditControllerSpec
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
         verify(mockConversionService, times(0)).toJson(any(), any())(any())
-        verify(mockAuditService, times(1)).send(eqTo(LargeMessageSubmissionRequested), any())(any())
+        verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationData), any())(any())
         verify(mockFieldParsingService, times(1)).getAdditionalFields(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
-      }*/
+      }
 
       "returns 202 when auditing was successful for trader failed upload event" in {
 
