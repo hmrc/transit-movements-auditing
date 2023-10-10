@@ -27,6 +27,7 @@ import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsError
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import play.api.libs.json.Reads
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
@@ -96,8 +97,7 @@ class AuditController @Inject() (
     if (appConfig.auditingEnabled) {
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       (for {
-        stream <- getSource(auditType, request)(exceedsMessageSize)
-
+        stream  <- getSource(auditType, request)(exceedsMessageSize)
         details <- buildDetails(stream)
         result  <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
       } yield result)
@@ -124,7 +124,7 @@ class AuditController @Inject() (
         case Right(s) =>
           for {
             body <- extractBody(s)
-            src  <- parseObj(body)
+            src  <- parse[JsObject](body)
           } yield Details(metadata, Some(src))
       }
     }
@@ -146,14 +146,10 @@ class AuditController @Inject() (
       )
   }
 
-  //TODO: combine parseObj and parseDetails??
-  //      e.g. private def parseXX[A](body: String): EitherT[Future, PresentationError, A]= ???
-  //      requires an implicit reads for the validate!
-
-  private def parseObj(body: String): EitherT[Future, PresentationError, JsObject] =
+  private def parse[A: Reads](body: String): EitherT[Future, PresentationError, A] =
     Json
       .parse(body)
-      .validate[JsObject]
+      .validate[A]
       .map(
         x => EitherT.rightT[Future, PresentationError](x)
       )
