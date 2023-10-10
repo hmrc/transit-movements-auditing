@@ -192,9 +192,9 @@ class AuditController @Inject() (
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier
   ): EitherT[Future, ConversionError, Source[ByteString, _]] =
-    if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined)
+    if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined) {
       conversionService.toJson(auditType.messageType.get, request.body)
-    else {
+    } else {
       EitherT.rightT(request.body)
     }
 
