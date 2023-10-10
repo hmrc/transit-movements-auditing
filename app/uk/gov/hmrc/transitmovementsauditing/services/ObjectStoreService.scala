@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -26,7 +25,6 @@ import play.api.Logging
 import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
-import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import akka.stream.Materializer
 

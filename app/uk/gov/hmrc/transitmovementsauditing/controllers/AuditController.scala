@@ -137,7 +137,7 @@ class AuditController @Inject() (
 
     (for {
       string  <- extractBody(request.body)
-      details <- parseDetails(string)
+      details <- parse[Details](string)
       result  <- auditService.sendStatusTypeEvent(details, auditType.name, auditSource).asPresentation
     } yield result)
       .fold(
@@ -150,17 +150,6 @@ class AuditController @Inject() (
     Json
       .parse(body)
       .validate[A]
-      .map(
-        x => EitherT.rightT[Future, PresentationError](x)
-      )
-      .recoverTotal {
-        err: JsError => EitherT.leftT(PresentationError.badRequestError(s"Could not parse: $err"))
-      }
-
-  private def parseDetails(body: String): EitherT[Future, PresentationError, Details] =
-    Json
-      .parse(body)
-      .validate[Details]
       .map(
         x => EitherT.rightT[Future, PresentationError](x)
       )

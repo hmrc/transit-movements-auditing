@@ -58,7 +58,6 @@ import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.SubmitArrivalNotificationFailedEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
