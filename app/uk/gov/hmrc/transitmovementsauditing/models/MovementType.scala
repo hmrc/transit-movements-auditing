@@ -42,6 +42,6 @@ object MovementType {
     Arrival
   )
 
-  private def findByName(name: String): Option[MovementType] = values.find(_.movementType == name)
+  def findByName(name: String): Option[MovementType] = values.find(_.movementType == name)
 
 }
