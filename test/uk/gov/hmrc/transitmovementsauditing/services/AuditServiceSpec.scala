@@ -16,12 +16,10 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import akka.stream.scaladsl.Source
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
 import org.mockito.MockitoSugar.when
-import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
@@ -68,30 +66,22 @@ class AuditServiceSpec
 
   private val mockAuditConnector: AuditConnector = mock[AuditConnector]
 
-  private val someGoodCC015CJson =
-    Json.obj("messageSender" -> "sender")
-
-  private val someGoodCC015CJsonString = Json.stringify(someGoodCC015CJson)
-
-  private val someInvalidJson =
-    """{
-      |  "messageSender":
-      |}""".stripMargin
+  private val someGoodCC015CJson = Json.obj("messageSender" -> "sender")
 
   private val metadata: Metadata =
     Metadata("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
+
   private val someValidDetails = Details(metadata, Some(someGoodCC015CJson))
 
-  override def beforeEach: Unit =
-    reset(mockAuditConnector)
+  private val detailsWithEmptyPayload = Details(metadata, None)
+
+  override def beforeEach: Unit = reset(mockAuditConnector)
 
   "Audit service" - {
 
     "should successfully send message to audit connector" - AuditType.values.foreach {
       auditType =>
         s"${auditType.name} to ${auditType.source}" in {
-          // testing the reduce works as expected by splitting the string into pieces.
-          val pieces: Int = Gen.oneOf(1 to 4).sample.getOrElse(1)
           reset(mockAuditConnector)
           val service                                   = new AuditServiceImpl(mockAuditConnector)
           val captor: ArgumentCaptor[ExtendedDataEvent] = ArgumentCaptor.forClass(classOf[ExtendedDataEvent])
@@ -99,7 +89,7 @@ class AuditServiceSpec
           when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(Success))
 
-          val result = service.send(auditType, Right(createStream(someGoodCC015CJsonString, pieces)))
+          val result = service.sendMessageTypeEvent(auditType, someValidDetails)
 
           whenReady(result.value, Timeout(1.second)) {
             result =>
@@ -107,20 +97,9 @@ class AuditServiceSpec
               val extendedDataEvent = captor.getValue
               extendedDataEvent.auditType mustBe auditType.name
               extendedDataEvent.auditSource mustBe auditType.source
-              extendedDataEvent.detail mustBe someGoodCC015CJson
+              extendedDataEvent.detail mustBe Json.toJson(someValidDetails)
           }
         }
-    }
-
-    "should return an error when the service fails to parse invalid json" in {
-      val service = new AuditServiceImpl(mockAuditConnector)
-      val result  = service.send(DeclarationData, Right(createStream(someInvalidJson)))
-
-      whenReady(result.value, Timeout(1.second)) {
-        res =>
-          res.isLeft mustBe true
-          res.left.getOrElse(AuditError.UnexpectedError) mustBe a[AuditError.FailedToParse]
-      }
     }
 
     "should return an error when the connector reports a failure" in {
@@ -129,7 +108,7 @@ class AuditServiceSpec
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(Failure("a failure")))
 
-      val result = service.send(DeclarationData, Right(createStream(someGoodCC015CJsonString)))
+      val result = service.sendMessageTypeEvent(DeclarationData, someValidDetails)
 
       whenReady(result.value, Timeout(1.second)) {
         _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
@@ -142,25 +121,30 @@ class AuditServiceSpec
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(Disabled))
 
-      val result = service.send(DeclarationData, Right(createStream(someGoodCC015CJsonString)))
+      val result = service.sendMessageTypeEvent(DeclarationData, someValidDetails)
 
       whenReady(result.value, Timeout(1.second)) {
         _ mustBe Left(AuditError.Disabled)
       }
     }
 
-    "should return an error if an empty stream is provided" in {
+    "should successfully send a message with an empty payload to the audit connector" in {
+
+      val captor: ArgumentCaptor[ExtendedDataEvent] = ArgumentCaptor.forClass(classOf[ExtendedDataEvent])
+
+      when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(Success))
+
       val service = new AuditServiceImpl(mockAuditConnector)
-
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(Future.successful(Disabled))
-
-      val result = service.send(DeclarationData, Right(Source.empty))
+      val result  = service.sendMessageTypeEvent(DeclarationData, detailsWithEmptyPayload)
 
       whenReady(result.value, Timeout(1.second)) {
-        case Left(AuditError.UnexpectedError(message, _)) =>
-          message mustBe "Error extracting body from stream"
-        case x => fail(s"Did not get a Left from an unexpected exception - got $x")
+        result =>
+          result mustBe Right(())
+          val extendedDataEvent = captor.getValue
+          extendedDataEvent.auditType mustBe DeclarationData.name
+          extendedDataEvent.auditSource mustBe DeclarationData.source
+          extendedDataEvent.detail mustBe Json.toJson(detailsWithEmptyPayload)
       }
     }
 

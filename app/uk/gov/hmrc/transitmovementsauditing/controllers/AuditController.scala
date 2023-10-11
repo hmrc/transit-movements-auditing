@@ -25,7 +25,9 @@ import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsError
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import play.api.libs.json.Reads
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
@@ -47,6 +49,7 @@ import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.Details
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
+import uk.gov.hmrc.transitmovementsauditing.models.Metadata
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
@@ -90,13 +93,13 @@ class AuditController @Inject() (
         else postStatusAudit(auditType)
     }
 
-  def postMessageTypeAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+  private def postMessageTypeAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
     if (appConfig.auditingEnabled) {
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
       (for {
-        stream <- getSource(auditType, request)(exceedsMessageSize)
-        result <- auditService.send(auditType, stream).asPresentation
+        stream  <- getSource(auditType, request)(exceedsMessageSize)
+        details <- buildDetails(stream)
+        result  <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
       } yield result)
         .fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -104,6 +107,26 @@ class AuditController @Inject() (
         )
     } else {
       Future.successful(Accepted)
+    }
+
+  private def buildDetails(payload: Payload)(implicit request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, Details] =
+    if (request.headers.get(Constants.XAuditMetaPath).isEmpty) {
+      EitherT.leftT[Future, Details](PresentationError.badRequestError(s"${Constants.XAuditMetaPath} is missing"))
+    } else {
+      val metadata = Metadata(request.headers)
+      payload match {
+        case Left(summary) =>
+          val objSummary = Json.obj(
+            "objectSummary"    -> summary.objectSummary.toString,
+            "additionalFields" -> summary.fields.toString()
+          )
+          EitherT.rightT[Future, PresentationError](Details(metadata, Some(objSummary)))
+        case Right(s) =>
+          for {
+            body <- extractBody(s)
+            src  <- parse[JsObject](body)
+          } yield Details(metadata, Some(src))
+      }
     }
 
   def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] = {
@@ -114,7 +137,7 @@ class AuditController @Inject() (
 
     (for {
       string  <- extractBody(request.body)
-      details <- parseDetails(string)
+      details <- parse[Details](string)
       result  <- auditService.sendStatusTypeEvent(details, auditType.name, auditSource).asPresentation
     } yield result)
       .fold(
@@ -123,10 +146,10 @@ class AuditController @Inject() (
       )
   }
 
-  private def parseDetails(body: String): EitherT[Future, PresentationError, Details] =
+  private def parse[A: Reads](body: String): EitherT[Future, PresentationError, A] =
     Json
       .parse(body)
-      .validate[Details]
+      .validate[A]
       .map(
         x => EitherT.rightT[Future, PresentationError](x)
       )
@@ -154,10 +177,11 @@ class AuditController @Inject() (
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier
   ): EitherT[Future, ConversionError, Source[ByteString, _]] =
-    if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined)
+    if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined) {
       conversionService.toJson(auditType.messageType.get, request.body)
-    else
+    } else {
       EitherT.rightT(request.body)
+    }
 
   private def fileId(): FileId =
     FileId(s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}")
