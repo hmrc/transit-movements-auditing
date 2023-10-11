@@ -199,9 +199,9 @@ class AuditControllerSpec
 
   "POST /" - {
 
-    "Payload sourced from request" - {
+    "Message type audits" - {
 
-      "returns 202 when auditing is disabled" in {
+      "returns 202 for a message type audit message when auditing is disabled" in {
 
         reset(mockAppConfig)
         when(mockAppConfig.auditingEnabled).thenReturn(false)
@@ -274,21 +274,6 @@ class AuditControllerSpec
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
       }
 
-      "returns 202 when auditing was successful for trader failed upload event" in {
-
-        when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("TraderFailedUploadEvent"), eqTo("common-transit-convention-traders"))(any()))
-          .thenReturn(EitherT.rightT(()))
-
-        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
-        status(result) mustBe Status.ACCEPTED
-
-        verify(mockAuditService, times(1)).sendStatusTypeEvent(
-          eqTo(someValidDetails),
-          eqTo("TraderFailedUploadEvent"),
-          eqTo("common-transit-convention-traders")
-        )(any())
-      }
-
       "returns 500 when the conversion service fails" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
@@ -319,7 +304,45 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any())
       }
 
+    }
+
+    "Status type audits" - {
+
+      "returns 202 for a message type audit message when auditing is disabled" in {
+
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(false)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
+        // If the config fails, we have something that can't be deserialised, so this will below up.
+        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(Source.single(ByteString())))
+        status(result) mustBe Status.ACCEPTED
+      }
+
+      "returns 202 when auditing was successful for trader failed upload event" in {
+
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
+        when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("TraderFailedUploadEvent"), eqTo("common-transit-convention-traders"))(any()))
+          .thenReturn(EitherT.rightT(()))
+
+        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
+        status(result) mustBe Status.ACCEPTED
+
+        verify(mockAuditService, times(1)).sendStatusTypeEvent(
+          eqTo(someValidDetails),
+          eqTo("TraderFailedUploadEvent"),
+          eqTo("common-transit-convention-traders")
+        )(any())
+      }
+
       "returns 500 when the audit service fails for trader failed upload event" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("TraderFailedUploadEvent"), eqTo("common-transit-convention-traders"))(any()))
           .thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
@@ -338,6 +361,10 @@ class AuditControllerSpec
       }
 
       "returns 202 when auditing for Status was successful with an valid Details json payload" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(
           mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("SubmitArrivalNotificationFailedEvent"), eqTo("common-transit-convention-traders"))(
             any()
@@ -355,6 +382,10 @@ class AuditControllerSpec
       }
 
       "returns 202 when auditing for Status was successful with an valid Details json payload along with optional values" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(
           mockAuditService.sendStatusTypeEvent(
             eqTo(someValidFullDetails),
@@ -374,6 +405,10 @@ class AuditControllerSpec
       }
 
       "returns 202 when auditing for Status was successful when audit source header is passed" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(
           mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("SubmitArrivalNotificationFailedEvent"), eqTo("test"))(any())
         ).thenReturn(EitherT.rightT(()))
@@ -390,16 +425,28 @@ class AuditControllerSpec
       }
 
       "returns 400 when auditing for Status with an invalid Details json payload" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody(invalidJsonDetailsStream))
         status(result) mustBe Status.BAD_REQUEST
       }
 
       "returns 500 when auditing for Status with an empty payload" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody())
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
       }
 
       "returns 400 when path header is not present" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
         val result = controller.post(DeclarationData)(fakeJsonRequestHeadersWithoutPath)
@@ -414,6 +461,10 @@ class AuditControllerSpec
       }
 
       "returns 500 when path header is present and Unexpected error occurs" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockAuditService.sendMessageTypeEvent(any(), any())(any()))
           .thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
@@ -430,6 +481,10 @@ class AuditControllerSpec
       }
 
       "returns 202 when path header is present" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         when(mockAuditService.sendMessageTypeEvent(eqTo(DeclarationData), any())(any()))
           .thenReturn(EitherT.rightT(()))
@@ -442,6 +497,10 @@ class AuditControllerSpec
       }
 
       "returns 202 when path header is present and message is large" in {
+        reset(mockAppConfig)
+        when(mockAppConfig.auditingEnabled).thenReturn(true)
+        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
+
         when(mockAuditService.sendMessageTypeEvent(eqTo(DeclarationData), any())(any()))
           .thenReturn(EitherT.rightT(()))
 
