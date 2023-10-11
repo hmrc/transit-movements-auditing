@@ -129,22 +129,24 @@ class AuditController @Inject() (
       }
     }
 
-  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] = {
+  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+    if (appConfig.auditingEnabled) {
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+      val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
 
-    val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
-
-    (for {
-      string  <- extractBody(request.body)
-      details <- parse[Details](string)
-      result  <- auditService.sendStatusTypeEvent(details, auditType.name, auditSource).asPresentation
-    } yield result)
-      .fold(
-        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-        _ => Accepted
-      )
-  }
+      (for {
+        string  <- extractBody(request.body)
+        details <- parse[Details](string)
+        result  <- auditService.sendStatusTypeEvent(details, auditType.name, auditSource).asPresentation
+      } yield result)
+        .fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          _ => Accepted
+        )
+    } else {
+      Future.successful(Accepted)
+    }
 
   private def parse[A: Reads](body: String): EitherT[Future, PresentationError, A] =
     Json
