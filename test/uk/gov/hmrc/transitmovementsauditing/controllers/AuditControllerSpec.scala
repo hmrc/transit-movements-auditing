@@ -58,7 +58,6 @@ import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.LargeMessageSubmissionRequested
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.SubmitArrivalNotificationFailedEvent
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
@@ -96,7 +95,6 @@ class AuditControllerSpec
   private val contentExceedsAuditLimit  = "50001"
 
   private val xmlStream          = Source.single(ByteString(<test>123</test>.mkString))
-  private val jsonStream         = Source.single(ByteString("""{ "test": "123" } """))
   private val jsonStreamMultiple = Source.single(ByteString("""{ "test1": "1235", "test2": "234" } """))
   private val jsonDetailsStream  = Source.single(ByteString("""{ "metadata": {"path": "some-path"}, "payload": { "test": "123" }} """.mkString))
 
@@ -128,10 +126,6 @@ class AuditControllerSpec
   private val fakeStatusRequest = emptyFakeRequest
     .withHeaders(CONTENT_TYPE -> "application/json")
     .withBody(jsonDetailsStream)
-
-  private val fakeJsonRequest = emptyFakeRequest
-    .withHeaders(CONTENT_TYPE -> "application/json")
-    .withBody(jsonStream)
 
   private val fakeJsonRequestHeadersWithoutPath = emptyFakeRequest
     .withHeaders(
@@ -306,7 +300,7 @@ class AuditControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
-        verify(mockAuditService, times(0)).send(any(), any())(any())
+        verify(mockAuditService, times(0)).sendMessageTypeEvent(any(), any())(any())
       }
 
       "returns 500 when the audit service fails" in {

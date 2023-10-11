@@ -53,11 +53,6 @@ trait AuditService {
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
 
-  // TODO: still required??
-  def send(auditType: AuditType, jsonStream: Payload)(implicit
-    hc: HeaderCarrier
-  ): EitherT[Future, AuditError, Unit]
-
   def sendStatusTypeEvent(details: Details, auditName: String, auditSource: String)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, AuditError, Unit]
@@ -75,16 +70,6 @@ class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: Execut
       result <- sendEvent(extendedDataEvent)
     } yield result
   }
-
-  def send(auditType: AuditType, jsonStream: Payload)(implicit
-    hc: HeaderCarrier
-  ): EitherT[Future, AuditError, Unit] =
-    for {
-      messageBody <- extractMessage(jsonStream)
-      jsValue     <- parseJson(messageBody)
-      extendedDataEvent = createExtendedEvent(auditType, jsValue)
-      result <- sendEvent(extendedDataEvent)
-    } yield result
 
   def sendStatusTypeEvent(details: Details, auditName: String, auditSource: String)(implicit
     hc: HeaderCarrier
