@@ -229,7 +229,7 @@ class AuditServiceSpec
         }
     }
 
-    "should successfully send message to audit connector for failed event" - AuditType.auditWorkFlowEvent.foreach {
+    "should successfully send message to audit connector for workflow event" - AuditType.auditWorkFlowEvent.foreach {
       auditType =>
         s"${auditType.name} to ${auditType.source}" in {
           reset(mockAuditConnector)
