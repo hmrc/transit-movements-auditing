@@ -138,7 +138,14 @@ class AuditController @Inject() (
       (for {
         string  <- extractBody(request.body)
         details <- parse[Details](string)
-        result  <- auditService.sendStatusTypeEvent(details, auditType.name, auditSource).asPresentation
+        parentAuditType = if (auditType.parent.isDefined) auditType.parent.get else "None"
+        result <- auditService
+          .sendStatusTypeEvent(
+            details.copy(details.metadata.copy(subtype = Some(auditType.name))),
+            parentAuditType,
+            auditSource
+          )
+          .asPresentation
       } yield result)
         .fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),

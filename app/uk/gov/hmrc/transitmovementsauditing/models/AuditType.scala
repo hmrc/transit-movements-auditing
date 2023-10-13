@@ -18,7 +18,9 @@ package uk.gov.hmrc.transitmovementsauditing.models
 
 import Sources._
 
-sealed abstract class AuditType(val name: String, val source: String, val messageType: Option[MessageType] = None) extends Product with Serializable
+sealed abstract class AuditType(val name: String, val source: String, val messageType: Option[MessageType] = None, val parent: Option[String])
+    extends Product
+    with Serializable
 
 object Sources {
   val commonTransitConventionTraders = "common-transit-convention-traders"
@@ -27,7 +29,34 @@ object Sources {
 
 object AuditType {
 
-  val values: Seq[AuditType] = Seq(
+  val auditFailedEvent: Seq[AuditType] = Seq(
+    TraderFailedUploadEvent,
+    SubmitArrivalNotificationFailedEvent,
+    SubmitDeclarationFailedEvent,
+    ValidationFailedEvent,
+    CreateMovementDBFailedEvent,
+    PushNotificationFailedEvent,
+    AddMessageDBFailedEvent,
+    PushNotificationUpdateFailedEvent,
+    SubmitAttachMessageFailedEvent,
+    GetMovementsDBFailedEvent,
+    GetMovementDBFailedEvent,
+    GetMovementMessagesDBFailedEvent,
+    GetMovementMessageDBFailedEvent,
+    PushPullNotificationGetBoxFailedEvent,
+    CustomerRequestedMissingMovement,
+    NCTSRequestedMissingMovement
+  )
+
+  val auditSuccessEvent: Seq[AuditType] = Seq(
+    TraderToNCTSSubmissionSuccessful,
+    NCTSToTraderSubmissionSuccessful
+  )
+
+  val auditWorkFlowEvent: Seq[AuditType] = Seq(LargeMessageSubmissionRequested)
+  val statusTypeEvents: Seq[AuditType]   = auditSuccessEvent ++ auditWorkFlowEvent ++ auditFailedEvent
+
+  val messageTypeEvents: Seq[AuditType] = Seq(
     AmendmentAcceptance,
     ArrivalNotification,
     InvalidationDecision,
@@ -52,69 +81,80 @@ object AuditType {
     PresentationNotificationForThePreLodgedDeclaration,
     ControlDecisionNotification,
     ForwardedIncidentNotificationToED,
-    PositiveAcknowledge,
-    LargeMessageSubmissionRequested,
-    TraderFailedUploadEvent,
-    SubmitArrivalNotificationFailedEvent,
-    SubmitDeclarationFailedEvent,
-    ValidationFailedEvent,
-    CreateMovementDBFailedEvent,
-    PushNotificationFailedEvent,
-    AddMessageDBFailedEvent,
-    PushNotificationUpdateFailedEvent,
-    SubmitAttachMessageFailedEvent,
-    GetMovementsDBFailedEvent,
-    GetMovementDBFailedEvent,
-    GetMovementMessagesDBFailedEvent,
-    GetMovementMessageDBFailedEvent,
-    PushPullNotificationGetBoxFailedEvent
+    PositiveAcknowledge
   )
 
-  case object AmendmentAcceptance            extends AuditType("AmendmentAcceptance", transitMovementsRouter, Some(MessageType.IE004))
-  case object ArrivalNotification            extends AuditType("ArrivalNotification", commonTransitConventionTraders, Some(MessageType.IE007))
-  case object InvalidationDecision           extends AuditType("InvalidationDecision", transitMovementsRouter, Some(MessageType.IE009))
-  case object DeclarationAmendment           extends AuditType("DeclarationAmendment", commonTransitConventionTraders, Some(MessageType.IE013))
-  case object DeclarationInvalidationRequest extends AuditType("DeclarationInvalidationRequest", commonTransitConventionTraders, Some(MessageType.IE014))
-  case object DeclarationData                extends AuditType("DeclarationData", commonTransitConventionTraders, Some(MessageType.IE015))
-  case object Discrepancies                  extends AuditType("Discrepancies", transitMovementsRouter, Some(MessageType.IE019))
-  case object NotificationToAmendDeclaration extends AuditType("NotificationToAmendDeclaration", transitMovementsRouter, Some(MessageType.IE022))
-  case object GoodsReleasedNotification      extends AuditType("GoodsReleasedNotification", transitMovementsRouter, Some(MessageType.IE025))
-  case object MRNAllocated                   extends AuditType("MRNAllocated", transitMovementsRouter, Some(MessageType.IE028))
-  case object ReleaseForTransit              extends AuditType("ReleaseForTransit", transitMovementsRouter, Some(MessageType.IE029))
-  case object RecoveryNotification           extends AuditType("RecoveryNotification", transitMovementsRouter, Some(MessageType.IE035))
-  case object UnloadingPermission            extends AuditType("UnloadingPermission", transitMovementsRouter, Some(MessageType.IE043))
-  case object UnloadingRemarks               extends AuditType("UnloadingRemarks", commonTransitConventionTraders, Some(MessageType.IE044))
+  val values: Seq[AuditType] = messageTypeEvents ++ statusTypeEvents
+
+  case object AmendmentAcceptance            extends AuditType("AmendmentAcceptance", transitMovementsRouter, Some(MessageType.IE004), None)
+  case object ArrivalNotification            extends AuditType("ArrivalNotification", commonTransitConventionTraders, Some(MessageType.IE007), None)
+  case object InvalidationDecision           extends AuditType("InvalidationDecision", transitMovementsRouter, Some(MessageType.IE009), None)
+  case object DeclarationAmendment           extends AuditType("DeclarationAmendment", commonTransitConventionTraders, Some(MessageType.IE013), None)
+  case object DeclarationInvalidationRequest extends AuditType("DeclarationInvalidationRequest", commonTransitConventionTraders, Some(MessageType.IE014), None)
+  case object DeclarationData                extends AuditType("DeclarationData", commonTransitConventionTraders, Some(MessageType.IE015), None)
+  case object Discrepancies                  extends AuditType("Discrepancies", transitMovementsRouter, Some(MessageType.IE019), None)
+  case object NotificationToAmendDeclaration extends AuditType("NotificationToAmendDeclaration", transitMovementsRouter, Some(MessageType.IE022), None)
+  case object GoodsReleasedNotification      extends AuditType("GoodsReleasedNotification", transitMovementsRouter, Some(MessageType.IE025), None)
+  case object MRNAllocated                   extends AuditType("MRNAllocated", transitMovementsRouter, Some(MessageType.IE028), None)
+  case object ReleaseForTransit              extends AuditType("ReleaseForTransit", transitMovementsRouter, Some(MessageType.IE029), None)
+  case object RecoveryNotification           extends AuditType("RecoveryNotification", transitMovementsRouter, Some(MessageType.IE035), None)
+  case object UnloadingPermission            extends AuditType("UnloadingPermission", transitMovementsRouter, Some(MessageType.IE043), None)
+  case object UnloadingRemarks               extends AuditType("UnloadingRemarks", commonTransitConventionTraders, Some(MessageType.IE044), None)
 
   case object InformationAboutNonArrivedMovement
-      extends AuditType("InformationAboutNonArrivedMovement", commonTransitConventionTraders, Some(MessageType.IE141))
-  case object WriteOffNotification                  extends AuditType("WriteOffNotification", transitMovementsRouter, Some(MessageType.IE045))
-  case object NoReleaseForTransit                   extends AuditType("NoReleaseForTransit", transitMovementsRouter, Some(MessageType.IE051))
-  case object RequestOfRelease                      extends AuditType("RequestOfRelease", commonTransitConventionTraders, Some(MessageType.IE054))
-  case object GuaranteeNotValid                     extends AuditType("GuaranteeNotValid", transitMovementsRouter, Some(MessageType.IE055))
-  case object RejectionFromOfficeOfDeparture        extends AuditType("RejectionFromOfficeOfDeparture", transitMovementsRouter, Some(MessageType.IE056))
-  case object RejectionFromOfficeOfDestination      extends AuditType("RejectionFromOfficeOfDestination", transitMovementsRouter, Some(MessageType.IE057))
-  case object ControlDecisionNotification           extends AuditType("ControlDecisionNotification", transitMovementsRouter, Some(MessageType.IE060))
-  case object ForwardedIncidentNotificationToED     extends AuditType("ForwardedIncidentNotificationToED", commonTransitConventionTraders, Some(MessageType.IE182))
-  case object PositiveAcknowledge                   extends AuditType("PositiveAcknowledge", transitMovementsRouter, Some(MessageType.IE928))
-  case object RequestOnNonArrivedMovement           extends AuditType("RequestOnNonArrivedMovement", transitMovementsRouter, Some(MessageType.IE140))
-  case object LargeMessageSubmissionRequested       extends AuditType("LargeMessageSubmissionRequested", commonTransitConventionTraders, None)
-  case object TraderFailedUploadEvent               extends AuditType("TraderFailedUploadEvent", commonTransitConventionTraders, None)
-  case object SubmitArrivalNotificationFailedEvent  extends AuditType("SubmitArrivalNotificationFailedEvent", commonTransitConventionTraders, None)
-  case object SubmitDeclarationFailedEvent          extends AuditType("SubmitDeclarationFailedEvent", commonTransitConventionTraders, None)
-  case object ValidationFailedEvent                 extends AuditType("ValidationFailedEvent", commonTransitConventionTraders, None)
-  case object CreateMovementDBFailedEvent           extends AuditType("CreateMovementDBFailedEvent", commonTransitConventionTraders, None)
-  case object PushNotificationFailedEvent           extends AuditType("PushNotificationFailedEvent", commonTransitConventionTraders, None)
-  case object AddMessageDBFailedEvent               extends AuditType("AddMessageDBFailedEvent", commonTransitConventionTraders, None)
-  case object PushNotificationUpdateFailedEvent     extends AuditType("PushNotificationUpdateFailedEvent", commonTransitConventionTraders, None)
-  case object SubmitAttachMessageFailedEvent        extends AuditType("SubmitAttachMessageFailedEvent", commonTransitConventionTraders, None)
-  case object GetMovementsDBFailedEvent             extends AuditType("GetMovementsDBFailedEvent", commonTransitConventionTraders, None)
-  case object GetMovementDBFailedEvent              extends AuditType("GetMovementDBFailedEvent", commonTransitConventionTraders, None)
-  case object GetMovementMessagesDBFailedEvent      extends AuditType("GetMovementMessagesDBFailedEvent", commonTransitConventionTraders, None)
-  case object GetMovementMessageDBFailedEvent       extends AuditType("GetMovementMessageDBFailedEvent", commonTransitConventionTraders, None)
-  case object PushPullNotificationGetBoxFailedEvent extends AuditType("PushPullNotificationGetBoxFailedEvent", commonTransitConventionTraders, None)
+      extends AuditType("InformationAboutNonArrivedMovement", commonTransitConventionTraders, Some(MessageType.IE141), None)
+  case object WriteOffNotification             extends AuditType("WriteOffNotification", transitMovementsRouter, Some(MessageType.IE045), None)
+  case object NoReleaseForTransit              extends AuditType("NoReleaseForTransit", transitMovementsRouter, Some(MessageType.IE051), None)
+  case object RequestOfRelease                 extends AuditType("RequestOfRelease", commonTransitConventionTraders, Some(MessageType.IE054), None)
+  case object GuaranteeNotValid                extends AuditType("GuaranteeNotValid", transitMovementsRouter, Some(MessageType.IE055), None)
+  case object RejectionFromOfficeOfDeparture   extends AuditType("RejectionFromOfficeOfDeparture", transitMovementsRouter, Some(MessageType.IE056), None)
+  case object RejectionFromOfficeOfDestination extends AuditType("RejectionFromOfficeOfDestination", transitMovementsRouter, Some(MessageType.IE057), None)
+  case object ControlDecisionNotification      extends AuditType("ControlDecisionNotification", transitMovementsRouter, Some(MessageType.IE060), None)
+
+  case object ForwardedIncidentNotificationToED
+      extends AuditType("ForwardedIncidentNotificationToED", commonTransitConventionTraders, Some(MessageType.IE182), None)
+  case object PositiveAcknowledge         extends AuditType("PositiveAcknowledge", transitMovementsRouter, Some(MessageType.IE928), None)
+  case object RequestOnNonArrivedMovement extends AuditType("RequestOnNonArrivedMovement", transitMovementsRouter, Some(MessageType.IE140), None)
+
+  case object LargeMessageSubmissionRequested
+      extends AuditType("LargeMessageSubmissionRequested", commonTransitConventionTraders, None, Some("CTCTradersWorkflow"))
+  case object TraderFailedUploadEvent extends AuditType("TraderFailedUploadEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+
+  case object SubmitArrivalNotificationFailedEvent
+      extends AuditType("SubmitArrivalNotificationFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object SubmitDeclarationFailedEvent extends AuditType("SubmitDeclarationFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object ValidationFailedEvent        extends AuditType("ValidationFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object CreateMovementDBFailedEvent  extends AuditType("CreateMovementDBFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object PushNotificationFailedEvent  extends AuditType("PushNotificationFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object AddMessageDBFailedEvent      extends AuditType("AddMessageDBFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+
+  case object PushNotificationUpdateFailedEvent
+      extends AuditType("PushNotificationUpdateFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object SubmitAttachMessageFailedEvent extends AuditType("SubmitAttachMessageFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object GetMovementsDBFailedEvent      extends AuditType("GetMovementsDBFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+  case object GetMovementDBFailedEvent       extends AuditType("GetMovementDBFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+
+  case object GetMovementMessagesDBFailedEvent
+      extends AuditType("GetMovementMessagesDBFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+
+  case object GetMovementMessageDBFailedEvent
+      extends AuditType("GetMovementMessageDBFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+
+  case object PushPullNotificationGetBoxFailedEvent
+      extends AuditType("PushPullNotificationGetBoxFailedEvent", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+
+  case object CustomerRequestedMissingMovement
+      extends AuditType("CustomerRequestedMissingMovement", commonTransitConventionTraders, None, Some("CTCTradersFailed"))
+
+  case object NCTSRequestedMissingMovement extends AuditType("NCTSRequestedMissingMovement", transitMovementsRouter, None, Some("CTCTradersFailed"))
 
   case object PresentationNotificationForThePreLodgedDeclaration
-      extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, Some(MessageType.IE170))
+      extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, Some(MessageType.IE170), None)
+
+  case object TraderToNCTSSubmissionSuccessful
+      extends AuditType("TraderToNCTSSubmissionSuccessful", commonTransitConventionTraders, None, Some("CTCTradersSucceeded"))
+
+  case object NCTSToTraderSubmissionSuccessful extends AuditType("NCTSToTraderSubmissionSuccessful", transitMovementsRouter, None, Some("CTCTradersSucceeded"))
 
   def fromName(name: String): Option[AuditType] = values.find(_.name == name)
 

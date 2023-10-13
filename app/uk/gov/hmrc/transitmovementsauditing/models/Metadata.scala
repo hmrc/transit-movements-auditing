@@ -27,6 +27,7 @@ object Metadata {
   def apply(headers: Headers): Metadata =
     Metadata(
       headers.get(Constants.XAuditMetaPath).getOrElse(""),
+      None,
       headers.get(Constants.XAuditMetaMovementId).map(MovementId(_)),
       headers.get(Constants.XAuditMetaMessageId).map(MessageId(_)),
       headers.get(Constants.XAuditMetaEORI).map(EORINumber(_)),
@@ -37,6 +38,7 @@ object Metadata {
 
 case class Metadata(
   path: String,
+  subtype: Option[String],
   movementId: Option[MovementId],
   messageId: Option[MessageId],
   enrolmentEORI: Option[EORINumber],
