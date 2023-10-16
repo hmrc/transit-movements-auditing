@@ -66,7 +66,7 @@ class AuditServiceSpec
   private val metadataMessageType: MetadataRequest =
     MetadataRequest("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
 
-  private val metadataFailedStatusType: MetadataRequest =
+  private val metadataStatusType: MetadataRequest =
     MetadataRequest(
       "some-path",
       Some(MovementId("movementId")),
@@ -76,27 +76,7 @@ class AuditServiceSpec
       Some(IE015)
     )
 
-  private val metadataSuccessStatusType: MetadataRequest =
-    MetadataRequest(
-      "some-path",
-      Some(MovementId("movementId")),
-      Some(MessageId("messageId")),
-      Some(EORINumber("enrolmentEORI")),
-      Some(Departure),
-      Some(IE015)
-    )
-
-  private val metadataWorkflowStatusType: MetadataRequest =
-    MetadataRequest(
-      "some-path",
-      Some(MovementId("movementId")),
-      Some(MessageId("messageId")),
-      Some(EORINumber("enrolmentEORI")),
-      Some(Departure),
-      Some(IE015)
-    )
-
-  private val statusEventDetails = Details(DetailsRequest(Some("CTCTradersFailed"), metadataFailedStatusType, Some(someGoodCC015CJson)))
+  private val statusEventDetails = Details(DetailsRequest(Some("CTCTradersFailed"), metadataStatusType, Some(someGoodCC015CJson)))
 
   private val messageTypeValidDetails = Details(DetailsRequest(None, metadataMessageType, Some(someGoodCC015CJson)))
 
@@ -108,7 +88,7 @@ class AuditServiceSpec
 
     "should successfully send message to audit connector" - AuditType.values
       .filterNot(
-        auditType => auditType.messageType.equals(None)
+        auditType => auditType.messageType.isEmpty
       )
       .foreach {
         auditType =>
@@ -183,7 +163,7 @@ class AuditServiceSpec
   "status audit" - {
     "should successfully send message to audit connector" - AuditType.values
       .filter(
-        auditType => auditType.messageType.equals(None)
+        auditType => auditType.messageType.isEmpty
       )
       .foreach {
         auditType =>
