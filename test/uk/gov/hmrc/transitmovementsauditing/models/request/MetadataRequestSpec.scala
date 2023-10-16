@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.models
+package uk.gov.hmrc.transitmovementsauditing.models.request
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.test.FakeHeaders
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
+import uk.gov.hmrc.transitmovementsauditing.models.MovementType
 
 class MetadataRequestSpec extends AnyFreeSpec with Matchers {
 

@@ -63,11 +63,11 @@ class AuditServiceSpec
 
   private val someGoodCC015CJson = Json.obj("messageSender" -> "sender")
 
-  private val metadataMessageType: MetadataRequest =
-    MetadataRequest("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
+  private val metadataMessageType: Metadata =
+    Metadata("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
 
-  private val metadataStatusType: MetadataRequest =
-    MetadataRequest(
+  private val metadataStatusType: Metadata =
+    Metadata(
       "some-path",
       Some(MovementId("movementId")),
       Some(MessageId("messageId")),
@@ -76,11 +76,11 @@ class AuditServiceSpec
       Some(IE015)
     )
 
-  private val statusEventDetails = Details(DetailsRequest(Some("CTCTradersFailed"), metadataStatusType, Some(someGoodCC015CJson)))
+  private val statusEventDetails = Details(Some("CTCTradersFailed"), metadataStatusType, Some(someGoodCC015CJson))
 
-  private val messageTypeValidDetails = Details(DetailsRequest(None, metadataMessageType, Some(someGoodCC015CJson)))
+  private val messageTypeValidDetails = Details(None, metadataMessageType, Some(someGoodCC015CJson))
 
-  private val detailsWithEmptyPayload = Details(DetailsRequest(None, metadataMessageType, None))
+  private val detailsWithEmptyPayload = Details(None, metadataMessageType, None)
 
   override def beforeEach: Unit = reset(mockAuditConnector)
 
@@ -176,7 +176,7 @@ class AuditServiceSpec
               .thenReturn(Future.successful(Success))
             val subType           = if (auditType.parent.isDefined) Some(auditType.name) else None
             val parent            = auditType.parent.getOrElse(auditType.name).toString
-            val statusTypeDetails = statusEventDetails.copy(statusEventDetails.details.copy(subType = subType))
+            val statusTypeDetails = statusEventDetails.copy(subType = subType)
             val result = service.sendStatusTypeEvent(
               statusTypeDetails,
               parent,

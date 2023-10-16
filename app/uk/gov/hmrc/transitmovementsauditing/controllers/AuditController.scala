@@ -33,11 +33,7 @@ import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
 import play.api.mvc.Result
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.internalauth.client.IAAction
-import uk.gov.hmrc.internalauth.client.Predicate
-import uk.gov.hmrc.internalauth.client.Resource
-import uk.gov.hmrc.internalauth.client.ResourceLocation
-import uk.gov.hmrc.internalauth.client.ResourceType
+import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.transitmovementsauditing.Payload
@@ -46,15 +42,11 @@ import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType
-import uk.gov.hmrc.transitmovementsauditing.models.Details
-import uk.gov.hmrc.transitmovementsauditing.models.DetailsRequest
-import uk.gov.hmrc.transitmovementsauditing.models.FileId
-import uk.gov.hmrc.transitmovementsauditing.models.MetadataRequest
-import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
-import uk.gov.hmrc.transitmovementsauditing.models.Details.detailsRequestFormat
+import uk.gov.hmrc.transitmovementsauditing.models._
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
+import uk.gov.hmrc.transitmovementsauditing.models.request.DetailsRequest
+import uk.gov.hmrc.transitmovementsauditing.models.request.MetadataRequest
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
@@ -122,12 +114,36 @@ class AuditController @Inject() (
             "objectSummary"    -> summary.objectSummary.toString,
             "additionalFields" -> summary.fields.toString()
           )
-          EitherT.rightT[Future, PresentationError](Details(DetailsRequest(None, metadataRequest, Some(objSummary))))
+          EitherT.rightT[Future, PresentationError](
+            Details(
+              None,
+              Metadata(
+                metadataRequest.path,
+                metadataRequest.movementId,
+                metadataRequest.messageId,
+                metadataRequest.enrolmentEORI,
+                metadataRequest.movementType,
+                metadataRequest.messageType
+              ),
+              Some(objSummary)
+            )
+          )
         case Right(s) =>
           for {
             body <- extractBody(s)
             src  <- parse[JsObject](body)
-          } yield Details(DetailsRequest(None, metadataRequest, Some(src)))
+          } yield Details(
+            None,
+            Metadata(
+              metadataRequest.path,
+              metadataRequest.movementId,
+              metadataRequest.messageId,
+              metadataRequest.enrolmentEORI,
+              metadataRequest.movementType,
+              metadataRequest.messageType
+            ),
+            Some(src)
+          )
       }
     }
 
@@ -143,7 +159,18 @@ class AuditController @Inject() (
         subType = if (auditType.parent.isDefined) Some(auditType.name) else None
         result <- auditService
           .sendStatusTypeEvent(
-            Details(detailsRequest.copy(subType = subType)),
+            Details(
+              subType,
+              Metadata(
+                detailsRequest.metadata.path,
+                detailsRequest.metadata.movementId,
+                detailsRequest.metadata.messageId,
+                detailsRequest.metadata.enrolmentEORI,
+                detailsRequest.metadata.movementType,
+                detailsRequest.metadata.messageType
+              ),
+              detailsRequest.payload
+            ),
             auditType.parent.getOrElse(auditType.name).toString,
             auditSource
           )
