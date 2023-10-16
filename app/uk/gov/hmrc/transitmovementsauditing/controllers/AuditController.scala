@@ -48,9 +48,11 @@ import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActi
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.Details
+import uk.gov.hmrc.transitmovementsauditing.models.DetailsRequest
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
-import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MetadataRequest
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
+import uk.gov.hmrc.transitmovementsauditing.models.Details.detailsRequestFormat
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
@@ -113,19 +115,19 @@ class AuditController @Inject() (
     if (request.headers.get(Constants.XAuditMetaPath).isEmpty) {
       EitherT.leftT[Future, Details](PresentationError.badRequestError(s"${Constants.XAuditMetaPath} is missing"))
     } else {
-      val metadata = Metadata(request.headers)
+      val metadataRequest = MetadataRequest(request.headers)
       payload match {
         case Left(summary) =>
           val objSummary = Json.obj(
             "objectSummary"    -> summary.objectSummary.toString,
             "additionalFields" -> summary.fields.toString()
           )
-          EitherT.rightT[Future, PresentationError](Details(metadata, Some(objSummary)))
+          EitherT.rightT[Future, PresentationError](Details(DetailsRequest(None, metadataRequest, Some(objSummary))))
         case Right(s) =>
           for {
             body <- extractBody(s)
             src  <- parse[JsObject](body)
-          } yield Details(metadata, Some(src))
+          } yield Details(DetailsRequest(None, metadataRequest, Some(src)))
       }
     }
 
@@ -136,13 +138,13 @@ class AuditController @Inject() (
       val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
 
       (for {
-        string  <- extractBody(request.body)
-        details <- parse[Details](string)
-        parentAuditType = if (auditType.parent.isDefined) auditType.parent.get else "None"
+        string         <- extractBody(request.body)
+        detailsRequest <- parse[DetailsRequest](string)
+        subType = if (auditType.parent.isDefined) Some(auditType.name) else None
         result <- auditService
           .sendStatusTypeEvent(
-            details.copy(details.metadata.copy(subtype = Some(auditType.name))),
-            parentAuditType,
+            Details(detailsRequest.copy(subType = subType)),
+            auditType.parent.getOrElse(auditType.name).toString,
             auditSource
           )
           .asPresentation

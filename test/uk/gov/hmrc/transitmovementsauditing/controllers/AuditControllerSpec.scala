@@ -63,11 +63,12 @@ import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadE
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
 import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
 import uk.gov.hmrc.transitmovementsauditing.models.Details
+import uk.gov.hmrc.transitmovementsauditing.models.DetailsRequest
 import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.MessageId
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
-import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MetadataRequest
 import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
@@ -107,19 +108,19 @@ class AuditControllerSpec
 
   private val someGoodCC015CJson = Json.obj("test" -> "123")
 
-  private val metadata: Metadata =
-    Metadata(
+  private val metadata: MetadataRequest =
+    MetadataRequest(
       "some-path",
-      Some("TraderFailedUploadEvent"),
       Some(MovementId("movementId")),
       Some(MessageId("messageId")),
       Some(EORINumber("enrolmentEORI")),
       Some(Departure),
       Some(IE015)
     )
-  private val someValidFullDetails = Details(metadata, Some(someGoodCC015CJson))
+  private val someValidFullDetails = DetailsRequest(Some("TraderFailedUploadEvent"), metadata, Some(someGoodCC015CJson))
 
-  private val someValidDetails = Details(Metadata("some-path", Some("TraderFailedUploadEvent"), None, None, None, None, None), Some(someGoodCC015CJson))
+  private val someValidDetails =
+    DetailsRequest(Some("TraderFailedUploadEvent"), MetadataRequest("some-path", None, None, None, None, None), Some(someGoodCC015CJson))
 
   private val emptyFakeRequest = FakeRequest("POST", "/")
 
@@ -333,14 +334,14 @@ class AuditControllerSpec
         when(mockAppConfig.auditingEnabled).thenReturn(true)
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
-        when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(any()))
+        when(mockAuditService.sendStatusTypeEvent(eqTo(Details(someValidDetails)), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(any()))
           .thenReturn(EitherT.rightT(()))
 
         val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
-          eqTo(someValidDetails),
+          eqTo(Details(someValidDetails)),
           eqTo("CTCTradersFailed"),
           eqTo("common-transit-convention-traders")
         )(any())
@@ -351,7 +352,7 @@ class AuditControllerSpec
         when(mockAppConfig.auditingEnabled).thenReturn(true)
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
-        when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(any()))
+        when(mockAuditService.sendStatusTypeEvent(eqTo(Details(someValidDetails)), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(any()))
           .thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
         val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
@@ -362,7 +363,7 @@ class AuditControllerSpec
         )
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
-          eqTo(someValidDetails),
+          eqTo(Details(someValidDetails)),
           eqTo("CTCTradersFailed"),
           eqTo("common-transit-convention-traders")
         )(any())
@@ -374,7 +375,7 @@ class AuditControllerSpec
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
         when(
-          mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(
+          mockAuditService.sendStatusTypeEvent(eqTo(Details(someValidDetails)), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(
             any()
           )
         ).thenReturn(EitherT.rightT(()))
@@ -383,7 +384,7 @@ class AuditControllerSpec
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
-          eqTo(someValidDetails),
+          eqTo(Details(someValidDetails)),
           eqTo("CTCTradersFailed"),
           eqTo("common-transit-convention-traders")
         )(any())
@@ -396,7 +397,7 @@ class AuditControllerSpec
 
         when(
           mockAuditService.sendStatusTypeEvent(
-            eqTo(someValidFullDetails),
+            eqTo(Details(someValidFullDetails)),
             eqTo("CTCTradersFailed"),
             eqTo("common-transit-convention-traders")
           )(any())
@@ -406,7 +407,7 @@ class AuditControllerSpec
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
-          eqTo(someValidFullDetails),
+          eqTo(Details(someValidFullDetails)),
           eqTo("CTCTradersFailed"),
           eqTo("common-transit-convention-traders")
         )(any())
@@ -418,7 +419,7 @@ class AuditControllerSpec
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
         when(
-          mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("CTCTradersFailed"), eqTo("test"))(any())
+          mockAuditService.sendStatusTypeEvent(eqTo(Details(someValidDetails)), eqTo("CTCTradersFailed"), eqTo("test"))(any())
         ).thenReturn(EitherT.rightT(()))
 
         val request = emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", XAuditSourceHeader -> "test").withBody(jsonDetailsStream)
@@ -426,7 +427,7 @@ class AuditControllerSpec
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
-          eqTo(someValidDetails),
+          eqTo(Details(someValidDetails)),
           eqTo("CTCTradersFailed"),
           eqTo("test")
         )(any())

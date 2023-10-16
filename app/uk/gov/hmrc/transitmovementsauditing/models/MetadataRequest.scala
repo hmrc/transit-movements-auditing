@@ -21,13 +21,12 @@ import play.api.libs.json.OFormat
 import play.api.mvc.Headers
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 
-object Metadata {
-  implicit lazy val metadataFormat: OFormat[Metadata] = Json.format[Metadata]
+object MetadataRequest {
+  implicit lazy val metadataRequestFormat: OFormat[MetadataRequest] = Json.format[MetadataRequest]
 
-  def apply(headers: Headers): Metadata =
-    Metadata(
+  def apply(headers: Headers): MetadataRequest =
+    MetadataRequest(
       headers.get(Constants.XAuditMetaPath).getOrElse(""),
-      None,
       headers.get(Constants.XAuditMetaMovementId).map(MovementId(_)),
       headers.get(Constants.XAuditMetaMessageId).map(MessageId(_)),
       headers.get(Constants.XAuditMetaEORI).map(EORINumber(_)),
@@ -36,9 +35,8 @@ object Metadata {
     )
 }
 
-case class Metadata(
+case class MetadataRequest(
   path: String,
-  subtype: Option[String],
   movementId: Option[MovementId],
   messageId: Option[MessageId],
   enrolmentEORI: Option[EORINumber],

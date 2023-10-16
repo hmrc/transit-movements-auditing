@@ -21,11 +21,11 @@ import org.scalatest.matchers.must.Matchers
 import play.api.test.FakeHeaders
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 
-class MetadataSpec extends AnyFreeSpec with Matchers {
+class MetadataRequestSpec extends AnyFreeSpec with Matchers {
 
   "Metadata with some optional headers" in {
     val headers = FakeHeaders(Seq(Constants.XAuditMetaPath -> "abc", Constants.XAuditMetaMovementId -> "123"))
-    Metadata.apply(headers) mustBe Metadata("abc", None, Some(MovementId("123")), None, None, None, None)
+    MetadataRequest.apply(headers) mustBe MetadataRequest("abc", Some(MovementId("123")), None, None, None, None)
   }
 
   "Metadata with all optional headers" in {
@@ -39,9 +39,8 @@ class MetadataSpec extends AnyFreeSpec with Matchers {
         Constants.XAuditMetaMessageType  -> MessageType.IE015.messageCode
       )
     )
-    Metadata.apply(headers) mustBe Metadata(
+    MetadataRequest.apply(headers) mustBe MetadataRequest(
       "abc",
-      None,
       Some(MovementId("123")),
       Some(MessageId("123")),
       Some(EORINumber("ABC12")),
