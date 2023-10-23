@@ -35,51 +35,28 @@ import play.api.http.Status
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
-import play.api.mvc.ActionBuilder
-import play.api.mvc.AnyContent
-import play.api.mvc.ControllerComponents
-import play.api.mvc.DefaultActionBuilder
-import play.api.mvc.PlayBodyParsers
-import play.api.mvc.Request
+import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.internalauth.client.IAAction
-import uk.gov.hmrc.internalauth.client.Predicate
-import uk.gov.hmrc.internalauth.client.Resource
-import uk.gov.hmrc.internalauth.client.ResourceLocation
-import uk.gov.hmrc.internalauth.client.ResourceType
+import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationAmendment
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.SubmitArrivalNotificationFailedEvent
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.TraderFailedUploadEvent
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType._
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
+import uk.gov.hmrc.transitmovementsauditing.models._
 import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
-import uk.gov.hmrc.transitmovementsauditing.models.Details
-import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
-import uk.gov.hmrc.transitmovementsauditing.models.FileId
-import uk.gov.hmrc.transitmovementsauditing.models.MessageId
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
-import uk.gov.hmrc.transitmovementsauditing.models.Metadata
-import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
-import uk.gov.hmrc.transitmovementsauditing.services.AuditService
-import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
-import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
-import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
-import uk.gov.hmrc.transitmovementsauditing.services.XmlParsingServiceHelpers
+import uk.gov.hmrc.transitmovementsauditing.services._
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class AuditControllerSpec
@@ -116,10 +93,10 @@ class AuditControllerSpec
       Some(Departure),
       Some(IE015)
     )
-  private val someValidFullDetails = Details(Some("TraderFailedUploadEvent"), metadata, Some(someGoodCC015CJson))
+  private val someValidFullDetails = Details(Some("TraderFailedUpload"), metadata, Some(someGoodCC015CJson))
 
   private val someValidDetails =
-    Details(Some("TraderFailedUploadEvent"), Metadata("some-path", None, None, None, None, None), Some(someGoodCC015CJson))
+    Details(Some("TraderFailedUpload"), Metadata("some-path", None, None, None, None, None), Some(someGoodCC015CJson))
 
   private val emptyFakeRequest = FakeRequest("POST", "/")
 
@@ -323,7 +300,7 @@ class AuditControllerSpec
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
         // If the config fails, we have something that can't be deserialised, so this will below up.
-        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(Source.single(ByteString())))
+        val result = controller.post(TraderFailedUpload)(fakeStatusRequest.withBody(Source.single(ByteString())))
         status(result) mustBe Status.ACCEPTED
       }
 
@@ -336,7 +313,7 @@ class AuditControllerSpec
         when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(any()))
           .thenReturn(EitherT.rightT(()))
 
-        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
+        val result = controller.post(TraderFailedUpload)(fakeStatusRequest.withBody(jsonDetailsStream))
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
@@ -354,7 +331,7 @@ class AuditControllerSpec
         when(mockAuditService.sendStatusTypeEvent(eqTo(someValidDetails), eqTo("CTCTradersFailed"), eqTo("common-transit-convention-traders"))(any()))
           .thenReturn(EitherT.leftT(AuditError.UnexpectedError("test error")))
 
-        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
+        val result = controller.post(TraderFailedUpload)(fakeStatusRequest.withBody(jsonDetailsStream))
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "INTERNAL_SERVER_ERROR",
@@ -379,7 +356,7 @@ class AuditControllerSpec
           )
         ).thenReturn(EitherT.rightT(()))
 
-        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonDetailsStream))
+        val result = controller.post(TraderFailedUpload)(fakeStatusRequest.withBody(jsonDetailsStream))
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
@@ -402,7 +379,7 @@ class AuditControllerSpec
           )(any())
         ).thenReturn(EitherT.rightT(()))
 
-        val result = controller.post(TraderFailedUploadEvent)(fakeStatusRequest.withBody(jsonFullDetailsStream))
+        val result = controller.post(TraderFailedUpload)(fakeStatusRequest.withBody(jsonFullDetailsStream))
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
@@ -422,7 +399,7 @@ class AuditControllerSpec
         ).thenReturn(EitherT.rightT(()))
 
         val request = emptyFakeRequest.withHeaders(CONTENT_TYPE -> "application/json", XAuditSourceHeader -> "test").withBody(jsonDetailsStream)
-        val result  = controller.post(TraderFailedUploadEvent)(request)
+        val result  = controller.post(TraderFailedUpload)(request)
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAuditService, times(1)).sendStatusTypeEvent(
@@ -437,7 +414,7 @@ class AuditControllerSpec
         when(mockAppConfig.auditingEnabled).thenReturn(true)
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
-        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody(invalidJsonDetailsStream))
+        val result = controller.post(SubmitArrivalNotificationFailed)(fakeStatusRequest.withBody(invalidJsonDetailsStream))
         status(result) mustBe Status.BAD_REQUEST
       }
 
@@ -446,7 +423,7 @@ class AuditControllerSpec
         when(mockAppConfig.auditingEnabled).thenReturn(true)
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
 
-        val result = controller.post(SubmitArrivalNotificationFailedEvent)(fakeStatusRequest.withBody())
+        val result = controller.post(SubmitArrivalNotificationFailed)(fakeStatusRequest.withBody())
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
       }
 
