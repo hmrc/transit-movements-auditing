@@ -18,6 +18,7 @@ package uk.gov.hmrc.transitmovementsauditing.models
 
 import Sources._
 import uk.gov.hmrc.transitmovementsauditing.models.ParentAuditType.CTCTradersFailed
+import uk.gov.hmrc.transitmovementsauditing.models.ParentAuditType.CTCTradersSucceeded
 import uk.gov.hmrc.transitmovementsauditing.models.ParentAuditType.CTCTradersWorkflow
 
 sealed abstract class AuditType(val name: String, val source: String, val messageType: Option[MessageType] = None, val parent: Option[ParentAuditType])
@@ -151,9 +152,9 @@ object AuditType {
       extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, Some(MessageType.IE170), None)
 
   case object TraderToNCTSSubmissionSuccessful
-      extends AuditType("TraderToNCTSSubmissionSuccessful", commonTransitConventionTraders, None, Some(CTCTradersWorkflow))
+      extends AuditType("TraderToNCTSSubmissionSuccessful", commonTransitConventionTraders, None, Some(CTCTradersSucceeded))
 
-  case object NCTSToTraderSubmissionSuccessful extends AuditType("NCTSToTraderSubmissionSuccessful", transitMovementsRouter, None, Some(CTCTradersWorkflow))
+  case object NCTSToTraderSubmissionSuccessful extends AuditType("NCTSToTraderSubmissionSuccessful", transitMovementsRouter, None, Some(CTCTradersSucceeded))
 
   def fromName(name: String): Option[AuditType] = values.find(_.name == name)
 
