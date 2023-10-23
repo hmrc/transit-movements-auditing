@@ -46,7 +46,6 @@ import uk.gov.hmrc.transitmovementsauditing.models._
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.models.request.DetailsRequest
-import uk.gov.hmrc.transitmovementsauditing.models.request.MetadataRequest
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
@@ -107,7 +106,14 @@ class AuditController @Inject() (
     if (request.headers.get(Constants.XAuditMetaPath).isEmpty) {
       EitherT.leftT[Future, Details](PresentationError.badRequestError(s"${Constants.XAuditMetaPath} is missing"))
     } else {
-      val metadataRequest = MetadataRequest(request.headers)
+      val metadata = Metadata(
+        request.headers.get(Constants.XAuditMetaPath).get,
+        request.headers.get(Constants.XAuditMetaMovementId).map(MovementId(_)),
+        request.headers.get(Constants.XAuditMetaMessageId).map(MessageId(_)),
+        request.headers.get(Constants.XAuditMetaEORI).map(EORINumber(_)),
+        request.headers.get(Constants.XAuditMetaMovementType).flatMap(MovementType.findByName(_)),
+        request.headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode(_))
+      )
       payload match {
         case Left(summary) =>
           val objSummary = Json.obj(
@@ -117,14 +123,7 @@ class AuditController @Inject() (
           EitherT.rightT[Future, PresentationError](
             Details(
               None,
-              Metadata(
-                metadataRequest.path,
-                metadataRequest.movementId,
-                metadataRequest.messageId,
-                metadataRequest.enrolmentEORI,
-                metadataRequest.movementType,
-                metadataRequest.messageType
-              ),
+              metadata,
               Some(objSummary)
             )
           )
@@ -134,14 +133,7 @@ class AuditController @Inject() (
             src  <- parse[JsObject](body)
           } yield Details(
             None,
-            Metadata(
-              metadataRequest.path,
-              metadataRequest.movementId,
-              metadataRequest.messageId,
-              metadataRequest.enrolmentEORI,
-              metadataRequest.movementType,
-              metadataRequest.messageType
-            ),
+            metadata,
             Some(src)
           )
       }

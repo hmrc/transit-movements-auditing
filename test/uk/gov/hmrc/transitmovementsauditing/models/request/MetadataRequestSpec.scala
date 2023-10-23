@@ -16,41 +16,62 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models.request
 
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import play.api.test.FakeHeaders
-import uk.gov.hmrc.transitmovementsauditing.config.Constants
-import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
-import uk.gov.hmrc.transitmovementsauditing.models.MessageId
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
-import uk.gov.hmrc.transitmovementsauditing.models.MovementId
-import uk.gov.hmrc.transitmovementsauditing.models.MovementType
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.Json
+import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
+import uk.gov.hmrc.transitmovementsauditing.models._
 
-class MetadataRequestSpec extends AnyFreeSpec with Matchers {
-
-  "Metadata with some optional headers" in {
-    val headers = FakeHeaders(Seq(Constants.XAuditMetaPath -> "abc", Constants.XAuditMetaMovementId -> "123"))
-    MetadataRequest.apply(headers) mustBe MetadataRequest("abc", Some(MovementId("123")), None, None, None, None)
-  }
-
-  "Metadata with all optional headers" in {
-    val headers = FakeHeaders(
-      Seq(
-        Constants.XAuditMetaPath         -> "abc",
-        Constants.XAuditMetaMovementId   -> "123",
-        Constants.XAuditMetaMessageId    -> "123",
-        Constants.XAuditMetaEORI         -> "ABC12",
-        Constants.XAuditMetaMovementType -> MovementType.Arrival.movementType,
-        Constants.XAuditMetaMessageType  -> MessageType.IE015.messageCode
+class MetadataRequestSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {
+  private val path = Gen.listOfN(10, Gen.alphaChar).map(_.mkString)
+  "when MetadataRequest is serialized, return an appropriate JsObject" in forAll(
+    path,
+    arbitrary[MovementId],
+    arbitrary[MessageId],
+    arbitrary[EORINumber],
+    arbitrary[MovementType],
+    arbitrary[MessageType]
+  ) {
+    (path, movementId, messageId, eoriNumber, movementType, messageType) =>
+      val actual = MetadataRequest.metadataRequestFormat.writes(
+        MetadataRequest(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType))
       )
-    )
-    MetadataRequest.apply(headers) mustBe MetadataRequest(
-      "abc",
-      Some(MovementId("123")),
-      Some(MessageId("123")),
-      Some(EORINumber("ABC12")),
-      Some(MovementType.Arrival),
-      Some(MessageType.IE015)
-    )
+      val expected = Json.obj(
+        "path"          -> path,
+        "movementId"    -> movementId,
+        "messageId"     -> messageId,
+        "enrolmentEORI" -> eoriNumber,
+        "movementType"  -> movementType,
+        "messageType"   -> messageType
+      )
+      actual mustBe expected
   }
+
+  "when an appropriate JsObject is deserialized, return a MetadataRequest" in forAll(
+    path,
+    arbitrary[MovementId],
+    arbitrary[MessageId],
+    arbitrary[EORINumber],
+    arbitrary[MovementType],
+    arbitrary[MessageType]
+  ) {
+    (path, movementId, messageId, eoriNumber, movementType, messageType) =>
+      val actual = MetadataRequest.metadataRequestFormat.reads(
+        Json.obj(
+          "path"          -> path,
+          "movementId"    -> movementId,
+          "messageId"     -> messageId,
+          "enrolmentEORI" -> eoriNumber,
+          "movementType"  -> movementType,
+          "messageType"   -> messageType
+        )
+      )
+      val expected = MetadataRequest(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType))
+      actual mustBe JsSuccess(expected)
+  }
+
 }

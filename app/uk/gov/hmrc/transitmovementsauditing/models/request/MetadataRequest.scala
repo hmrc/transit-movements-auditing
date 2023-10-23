@@ -18,26 +18,10 @@ package uk.gov.hmrc.transitmovementsauditing.models.request
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import play.api.mvc.Headers
-import uk.gov.hmrc.transitmovementsauditing.config.Constants
-import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
-import uk.gov.hmrc.transitmovementsauditing.models.MessageId
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
-import uk.gov.hmrc.transitmovementsauditing.models.MovementId
-import uk.gov.hmrc.transitmovementsauditing.models.MovementType
+import uk.gov.hmrc.transitmovementsauditing.models._
 
 object MetadataRequest {
   implicit lazy val metadataRequestFormat: OFormat[MetadataRequest] = Json.format[MetadataRequest]
-
-  def apply(headers: Headers): MetadataRequest =
-    MetadataRequest(
-      headers.get(Constants.XAuditMetaPath).getOrElse(""),
-      headers.get(Constants.XAuditMetaMovementId).map(MovementId(_)),
-      headers.get(Constants.XAuditMetaMessageId).map(MessageId(_)),
-      headers.get(Constants.XAuditMetaEORI).map(EORINumber(_)),
-      headers.get(Constants.XAuditMetaMovementType).flatMap(MovementType.findByName(_)),
-      headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode(_))
-    )
 }
 
 case class MetadataRequest(
