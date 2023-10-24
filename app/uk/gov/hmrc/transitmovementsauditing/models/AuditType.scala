@@ -109,6 +109,9 @@ object AuditType {
   case object PositiveAcknowledge         extends AuditType("PositiveAcknowledge", transitMovementsRouter, Some(MessageType.IE928), None)
   case object RequestOnNonArrivedMovement extends AuditType("RequestOnNonArrivedMovement", transitMovementsRouter, Some(MessageType.IE140), None)
 
+  case object PresentationNotificationForThePreLodgedDeclaration
+      extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, Some(MessageType.IE170), None)
+
   case object LargeMessageSubmissionRequested
       extends AuditType("LargeMessageSubmissionRequested", commonTransitConventionTraders, None, Some(CTCTradersWorkflow))
 
@@ -144,9 +147,6 @@ object AuditType {
       extends AuditType("CustomerRequestedMissingMovement", commonTransitConventionTraders, None, Some(CTCTradersFailed))
 
   case object NCTSRequestedMissingMovement extends AuditType("NCTSRequestedMissingMovement", transitMovementsRouter, None, Some(CTCTradersFailed))
-
-  case object PresentationNotificationForThePreLodgedDeclaration
-      extends AuditType("PresentationNotificationForThePreLodgedDeclaration", commonTransitConventionTraders, Some(MessageType.IE170), None)
 
   case object TraderToNCTSSubmissionSuccessful
       extends AuditType("TraderToNCTSSubmissionSuccessful", commonTransitConventionTraders, None, Some(CTCTradersSucceeded))
