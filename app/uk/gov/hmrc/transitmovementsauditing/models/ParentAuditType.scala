@@ -16,19 +16,16 @@
 
 package uk.gov.hmrc.transitmovementsauditing.models
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
+sealed trait ParentAuditType
 
-object Metadata {
-  implicit lazy val metadataFormat: OFormat[Metadata] = Json.format[Metadata]
+object ParentAuditType {
+
+  final case object CTCTradersSucceeded extends ParentAuditType
+
+  final case object CTCTradersFailed extends ParentAuditType
+
+  final case object CTCTradersWorkflow extends ParentAuditType
+
+  val parentAuditValues = Seq(CTCTradersSucceeded, CTCTradersFailed, CTCTradersWorkflow)
 
 }
-
-case class Metadata(
-  path: String,
-  movementId: Option[MovementId],
-  messageId: Option[MessageId],
-  enrolmentEORI: Option[EORINumber],
-  movementType: Option[MovementType],
-  messageType: Option[MessageType]
-)

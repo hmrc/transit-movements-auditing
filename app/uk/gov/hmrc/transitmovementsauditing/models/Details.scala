@@ -23,4 +23,4 @@ import play.api.libs.json.OFormat
 object Details {
   implicit lazy val detailsFormat: OFormat[Details] = Json.format[Details]
 }
-case class Details(metadata: Metadata, payload: Option[JsObject])
+case class Details(subType: Option[String], metadata: Metadata, payload: Option[JsObject])

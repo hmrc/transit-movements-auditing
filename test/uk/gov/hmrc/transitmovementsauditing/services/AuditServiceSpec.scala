@@ -37,19 +37,14 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType
-import uk.gov.hmrc.transitmovementsauditing.models.Details
-import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
-import uk.gov.hmrc.transitmovementsauditing.models.MessageId
-import uk.gov.hmrc.transitmovementsauditing.models.Metadata
-import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
+import uk.gov.hmrc.transitmovementsauditing.models._
 import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
@@ -68,39 +63,55 @@ class AuditServiceSpec
 
   private val someGoodCC015CJson = Json.obj("messageSender" -> "sender")
 
-  private val metadata: Metadata =
+  private val metadataMessageType: Metadata =
     Metadata("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
 
-  private val someValidDetails = Details(metadata, Some(someGoodCC015CJson))
+  private val metadataStatusType: Metadata =
+    Metadata(
+      "some-path",
+      Some(MovementId("movementId")),
+      Some(MessageId("messageId")),
+      Some(EORINumber("enrolmentEORI")),
+      Some(Departure),
+      Some(IE015)
+    )
 
-  private val detailsWithEmptyPayload = Details(metadata, None)
+  private val statusEventDetails = Details(Some("CTCTradersFailed"), metadataStatusType, Some(someGoodCC015CJson))
+
+  private val messageTypeValidDetails = Details(None, metadataMessageType, Some(someGoodCC015CJson))
+
+  private val detailsWithEmptyPayload = Details(None, metadataMessageType, None)
 
   override def beforeEach: Unit = reset(mockAuditConnector)
 
-  "Audit service" - {
+  "message type audit" - {
 
-    "should successfully send message to audit connector" - AuditType.values.foreach {
-      auditType =>
-        s"${auditType.name} to ${auditType.source}" in {
-          reset(mockAuditConnector)
-          val service                                   = new AuditServiceImpl(mockAuditConnector)
-          val captor: ArgumentCaptor[ExtendedDataEvent] = ArgumentCaptor.forClass(classOf[ExtendedDataEvent])
+    "should successfully send message to audit connector" - AuditType.values
+      .filterNot(
+        auditType => auditType.messageType.isEmpty
+      )
+      .foreach {
+        auditType =>
+          s"${auditType.name} to ${auditType.source}" in {
+            reset(mockAuditConnector)
+            val service                                   = new AuditServiceImpl(mockAuditConnector)
+            val captor: ArgumentCaptor[ExtendedDataEvent] = ArgumentCaptor.forClass(classOf[ExtendedDataEvent])
 
-          when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
-            .thenReturn(Future.successful(Success))
+            when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
+              .thenReturn(Future.successful(Success))
 
-          val result = service.sendMessageTypeEvent(auditType, someValidDetails)
+            val result = service.sendMessageTypeEvent(auditType, messageTypeValidDetails)
 
-          whenReady(result.value, Timeout(1.second)) {
-            result =>
-              result mustBe Right(())
-              val extendedDataEvent = captor.getValue
-              extendedDataEvent.auditType mustBe auditType.name
-              extendedDataEvent.auditSource mustBe auditType.source
-              extendedDataEvent.detail mustBe Json.toJson(someValidDetails)
+            whenReady(result.value, Timeout(1.second)) {
+              result =>
+                result mustBe Right(())
+                val extendedDataEvent = captor.getValue
+                extendedDataEvent.auditType mustBe auditType.name
+                extendedDataEvent.auditSource mustBe auditType.source
+                extendedDataEvent.detail mustBe Json.toJson(messageTypeValidDetails)
+            }
           }
-        }
-    }
+      }
 
     "should return an error when the connector reports a failure" in {
       val service = new AuditServiceImpl(mockAuditConnector)
@@ -108,7 +119,7 @@ class AuditServiceSpec
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(Failure("a failure")))
 
-      val result = service.sendMessageTypeEvent(DeclarationData, someValidDetails)
+      val result = service.sendMessageTypeEvent(DeclarationData, messageTypeValidDetails)
 
       whenReady(result.value, Timeout(1.second)) {
         _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
@@ -121,7 +132,7 @@ class AuditServiceSpec
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(Disabled))
 
-      val result = service.sendMessageTypeEvent(DeclarationData, someValidDetails)
+      val result = service.sendMessageTypeEvent(DeclarationData, messageTypeValidDetails)
 
       whenReady(result.value, Timeout(1.second)) {
         _ mustBe Left(AuditError.Disabled)
@@ -147,9 +158,14 @@ class AuditServiceSpec
           extendedDataEvent.detail mustBe Json.toJson(detailsWithEmptyPayload)
       }
     }
+  }
 
-    "status audit" - {
-      "should successfully send message to audit connector" - AuditType.values.foreach {
+  "status audit" - {
+    "should successfully send message to audit connector" - AuditType.values
+      .filter(
+        auditType => auditType.messageType.isEmpty
+      )
+      .foreach {
         auditType =>
           s"${auditType.name} to ${auditType.source}" in {
             reset(mockAuditConnector)
@@ -158,47 +174,52 @@ class AuditServiceSpec
 
             when(mockAuditConnector.sendExtendedEvent(captor.capture())(any[HeaderCarrier], any[ExecutionContext]))
               .thenReturn(Future.successful(Success))
-
-            val result = service.sendStatusTypeEvent(someValidDetails, auditType.name, auditType.source)
+            val subType           = if (auditType.parent.isDefined) Some(auditType.name) else None
+            val parent            = auditType.parent.getOrElse(auditType.name).toString
+            val statusTypeDetails = statusEventDetails.copy(subType = subType)
+            val result = service.sendStatusTypeEvent(
+              statusTypeDetails,
+              parent,
+              auditType.source
+            )
 
             whenReady(result.value, Timeout(1.second)) {
               result =>
                 result mustBe Right(())
                 val extendedDataEvent = captor.getValue
-                extendedDataEvent.auditType mustBe auditType.name
+                extendedDataEvent.auditType mustBe parent
                 extendedDataEvent.auditSource mustBe auditType.source
-                Json.parse(extendedDataEvent.detail.toString()).validate[Details].get mustBe someValidDetails
+                Json.parse(extendedDataEvent.detail.toString()).validate[Details].get mustBe statusTypeDetails
             }
           }
       }
 
-      "should return an error when the connector reports a failure" in {
-        val service = new AuditServiceImpl(mockAuditConnector)
+    "should return an error when the connector reports a failure" in {
+      val service = new AuditServiceImpl(mockAuditConnector)
 
-        when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(Failure("a failure")))
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(Failure("a failure")))
 
-        val result = service.sendStatusTypeEvent(someValidDetails, "SubmitDeclarationFailedEvent", "common-transit-convention-traders")
+      val result = service.sendStatusTypeEvent(statusEventDetails, "CTCTradersFailed", "common-transit-convention-traders")
 
-        whenReady(result.value, Timeout(1.second)) {
-          _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
-        }
+      whenReady(result.value, Timeout(1.second)) {
+        _.left.getOrElse(Failure("a different failure")) mustBe a[AuditError.UnexpectedError]
       }
-
-      "should return an error when the connector reports that auditing is disabled" in {
-        val service = new AuditServiceImpl(mockAuditConnector)
-
-        when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(Disabled))
-
-        val result = service.sendStatusTypeEvent(someValidDetails, "SubmitDeclarationFailedEvent", "common-transit-convention-traders")
-
-        whenReady(result.value, Timeout(1.second)) {
-          _ mustBe Left(AuditError.Disabled)
-        }
-      }
-
     }
+
+    "should return an error when the connector reports that auditing is disabled" in {
+      val service = new AuditServiceImpl(mockAuditConnector)
+
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(Disabled))
+
+      val result = service.sendStatusTypeEvent(statusEventDetails, "CTCTradersFailed", "common-transit-convention-traders")
+
+      whenReady(result.value, Timeout(1.second)) {
+        _ mustBe Left(AuditError.Disabled)
+      }
+    }
+
   }
 
 }

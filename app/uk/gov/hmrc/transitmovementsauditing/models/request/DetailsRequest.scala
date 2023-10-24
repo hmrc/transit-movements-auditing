@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.models
+package uk.gov.hmrc.transitmovementsauditing.models.request
 
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
-object Metadata {
-  implicit lazy val metadataFormat: OFormat[Metadata] = Json.format[Metadata]
-
+object DetailsRequest {
+  implicit lazy val detailsRequestFormat: OFormat[DetailsRequest] = Json.format[DetailsRequest]
 }
 
-case class Metadata(
-  path: String,
-  movementId: Option[MovementId],
-  messageId: Option[MessageId],
-  enrolmentEORI: Option[EORINumber],
-  movementType: Option[MovementType],
-  messageType: Option[MessageType]
-)
+case class DetailsRequest(metadata: MetadataRequest, payload: Option[JsObject])

@@ -17,10 +17,19 @@
 package uk.gov.hmrc.transitmovementsauditing.generators
 
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import uk.gov.hmrc.objectstore.client.Md5Hash
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
+import uk.gov.hmrc.transitmovementsauditing.models.MovementType
+import uk.gov.hmrc.transitmovementsauditing.models.request.MetadataRequest
 
 import java.time.Instant
 import java.time.ZoneOffset
@@ -43,4 +52,54 @@ trait ModelGenerators {
     )
   }
 
+  lazy val genShortUUID: Gen[String] = Gen.long.map {
+    l: Long =>
+      f"${BigInt(l)}%016x"
+  }
+
+  implicit lazy val arbitraryMessageId: Arbitrary[MessageId] = Arbitrary {
+    genShortUUID.map(MessageId(_))
+  }
+
+  implicit lazy val arbitraryEORINumber: Arbitrary[EORINumber] = Arbitrary {
+    Gen.alphaNumStr.map(EORINumber(_))
+  }
+
+  implicit lazy val arbitraryMessageType: Arbitrary[MessageType] = Arbitrary {
+    Gen.oneOf(MessageType.values)
+  }
+
+  implicit lazy val arbitraryAuditType: Arbitrary[AuditType] = Arbitrary {
+    Gen.oneOf(AuditType.values)
+  }
+
+  implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
+    genShortUUID.map(MovementId(_))
+  }
+
+  implicit lazy val arbitraryMovementType: Arbitrary[MovementType] = Arbitrary {
+    Gen.oneOf(MovementType.values)
+  }
+
+  implicit val arbitraryMetadata: Arbitrary[Metadata] = Arbitrary {
+    for {
+      path          <- Gen.alphaNumStr
+      movementId    <- arbitrary[MovementId]
+      messageId     <- arbitrary[MessageId]
+      enrolmentEORI <- arbitrary[EORINumber]
+      movementType  <- arbitrary[MovementType]
+      messageType   <- arbitrary[MessageType]
+    } yield Metadata(path, Some(movementId), Some(messageId), Some(enrolmentEORI), Some(movementType), Some(messageType))
+  }
+
+  implicit val arbitraryMetadataRequest: Arbitrary[MetadataRequest] = Arbitrary {
+    for {
+      path          <- Gen.alphaNumStr
+      movementId    <- arbitrary[MovementId]
+      messageId     <- arbitrary[MessageId]
+      enrolmentEORI <- arbitrary[EORINumber]
+      movementType  <- arbitrary[MovementType]
+      messageType   <- arbitrary[MessageType]
+    } yield MetadataRequest(path, Some(movementId), Some(messageId), Some(enrolmentEORI), Some(movementType), Some(messageType))
+  }
 }
