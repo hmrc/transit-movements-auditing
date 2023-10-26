@@ -41,7 +41,7 @@ object AuditType {
     DeclarationData,
     Discrepancies,
     NotificationToAmendDeclaration,
-    GoodsReleasedNotification,
+    GoodsReleaseNotification,
     MRNAllocated,
     ReleaseForTransit,
     RecoveryNotification,
@@ -87,7 +87,7 @@ object AuditType {
   case object DeclarationData                extends AuditType("DeclarationData", commonTransitConventionTraders, Some(MessageType.IE015), None)
   case object Discrepancies                  extends AuditType("Discrepancies", transitMovementsRouter, Some(MessageType.IE019), None)
   case object NotificationToAmendDeclaration extends AuditType("NotificationToAmendDeclaration", transitMovementsRouter, Some(MessageType.IE022), None)
-  case object GoodsReleasedNotification      extends AuditType("GoodsReleasedNotification", transitMovementsRouter, Some(MessageType.IE025), None)
+  case object GoodsReleaseNotification       extends AuditType("GoodsReleaseNotification", transitMovementsRouter, Some(MessageType.IE025), None)
   case object MRNAllocated                   extends AuditType("MRNAllocated", transitMovementsRouter, Some(MessageType.IE028), None)
   case object ReleaseForTransit              extends AuditType("ReleaseForTransit", transitMovementsRouter, Some(MessageType.IE029), None)
   case object RecoveryNotification           extends AuditType("RecoveryNotification", transitMovementsRouter, Some(MessageType.IE035), None)
