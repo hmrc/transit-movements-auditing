@@ -50,7 +50,6 @@ object AuditType {
     InformationAboutNonArrivedMovement,
     WriteOffNotification,
     NoReleaseForTransit,
-    RequestOfRelease,
     GuaranteeNotValid,
     RejectionFromOfficeOfDeparture,
     RejectionFromOfficeOfDestination,
@@ -98,7 +97,6 @@ object AuditType {
       extends AuditType("InformationAboutNonArrivedMovement", commonTransitConventionTraders, Some(MessageType.IE141), None)
   case object WriteOffNotification             extends AuditType("WriteOffNotification", transitMovementsRouter, Some(MessageType.IE045), None)
   case object NoReleaseForTransit              extends AuditType("NoReleaseForTransit", transitMovementsRouter, Some(MessageType.IE051), None)
-  case object RequestOfRelease                 extends AuditType("RequestOfRelease", commonTransitConventionTraders, Some(MessageType.IE054), None)
   case object GuaranteeNotValid                extends AuditType("GuaranteeNotValid", transitMovementsRouter, Some(MessageType.IE055), None)
   case object RejectionFromOfficeOfDeparture   extends AuditType("RejectionFromOfficeOfDeparture", transitMovementsRouter, Some(MessageType.IE056), None)
   case object RejectionFromOfficeOfDestination extends AuditType("RejectionFromOfficeOfDestination", transitMovementsRouter, Some(MessageType.IE057), None)
