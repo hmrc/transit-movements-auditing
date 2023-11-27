@@ -23,6 +23,8 @@ import uk.gov.hmrc.objectstore.client.Md5Hash
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.Channel
+import uk.gov.hmrc.transitmovementsauditing.models.ClientId
 import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
 import uk.gov.hmrc.transitmovementsauditing.models.MessageId
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
@@ -81,6 +83,14 @@ trait ModelGenerators {
     Gen.oneOf(MovementType.values)
   }
 
+  implicit lazy val arbitraryClientId: Arbitrary[ClientId] = Arbitrary {
+    Gen.stringOfN(24, Gen.alphaNumChar).map(ClientId.apply)
+  }
+
+  implicit lazy val arbitraryChannel: Arbitrary[Channel] = Arbitrary {
+    Gen.oneOf(Channel.values)
+  }
+
   implicit val arbitraryMetadata: Arbitrary[Metadata] = Arbitrary {
     for {
       path          <- Gen.alphaNumStr
@@ -89,7 +99,9 @@ trait ModelGenerators {
       enrolmentEORI <- arbitrary[EORINumber]
       movementType  <- arbitrary[MovementType]
       messageType   <- arbitrary[MessageType]
-    } yield Metadata(path, Some(movementId), Some(messageId), Some(enrolmentEORI), Some(movementType), Some(messageType))
+      clientId      <- arbitrary[ClientId]
+      channel       <- arbitrary[Channel]
+    } yield Metadata(path, Some(movementId), Some(messageId), Some(enrolmentEORI), Some(movementType), Some(messageType), Some(clientId), Some(channel))
   }
 
   implicit val arbitraryMetadataRequest: Arbitrary[MetadataRequest] = Arbitrary {

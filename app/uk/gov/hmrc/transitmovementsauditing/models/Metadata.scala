@@ -30,5 +30,7 @@ case class Metadata(
   messageId: Option[MessageId],
   enrolmentEORI: Option[EORINumber],
   movementType: Option[MovementType],
-  messageType: Option[MessageType]
+  messageType: Option[MessageType],
+  clientId: Option[ClientId],
+  channel: Option[Channel]
 )

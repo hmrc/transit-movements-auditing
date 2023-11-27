@@ -36,14 +36,20 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     arbitrary[MessageType]
   ) {
     (path, movementId, messageId, eoriNumber, movementType, messageType) =>
-      val actual = Metadata.metadataFormat.writes(Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType)))
+      val clientId = arbitraryClientId.arbitrary.sample.get
+      val channel  = arbitraryChannel.arbitrary.sample.get
+      val actual = Metadata.metadataFormat.writes(
+        Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel))
+      )
       val expected = Json.obj(
         "path"          -> path,
         "movementId"    -> movementId,
         "messageId"     -> messageId,
         "enrolmentEORI" -> eoriNumber,
         "movementType"  -> movementType,
-        "messageType"   -> messageType
+        "messageType"   -> messageType,
+        "clientId"      -> clientId,
+        "channel"       -> channel
       )
       actual mustBe expected
   }
@@ -57,6 +63,8 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     arbitrary[MessageType]
   ) {
     (path, movementId, messageId, eoriNumber, movementType, messageType) =>
+      val clientId = arbitraryClientId.arbitrary.sample.get
+      val channel  = arbitraryChannel.arbitrary.sample.get
       val actual = Metadata.metadataFormat.reads(
         Json.obj(
           "path"          -> path,
@@ -64,10 +72,12 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
           "messageId"     -> messageId,
           "enrolmentEORI" -> eoriNumber,
           "movementType"  -> movementType,
-          "messageType"   -> messageType
+          "messageType"   -> messageType,
+          "clientId"      -> clientId,
+          "channel"       -> channel
         )
       )
-      val expected = Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType))
+      val expected = Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel))
       actual mustBe JsSuccess(expected)
   }
 

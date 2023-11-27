@@ -64,7 +64,16 @@ class AuditServiceSpec
   private val someGoodCC015CJson = Json.obj("messageSender" -> "sender")
 
   private val metadataMessageType: Metadata =
-    Metadata("some-path", Some(MovementId("movementId")), Some(MessageId("messageId")), Some(EORINumber("enrolmentEORI")), Some(Departure), Some(IE015))
+    Metadata(
+      "some-path",
+      Some(MovementId("movementId")),
+      Some(MessageId("messageId")),
+      Some(EORINumber("enrolmentEORI")),
+      Some(Departure),
+      Some(IE015),
+      Some(ClientId("53434")),
+      Some(Channel.API)
+    )
 
   private val metadataStatusType: Metadata =
     Metadata(
@@ -73,7 +82,9 @@ class AuditServiceSpec
       Some(MessageId("messageId")),
       Some(EORINumber("enrolmentEORI")),
       Some(Departure),
-      Some(IE015)
+      Some(IE015),
+      Some(ClientId("53434")),
+      Some(Channel.API)
     )
 
   private val statusEventDetails = Details(Some("CTCTradersFailed"), metadataStatusType, Some(someGoodCC015CJson))
