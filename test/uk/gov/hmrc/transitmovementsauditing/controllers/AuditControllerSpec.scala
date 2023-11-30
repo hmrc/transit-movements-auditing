@@ -95,7 +95,7 @@ class AuditControllerSpec
       Some(Departure),
       Some(IE015),
       Some(ClientId("53434")),
-      Some(Channel.API)
+      Some(Channel.api)
     )
   private val someValidFullDetails = Details(Some("TraderFailedUpload"), metadata, Some(someGoodCC015CJson))
 
@@ -105,14 +105,14 @@ class AuditControllerSpec
   private val someValidDetailsWithClientId =
     Details(
       Some("TraderFailedUpload"),
-      Metadata("some-path", None, None, None, None, None, Some(ClientId("53434")), Some(Channel.API)),
+      Metadata("some-path", None, None, None, None, None, Some(ClientId("53434")), Some(Channel.api)),
       Some(someGoodCC015CJson)
     )
 
   private val someValidDetailsWithOutClientId =
     Details(
       Some("TraderFailedUpload"),
-      Metadata("some-path", None, None, None, None, None, None, Some(Channel.WEB)),
+      Metadata("some-path", None, None, None, None, None, None, Some(Channel.web)),
       Some(someGoodCC015CJson)
     )
 
@@ -294,7 +294,7 @@ class AuditControllerSpec
         val details = argumentCaptor.getValue
 
         details.metadata.clientId mustBe Some(ClientId("53434"))
-        details.metadata.channel mustBe Some(Channel.API)
+        details.metadata.channel mustBe Some(Channel.api)
 
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())
       }
@@ -311,7 +311,7 @@ class AuditControllerSpec
         val details = argumentCaptor.getValue
 
         details.metadata.clientId mustBe None
-        details.metadata.channel mustBe Some(Channel.WEB)
+        details.metadata.channel mustBe Some(Channel.web)
 
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())
       }

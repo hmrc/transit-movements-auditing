@@ -20,25 +20,25 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.JsString
 import play.api.libs.json.Json
-import uk.gov.hmrc.transitmovementsauditing.models.Channel.API
-import uk.gov.hmrc.transitmovementsauditing.models.Channel.WEB
+import uk.gov.hmrc.transitmovementsauditing.models.Channel.api
+import uk.gov.hmrc.transitmovementsauditing.models.Channel.web
 
 class ChannelSpec extends AnyFlatSpec with Matchers {
 
   "Channel" should "serialise correctly" in {
-    Json.toJson[Channel](Channel.API) should be(JsString("API"))
+    Json.toJson[Channel](Channel.api) should be(JsString("api"))
   }
 
   "Channel" should "deserialize correctly" in {
-    JsString("API").validate[Channel].get should be(Channel.API)
+    JsString("api").validate[Channel].get should be(Channel.api)
   }
 
-  "getChannel" should "return channel as API if clientId is defined" in {
-    Channel.getChannel(Some(ClientId("54321"))) should be(Some(API))
+  "getChannel" should "return channel as api if clientId is defined" in {
+    Channel.getChannel(Some(ClientId("54321"))) should be(Some(api))
   }
 
   "getChannel" should "return channel as WEB if clientId is not defined" in {
-    Channel.getChannel(None) should be(Some(WEB))
+    Channel.getChannel(None) should be(Some(web))
   }
 
 }

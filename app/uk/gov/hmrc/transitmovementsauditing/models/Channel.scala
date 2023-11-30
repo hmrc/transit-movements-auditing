@@ -26,25 +26,25 @@ import play.api.libs.json.Writes
 sealed trait Channel
 
 object Channel {
-  final case object API extends Channel
-  final case object WEB extends Channel
+  final case object api extends Channel
+  final case object web extends Channel
 
-  val values = Seq(API, WEB)
+  val values = Seq(api, web)
 
   implicit val channelWrites = new Writes[Channel] {
     override def writes(channel: Channel) = Json.toJson(channel.toString)
   }
 
   implicit val channelReads: Reads[Channel] = Reads {
-    case JsString("API") => JsSuccess(API)
-    case JsString("WEB") => JsSuccess(WEB)
+    case JsString("api") => JsSuccess(api)
+    case JsString("web") => JsSuccess(web)
     case _               => JsError("Invalid Channel name")
   }
 
   def getChannel(clientId: Option[ClientId]): Option[Channel] =
     if (clientId.isDefined) {
-      Some(API)
+      Some(api)
     } else {
-      Some(WEB)
+      Some(web)
     }
 }
