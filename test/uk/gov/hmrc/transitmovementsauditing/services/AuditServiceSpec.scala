@@ -72,7 +72,7 @@ class AuditServiceSpec
       Some(Departure),
       Some(IE015),
       Some(ClientId("53434")),
-      Some(Channel.api)
+      Some(Channel.Api)
     )
 
   private val metadataStatusType: Metadata =
@@ -84,7 +84,7 @@ class AuditServiceSpec
       Some(Departure),
       Some(IE015),
       Some(ClientId("53434")),
-      Some(Channel.api)
+      Some(Channel.Api)
     )
 
   private val statusEventDetails = Details(Some("CTCTradersFailed"), metadataStatusType, Some(someGoodCC015CJson))

@@ -23,28 +23,30 @@ import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 
-sealed trait Channel
+sealed abstract class Channel(val channel: String) extends Product with Serializable
 
 object Channel {
-  final case object api extends Channel
-  final case object web extends Channel
+  final case object Api extends Channel("api")
+  final case object Web extends Channel("web")
 
-  val values = Seq(api, web)
+  val values = Seq(Api, Web)
+
+  def findByChannel(channel: String) =
+    values.find(_.channel == channel)
 
   implicit val channelWrites = new Writes[Channel] {
-    override def writes(channel: Channel) = Json.toJson(channel.toString)
+    override def writes(channel: Channel) = Json.toJson(channel.channel)
   }
 
   implicit val channelReads: Reads[Channel] = Reads {
-    case JsString("api") => JsSuccess(api)
-    case JsString("web") => JsSuccess(web)
+    case JsString(value) => findByChannel(value).map(JsSuccess(_)).getOrElse(JsError("Invalid Channel name"))
     case _               => JsError("Invalid Channel name")
   }
 
   def getChannel(clientId: Option[ClientId]): Option[Channel] =
     if (clientId.isDefined) {
-      Some(api)
+      Some(Api)
     } else {
-      Some(web)
+      Some(Web)
     }
 }

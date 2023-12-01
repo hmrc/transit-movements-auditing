@@ -74,7 +74,7 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
           "movementType"  -> movementType,
           "messageType"   -> messageType,
           "clientId"      -> clientId,
-          "channel"       -> channel
+          "channel"       -> channel.channel
         )
       )
       val expected = Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel))
