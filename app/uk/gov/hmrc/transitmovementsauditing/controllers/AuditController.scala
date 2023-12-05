@@ -30,6 +30,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
+import play.api.mvc.Headers
 import play.api.mvc.Request
 import play.api.mvc.Result
 import uk.gov.hmrc.http.HeaderCarrier
@@ -91,7 +92,7 @@ class AuditController @Inject() (
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       (for {
         stream  <- getSource(auditType, request)(exceedsMessageSize)
-        details <- buildDetails(stream)
+        details <- buildDetails(stream, auditType.source)
         result  <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
       } yield result)
         .fold(
@@ -102,17 +103,23 @@ class AuditController @Inject() (
       Future.successful(Accepted)
     }
 
-  private def buildDetails(payload: Payload)(implicit request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, Details] =
+  private def buildDetails(payload: Payload, auditSource: String)(implicit
+    request: Request[Source[ByteString, _]]
+  ): EitherT[Future, PresentationError, Details] =
     if (request.headers.get(Constants.XAuditMetaPath).isEmpty) {
       EitherT.leftT[Future, Details](PresentationError.badRequestError(s"${Constants.XAuditMetaPath} is missing"))
     } else {
+      val (clientId, channel) = getChannelAndClientId(request.headers, auditSource)
+
       val metadata = Metadata(
         request.headers.get(Constants.XAuditMetaPath).get,
         request.headers.get(Constants.XAuditMetaMovementId).map(MovementId(_)),
         request.headers.get(Constants.XAuditMetaMessageId).map(MessageId(_)),
         request.headers.get(Constants.XAuditMetaEORI).map(EORINumber(_)),
         request.headers.get(Constants.XAuditMetaMovementType).flatMap(MovementType.findByName(_)),
-        request.headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode(_))
+        request.headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode(_)),
+        clientId,
+        channel
       )
       payload match {
         case Left(summary) =>
@@ -139,11 +146,23 @@ class AuditController @Inject() (
       }
     }
 
+  private def getChannelAndClientId(headers: Headers, auditSource: String) = {
+    var clientId                 = headers.get(Constants.XClientIdHeader).map(ClientId(_))
+    var channel: Option[Channel] = None
+    auditSource match {
+      case Sources.commonTransitConventionTraders => channel = Channel.getChannel(clientId)
+      case _                                      => clientId = None
+    }
+    (clientId, channel)
+  }
+
   def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
     if (appConfig.auditingEnabled) {
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
       val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
+
+      val (clientId, channel) = getChannelAndClientId(request.headers, auditSource)
 
       (for {
         string         <- extractBody(request.body)
@@ -159,7 +178,9 @@ class AuditController @Inject() (
                 detailsRequest.metadata.messageId,
                 detailsRequest.metadata.enrolmentEORI,
                 detailsRequest.metadata.movementType,
-                detailsRequest.metadata.messageType
+                detailsRequest.metadata.messageType,
+                clientId,
+                channel
               ),
               detailsRequest.payload
             ),

@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.config
+package uk.gov.hmrc.transitmovementsauditing.models
 
-object Constants {
-  val XContentLengthHeader   = "X-ContentLength"
-  val XAuditSourceHeader     = "X-Audit-Source"
-  val XAuditMetaPath         = "X-Audit-Meta-Path"
-  val XAuditMetaMovementId   = "X-Audit-Meta-Movement-Id"
-  val XAuditMetaMessageId    = "X-Audit-Meta-Message-Id"
-  val XAuditMetaEORI         = "X-Audit-Meta-EORI"
-  val XAuditMetaMovementType = "X-Audit-Meta-Movement-Type"
-  val XAuditMetaMessageType  = "X-Audit-Meta-Message-Type"
-  val XClientIdHeader        = "X-Client-Id"
+import play.api.libs.json.Json
+
+object ClientId {
+  implicit val clientIdFormat = Json.valueFormat[ClientId]
 }
+
+case class ClientId(value: String) extends AnyVal
