@@ -2,20 +2,20 @@ import sbt._
 
 object AppDependencies {
 
-  private val catsVersion     = "2.8.0"
-  private val hmrcPlayVersion = "7.12.0"
+  private val catsVersion     = "2.9.0"
+  private val hmrcPlayVersion = "8.4.0"
 
   val compile = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-backend-play-28"    % hmrcPlayVersion,
+    "uk.gov.hmrc"             %% "bootstrap-backend-play-30"    % hmrcPlayVersion,
     "org.typelevel"           %% "cats-core"                    % catsVersion,
-    "com.lightbend.akka"      %% "akka-stream-alpakka-xml"      % "3.0.4",
+    "org.apache.pekko"        %% "pekko-connectors-xml"         % "1.0.1",
     "io.lemonlabs"            %% "scala-uri"                    % "3.6.0",
-    "uk.gov.hmrc.objectstore" %% "object-store-client-play-28"  % "1.0.0",
-    "uk.gov.hmrc"             %% "internal-auth-client-play-28" % "1.4.0"
+    "uk.gov.hmrc.objectstore" %% "object-store-client-play-30"  % "1.3.0",
+    "uk.gov.hmrc"             %% "internal-auth-client-play-30" % "1.8.0"
   )
 
   val test = Seq(
-    "uk.gov.hmrc"            %% "bootstrap-test-play-28"  % hmrcPlayVersion,
+    "uk.gov.hmrc"            %% "bootstrap-test-play-30"  % hmrcPlayVersion,
     "org.mockito"             % "mockito-core"            % "4.5.1",
     "org.mockito"            %% "mockito-scala-scalatest" % "1.17.5",
     "org.typelevel"          %% "cats-core"               % catsVersion,

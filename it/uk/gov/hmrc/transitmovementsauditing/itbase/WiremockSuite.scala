@@ -19,7 +19,7 @@ package uk.gov.hmrc.transitmovementsauditing.itbase
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
-import com.kenshoo.play.metrics.Metrics
+//import com.kenshoo.play.metrics.Metrics
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
@@ -67,16 +67,16 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
             key -> server.port.toString()
         }: _*
       )
-      .overrides(bindings: _*)
+  //.overrides(bindings: _*)
 
   override lazy val fakeApplication: Application =
     applicationBuilder.build()
 
   protected lazy val injector: Injector = fakeApplication.injector
 
-  protected def bindings: Seq[GuiceableModule] = Seq(
-    bind[Metrics].toInstance(new TestMetrics)
-  )
+//  protected def bindings: Seq[GuiceableModule] = Seq(
+//    bind[Metrics].toInstance(new TestMetrics)
+//  )
 
   override def beforeAll(): Unit = {
     server.start()
