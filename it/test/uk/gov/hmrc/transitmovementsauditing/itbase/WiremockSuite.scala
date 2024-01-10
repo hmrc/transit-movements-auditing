@@ -19,16 +19,11 @@ package uk.gov.hmrc.transitmovementsauditing.itbase
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
-//import com.kenshoo.play.metrics.Metrics
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.Suite
+import org.scalatest._
 import org.scalatestplus.play.guice.GuiceFakeApplicationFactory
 import play.api.Application
 import play.api.inject.Injector
-import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.inject.guice.GuiceableModule
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
@@ -67,16 +62,11 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
             key -> server.port.toString()
         }: _*
       )
-  //.overrides(bindings: _*)
 
   override lazy val fakeApplication: Application =
     applicationBuilder.build()
 
   protected lazy val injector: Injector = fakeApplication.injector
-
-//  protected def bindings: Seq[GuiceableModule] = Seq(
-//    bind[Metrics].toInstance(new TestMetrics)
-//  )
 
   override def beforeAll(): Unit = {
     server.start()
