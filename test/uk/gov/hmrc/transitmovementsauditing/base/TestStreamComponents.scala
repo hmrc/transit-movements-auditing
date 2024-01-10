@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.transitmovementsauditing.base
 
-import akka.Done
-import akka.stream.FlowShape
-import akka.stream.scaladsl.Broadcast
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Sink
+import org.apache.pekko.Done
+import org.apache.pekko.stream.FlowShape
+import org.apache.pekko.stream.scaladsl.Broadcast
+import org.apache.pekko.stream.scaladsl.Flow
+import org.apache.pekko.stream.scaladsl.GraphDSL
+import org.apache.pekko.stream.scaladsl.Sink
 
 import scala.concurrent.Future
 

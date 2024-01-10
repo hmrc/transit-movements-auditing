@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject

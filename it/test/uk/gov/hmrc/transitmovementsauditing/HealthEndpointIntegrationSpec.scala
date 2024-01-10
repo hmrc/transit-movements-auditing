@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.transitmovementsauditing
 
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent._
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite

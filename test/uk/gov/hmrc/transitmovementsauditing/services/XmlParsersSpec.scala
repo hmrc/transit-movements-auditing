@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import akka.stream.alpakka.xml.ParseEvent
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
+import org.apache.pekko.stream.connectors.xml.ParseEvent
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec

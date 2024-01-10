@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Keep
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar.when

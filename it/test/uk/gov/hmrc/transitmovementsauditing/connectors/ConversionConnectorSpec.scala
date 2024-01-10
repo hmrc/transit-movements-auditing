@@ -16,16 +16,13 @@
 
 package uk.gov.hmrc.transitmovementsauditing.connectors
 
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.equalTo
-import com.github.tomakehurst.wiremock.client.WireMock.post
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock._
 import com.typesafe.config.ConfigFactory
 import io.lemonlabs.uri.Url
+import org.apache.pekko.stream.scaladsl.Flow
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
 import org.mockito.MockitoSugar.when
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -36,11 +33,9 @@ import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.http.HeaderNames
-import play.api.http.Status.BAD_REQUEST
-import play.api.http.Status.OK
+import play.api.http.Status._
 import play.api.libs.json.Json
-import play.api.libs.ws.ahc.AhcWSClient
-import play.api.libs.ws.ahc.AhcWSClientConfigFactory
+import play.api.libs.ws.ahc._
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -52,11 +47,11 @@ import uk.gov.hmrc.transitmovementsauditing.itbase.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
 
+  implicit val ec     = materializer.executionContext
   private val timeout = Timeout(5.seconds)
 
   private def conversionUrl(messageType: String) = s"/transit-movements-converter/messages/$messageType"

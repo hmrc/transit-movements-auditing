@@ -5,9 +5,9 @@ This microservice is in [Beta](https://www.gov.uk/help/beta). The signature may 
 
 ## Prerequisites
 
-- Scala 2.13.8
+- Scala 2.13.12
 - Java 11
-- sbt > 1.7.2
+- sbt 1.9.7
 - [Service Manager](https://github.com/hmrc/service-manager)
 
 ## Development Setup
@@ -19,7 +19,7 @@ Task | Description | Command
 :-------|:------------|:-----
 run | Runs the application with the default configured port | ```$ sbt run```
 test | Runs the standard unit tests | ```$ sbt test```
-it:test  | Runs the integration tests | ```$ sbt it:test ```
+it/test  | Runs the integration tests | ```$ sbt it/test ```
 dependencyCheck | Runs dependency-check against the current project. It aggregates dependencies and generates a report | ```$ sbt dependencyCheck```
 dependencyUpdates |  Shows a list of project dependencies that can be updated | ```$ sbt dependencyUpdates```
 dependencyUpdatesReport | Writes a list of project dependencies to a file | ```$ sbt dependencyUpdatesReport```

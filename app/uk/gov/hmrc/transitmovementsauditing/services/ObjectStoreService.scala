@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
@@ -26,7 +26,7 @@ import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
