@@ -39,10 +39,8 @@ trait StreamingParsers {
 
   implicit val materializer: Materializer
 
-  //  We have to be careful to not use Play's EC because we could accidentally starve the thread pool
-  //  and cause errors for additional connections
   implicit val materializerExecutionContext: ExecutionContext =
-    ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(4))
+    ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
   lazy val streamFromMemory: BodyParser[Source[ByteString, _]] = BodyParser {
     _ =>
