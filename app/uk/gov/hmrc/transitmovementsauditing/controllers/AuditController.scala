@@ -81,7 +81,7 @@ class AuditController @Inject() (
   private val predicate = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
 
   def post(auditType: AuditType): Action[Source[ByteString, _]] =
-    internalAuth(predicate).streamFromFile {
+    internalAuth(predicate).async(streamFromMemory) {
       implicit request =>
         if (auditType.messageType.isDefined) postMessageTypeAudit(auditType)
         else postStatusAudit(auditType)
@@ -243,11 +243,12 @@ class AuditController @Inject() (
     if (exceedsLimit) {
       logger.info("Payload in body and > auditing message limit")
       (for {
-        parseResults <- fieldParsingService.getAdditionalFields(auditType.messageType, request.body).asPresentation
+        source       <- reUsableSource(request)
+        parseResults <- fieldParsingService.getAdditionalFields(auditType.messageType, source.lift(1).get).asPresentation
         keyValuePairs = parseResults.collect {
           case Right(pair) => pair
         }
-        objSummary <- objectStoreService.putFile(fileId(), request.body).asPresentation
+        objSummary <- objectStoreService.putFile(fileId(), source.lift(2).get).asPresentation
       } yield ObjectSummaryWithFields(objSummary, keyValuePairs)).map {
         summaryWithFields => Left(summaryWithFields)
       }
@@ -256,5 +257,23 @@ class AuditController @Inject() (
       convertIfNecessary(auditType, request).asPresentation
         .map(Right(_))
     }
+
+  private def materializeSource(source: Source[ByteString, _]): EitherT[Future, PresentationError, Seq[ByteString]] =
+    EitherT(
+      source
+        .runWith(Sink.seq)
+        .map(Right(_): Either[PresentationError, Seq[ByteString]])
+        .recover {
+          error =>
+            Left(PresentationError.internalServiceError(cause = Some(error)))
+        }
+    )
+
+  // Function to create a new source from the materialized sequence
+  private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, _] = Source(seq.toList)
+
+  private def reUsableSource(request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+    byteStringSeq <- materializeSource(request.body)
+  } yield List.fill(3)(createReusableSource(byteStringSeq))
 
 }
