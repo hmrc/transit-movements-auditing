@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.transitmovementsauditing.controllers
 
+import cats.data.EitherT
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import cats.data.EitherT
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
@@ -28,11 +28,7 @@ import play.api.libs.json.JsError
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
-import play.api.mvc.Action
-import play.api.mvc.ControllerComponents
-import play.api.mvc.Headers
-import play.api.mvc.Request
-import play.api.mvc.Result
+import play.api.mvc._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -44,7 +40,6 @@ import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models._
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.models.request.DetailsRequest
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
@@ -227,12 +222,15 @@ class AuditController @Inject() (
 
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, ConversionError, Source[ByteString, _]] =
-    if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined) {
-      conversionService.toJson(auditType.messageType.get, request.body)
-    } else {
-      EitherT.rightT(request.body)
-    }
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    for {
+      sources <- reUsableSource(request, 2)
+      converted <-
+        if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined)
+          conversionService.toJson(auditType.messageType.get, sources.head).asPresentation
+        else
+          EitherT.rightT[Future, PresentationError](sources.lift(1).get)
+    } yield converted
 
   private def fileId(): FileId =
     FileId(s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}")
@@ -243,18 +241,18 @@ class AuditController @Inject() (
     if (exceedsLimit) {
       logger.info("Payload in body and > auditing message limit")
       (for {
-        source       <- reUsableSource(request)
-        parseResults <- fieldParsingService.getAdditionalFields(auditType.messageType, source.lift(1).get).asPresentation
+        sources      <- reUsableSource(request, 2)
+        parseResults <- fieldParsingService.getAdditionalFields(auditType.messageType, sources.head).asPresentation
         keyValuePairs = parseResults.collect {
           case Right(pair) => pair
         }
-        objSummary <- objectStoreService.putFile(fileId(), source.lift(2).get).asPresentation
+        objSummary <- objectStoreService.putFile(fileId(), sources.lift(1).get).asPresentation
       } yield ObjectSummaryWithFields(objSummary, keyValuePairs)).map {
         summaryWithFields => Left(summaryWithFields)
       }
     } else {
       logger.info("Payload in body and < auditing message limit")
-      convertIfNecessary(auditType, request).asPresentation
+      convertIfNecessary(auditType, request)
         .map(Right(_))
     }
 
@@ -272,8 +270,11 @@ class AuditController @Inject() (
   // Function to create a new source from the materialized sequence
   private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, _] = Source(seq.toList)
 
-  private def reUsableSource(request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+  private def reUsableSource(
+    request: Request[Source[ByteString, _]],
+    numberOfSources: Int = 3
+  ): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
     byteStringSeq <- materializeSource(request.body)
-  } yield List.fill(3)(createReusableSource(byteStringSeq))
+  } yield List.fill(numberOfSources)(createReusableSource(byteStringSeq))
 
 }
