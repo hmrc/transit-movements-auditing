@@ -39,7 +39,7 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
       val clientId = arbitraryClientId.arbitrary.sample.get
       val channel  = arbitraryChannel.arbitrary.sample.get
       val actual = Metadata.metadataFormat.writes(
-        Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel))
+        Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel), Some(123))
       )
       val expected = Json.obj(
         "path"          -> path,
@@ -49,7 +49,8 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
         "movementType"  -> movementType,
         "messageType"   -> messageType,
         "clientId"      -> clientId,
-        "channel"       -> channel
+        "channel"       -> channel,
+        "size"          -> 123
       )
       actual mustBe expected
   }
@@ -74,10 +75,12 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
           "movementType"  -> movementType,
           "messageType"   -> messageType,
           "clientId"      -> clientId,
-          "channel"       -> channel.channel
+          "channel"       -> channel.channel,
+          "size"          -> 123
         )
       )
-      val expected = Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel))
+      val expected =
+        Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel), Some(123))
       actual mustBe JsSuccess(expected)
   }
 

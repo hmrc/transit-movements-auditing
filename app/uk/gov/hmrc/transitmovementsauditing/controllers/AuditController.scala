@@ -87,7 +87,7 @@ class AuditController @Inject() (
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       (for {
         stream  <- getSource(auditType, request)(exceedsMessageSize)
-        details <- buildDetails(stream, auditType.source)
+        details <- buildDetails(stream)
         result  <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
       } yield result)
         .fold(
@@ -98,13 +98,13 @@ class AuditController @Inject() (
       Future.successful(Accepted)
     }
 
-  private def buildDetails(payload: Payload, auditSource: String)(implicit
+  private def buildDetails(payload: Payload)(implicit
     request: Request[Source[ByteString, _]]
   ): EitherT[Future, PresentationError, Details] =
     if (request.headers.get(Constants.XAuditMetaPath).isEmpty) {
       EitherT.leftT[Future, Details](PresentationError.badRequestError(s"${Constants.XAuditMetaPath} is missing"))
     } else {
-      val (clientId, channel) = getChannelAndClientId(request.headers, auditSource)
+      val (clientId, channel) = getChannelAndClientId(request.headers)
 
       val metadata = Metadata(
         request.headers.get(Constants.XAuditMetaPath).get,
@@ -114,8 +114,10 @@ class AuditController @Inject() (
         request.headers.get(Constants.XAuditMetaMovementType).flatMap(MovementType.findByName(_)),
         request.headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode(_)),
         clientId,
-        channel
+        channel,
+        request.headers.get(Constants.XContentLengthHeader).map(_.toLong)
       )
+
       payload match {
         case Left(summary) =>
           val objSummary = Json.obj(
@@ -141,13 +143,9 @@ class AuditController @Inject() (
       }
     }
 
-  private def getChannelAndClientId(headers: Headers, auditSource: String) = {
-    var clientId                 = headers.get(Constants.XClientIdHeader).map(ClientId(_))
-    var channel: Option[Channel] = None
-    auditSource match {
-      case Sources.commonTransitConventionTraders => channel = Channel.getChannel(clientId)
-      case _                                      => clientId = None
-    }
+  private def getChannelAndClientId(headers: Headers, auditType: Option[AuditType] = None) = {
+    val clientId = headers.get(Constants.XClientIdHeader).map(ClientId(_))
+    val channel  = if (auditType.isDefined && (auditType.get == AuditType.NCTSRequestedMissingMovement)) None else Channel.getChannel(clientId)
     (clientId, channel)
   }
 
@@ -157,7 +155,7 @@ class AuditController @Inject() (
 
       val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
 
-      val (clientId, channel) = getChannelAndClientId(request.headers, auditSource)
+      val (clientId, channel) = getChannelAndClientId(request.headers, Some(auditType))
 
       (for {
         string         <- extractBody(request.body)
