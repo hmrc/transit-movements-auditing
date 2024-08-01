@@ -32,5 +32,6 @@ case class Metadata(
   movementType: Option[MovementType],
   messageType: Option[MessageType],
   clientId: Option[ClientId],
-  channel: Option[Channel]
+  channel: Option[Channel],
+  size: Option[Long] = None
 )
