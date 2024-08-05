@@ -17,13 +17,15 @@
 package uk.gov.hmrc.transitmovementsauditing.config
 
 object Constants {
-  val XContentLengthHeader   = "X-ContentLength"
-  val XAuditSourceHeader     = "X-Audit-Source"
-  val XAuditMetaPath         = "X-Audit-Meta-Path"
-  val XAuditMetaMovementId   = "X-Audit-Meta-Movement-Id"
-  val XAuditMetaMessageId    = "X-Audit-Meta-Message-Id"
-  val XAuditMetaEORI         = "X-Audit-Meta-EORI"
-  val XAuditMetaMovementType = "X-Audit-Meta-Movement-Type"
-  val XAuditMetaMessageType  = "X-Audit-Meta-Message-Type"
-  val XClientIdHeader        = "X-Client-Id"
+  val XContentLengthHeader       = "X-ContentLength"
+  val XAuditSourceHeader         = "X-Audit-Source"
+  val XAuditMetaPath             = "X-Audit-Meta-Path"
+  val XAuditMetaMovementId       = "X-Audit-Meta-Movement-Id"
+  val XAuditMetaMessageId        = "X-Audit-Meta-Message-Id"
+  val XAuditMetaEORI             = "X-Audit-Meta-EORI"
+  val XAuditMetaMovementType     = "X-Audit-Meta-Movement-Type"
+  val XAuditMetaMessageType      = "X-Audit-Meta-Message-Type"
+  val XClientIdHeader            = "X-Client-Id"
+  val APIVersionHeaderKey        = "APIVersion"
+  val APIVersionFinalHeaderValue = "final"
 }
