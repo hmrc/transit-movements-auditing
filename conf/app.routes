@@ -1,3 +1,3 @@
 # microservice specific routes
 
-POST        /audit/:auditType           uk.gov.hmrc.transitmovementsauditing.controllers.AuditController.post(auditType: uk.gov.hmrc.transitmovementsauditing.models.AuditType)
+POST        /audit/:auditType           uk.gov.hmrc.transitmovementsauditing.routing.VersionedRoutingController.post(auditType: String)
