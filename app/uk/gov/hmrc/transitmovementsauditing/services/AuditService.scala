@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.transitmovementsauditing.services
 
-import org.apache.pekko.stream.Materializer
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
@@ -53,7 +52,7 @@ trait AuditService {
 }
 
 @Singleton
-class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext, materializer: Materializer) extends AuditService with Logging {
+class AuditServiceImpl @Inject() (connector: AuditConnector)(implicit ec: ExecutionContext) extends AuditService with Logging {
 
   def sendMessageTypeEvent(auditType: AuditType, details: Details)(implicit
     hc: HeaderCarrier
