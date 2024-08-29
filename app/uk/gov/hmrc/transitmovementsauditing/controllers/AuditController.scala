@@ -177,7 +177,7 @@ class AuditController @Inject() (
               ),
               detailsRequest.payload
             ),
-            auditType.parent.getOrElse(auditType.name).toString,
+            auditType.parent.map(_.toString).getOrElse(auditType.name),
             auditSource
           )
           .asPresentation
@@ -270,7 +270,7 @@ class AuditController @Inject() (
 
   private def reUsableSource(
     request: Request[Source[ByteString, _]],
-    numberOfSources: Int = 3
+    numberOfSources: Int
   ): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
     byteStringSeq <- materializeSource(request.body)
   } yield List.fill(numberOfSources)(createReusableSource(byteStringSeq))

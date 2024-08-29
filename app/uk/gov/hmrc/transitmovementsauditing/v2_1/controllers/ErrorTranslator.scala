@@ -45,7 +45,7 @@ trait ErrorTranslator {
     def convert(input: E): PresentationError
   }
 
-  implicit val auditError = new Converter[AuditError] {
+  implicit val auditError: Converter[AuditError] = new Converter[AuditError] {
 
     def convert(auditError: AuditError): PresentationError = auditError match {
       case AuditError.UnexpectedError(_, thr) => PresentationError.internalServiceError(cause = thr)
@@ -54,7 +54,7 @@ trait ErrorTranslator {
     }
   }
 
-  implicit val conversionError = new Converter[ConversionError] {
+  implicit val conversionError: Converter[ConversionError] = new Converter[ConversionError] {
 
     def convert(conversionError: ConversionError): PresentationError = conversionError match {
       case ConversionError.FailedConversion(_)     => PresentationError.internalServiceError()
@@ -62,7 +62,7 @@ trait ErrorTranslator {
     }
   }
 
-  implicit val objectStoreError = new Converter[ObjectStoreError] {
+  implicit val objectStoreError: Converter[ObjectStoreError] = new Converter[ObjectStoreError] {
 
     def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
       case FileNotFound(fileLocation) => PresentationError.badRequestError(s"file not found at location: $fileLocation")
@@ -70,13 +70,15 @@ trait ErrorTranslator {
     }
   }
 
-  implicit val parseError = new Converter[ParseError] {
+  implicit val parseError: Converter[ParseError] = new Converter[ParseError] {
 
     def convert(parseError: ParseError): PresentationError = parseError match {
       case NoElementFound(element)                          => PresentationError.badRequestError(s"Element $element not found")
       case TooManyElementsFound(element)                    => PresentationError.badRequestError(s"Found too many elements of type $element")
       case BadDateTime(element, ex: DateTimeParseException) => PresentationError.badRequestError(s"Could not parse datetime for $element: ${ex.getMessage}")
       case ParseError.UnexpectedError(ex)                   => PresentationError.internalServiceError(cause = ex)
+      case ParseError.IgnoreElement                         => PresentationError.badRequestError("Element set to Ignore")
+
     }
   }
 

@@ -19,6 +19,7 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.models
 import play.api.libs.json.JsError
 import play.api.libs.json.JsString
 import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
@@ -29,13 +30,13 @@ object Channel {
   final case object Api extends Channel("api")
   final case object Web extends Channel("web")
 
-  val values = Seq(Api, Web)
+  val values: Seq[Channel] = Seq(Api, Web)
 
-  def findByChannel(channel: String) =
+  def findByChannel(channel: String): Option[Channel] =
     values.find(_.channel == channel)
 
-  implicit val channelWrites = new Writes[Channel] {
-    override def writes(channel: Channel) = Json.toJson(channel.channel)
+  implicit val channelWrites: Writes[Channel] = new Writes[Channel] {
+    override def writes(channel: Channel): JsValue = Json.toJson(channel.channel)
   }
 
   implicit val channelReads: Reads[Channel] = Reads {

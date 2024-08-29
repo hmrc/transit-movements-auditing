@@ -186,7 +186,7 @@ class AuditController @Inject() (
               ),
               detailsRequest.payload
             ),
-            auditType.parent.getOrElse(auditType.name).toString,
+            auditType.parent.map(_.toString).getOrElse(auditType.name),
             auditSource
           )
           .asPresentation

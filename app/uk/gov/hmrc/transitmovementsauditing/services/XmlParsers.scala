@@ -17,7 +17,6 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.connectors.xml.ParseEvent
 import org.apache.pekko.stream.connectors.xml.scaladsl.XmlParsing
 import org.apache.pekko.stream.scaladsl.Flow
@@ -27,7 +26,7 @@ import scala.concurrent.Future
 
 object XmlParsers extends XmlParsingServiceHelpers {
 
-  def extractElement(name: String, path: Seq[String])(implicit mat: Materializer): Flow[ParseEvent, ParseResult[(String, String)], NotUsed] =
+  def extractElement(name: String, path: Seq[String]): Flow[ParseEvent, ParseResult[(String, String)], NotUsed] =
     XmlParsing
       .subtree(path) // path
       .collect {
