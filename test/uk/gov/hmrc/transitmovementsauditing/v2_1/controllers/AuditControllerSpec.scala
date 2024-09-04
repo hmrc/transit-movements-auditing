@@ -282,7 +282,7 @@ class AuditControllerSpec
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
       }
 
-      "returns 202 when auditing was successful When auditSource is common-transit-convention-traders and ClientId is provided than details should contain Channel as API" in {
+      "returns 202 when auditing was successful when ClientId is provided than details should contain Channel as API" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         val argumentCaptor: ArgumentCaptor[Details] = ArgumentCaptor.forClass(classOf[Details])
@@ -299,7 +299,7 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())
       }
 
-      "returns 202 when auditing was successful When auditSource is common-transit-convention-traders and ClientId is not provided than details should contain Channel as WEB" in {
+      "returns 202 when auditing was successful When ClientId is not provided than details should contain Channel as WEB" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
         val argumentCaptor: ArgumentCaptor[Details] = ArgumentCaptor.forClass(classOf[Details])
@@ -314,25 +314,6 @@ class AuditControllerSpec
         details.metadata.channel mustBe Some(Channel.Web)
 
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())
-      }
-
-      "returns 202 when auditing was successful When auditSource is not common-transit-convention-traders and details doesn't contain Channel and ClientId" in {
-
-        when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
-        when(mockConversionService.toJson(eqTo(MessageType.IE004), any())(any())).thenAnswer(conversionServiceXmlToJsonPartial)
-        val argumentCaptor: ArgumentCaptor[Details] = ArgumentCaptor.forClass(classOf[Details])
-        when(mockAuditService.sendMessageTypeEvent(eqTo(AmendmentAcceptance), argumentCaptor.capture())(any())).thenReturn(EitherT.rightT(()))
-
-        val result = controller.post(AmendmentAcceptance)(fakeRequest)
-        status(result) mustBe Status.ACCEPTED
-
-        val details = argumentCaptor.getValue
-
-        details.metadata.clientId mustBe None
-        details.metadata.channel mustBe None
-
-        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), any())(any())
-        verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any())
       }
 
       "returns 500 when the conversion service fails" in {
@@ -593,7 +574,7 @@ class AuditControllerSpec
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationData), any())(any())
       }
 
-      "returns 202 when auditing was successful When auditSource is common-transit-convention-traders and ClientId is provided than details should contain Channel as API" in {
+      "returns 202 when auditing was successful When ClientId is provided than details should contain Channel as API" in {
         reset(mockAppConfig)
         when(mockAppConfig.auditingEnabled).thenReturn(true)
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000)
@@ -615,7 +596,7 @@ class AuditControllerSpec
 
       }
 
-      "returns 202 when auditing was successful When auditSource is common-transit-convention-traders and ClientId is not provided than details should contain Channel as WEB" in {
+      "returns 202 when auditing was successful When ClientId is not provided than details should contain Channel as WEB" in {
 
         reset(mockAppConfig)
         when(mockAppConfig.auditingEnabled).thenReturn(true)
