@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.transitmovementsauditing.v2_1.controllers
 
+import cats.data.EitherT
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import cats.data.EitherT
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
@@ -28,21 +28,14 @@ import play.api.libs.json.JsError
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
-import play.api.mvc.Action
-import play.api.mvc.ControllerComponents
-import play.api.mvc.Headers
-import play.api.mvc.Request
-import play.api.mvc.Result
+import play.api.mvc._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.transitmovementsauditing.v2_1.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.Sources
 import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models._
@@ -53,6 +46,7 @@ import uk.gov.hmrc.transitmovementsauditing.v2_1.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.v2_1.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.v2_1.services.FieldParsingService
 import uk.gov.hmrc.transitmovementsauditing.v2_1.services.ObjectStoreService
+import uk.gov.hmrc.transitmovementsauditing.v2_1.transitmovementsauditing.Payload
 
 import java.time.Instant
 import java.time.ZoneOffset
@@ -94,8 +88,9 @@ class AuditController @Inject() (
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       (for {
         stream  <- getSource(auditType, request)(exceedsMessageSize)
-        details <- buildDetails(stream, auditType.source)
-        result  <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
+        details <- buildDetails(stream)
+
+        result <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
       } yield result)
         .fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -105,13 +100,13 @@ class AuditController @Inject() (
       Future.successful(Accepted)
     }
 
-  private def buildDetails(payload: Payload, auditSource: String)(implicit
+  private def buildDetails(payload: Payload)(implicit
     request: Request[Source[ByteString, _]]
   ): EitherT[Future, PresentationError, Details] =
     if (request.headers.get(Constants.XAuditMetaPath).isEmpty) {
       EitherT.leftT[Future, Details](PresentationError.badRequestError(s"${Constants.XAuditMetaPath} is missing"))
     } else {
-      val (clientId, channel) = getChannelAndClientId(request.headers, auditSource)
+      val (clientId, channel) = getChannelAndClientId(request.headers)
 
       val metadata = Metadata(
         request.headers.get(Constants.XAuditMetaPath).get,
@@ -121,7 +116,8 @@ class AuditController @Inject() (
         request.headers.get(Constants.XAuditMetaMovementType).flatMap(MovementType.findByName(_)),
         request.headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode(_)),
         clientId,
-        channel
+        channel,
+        request.headers.get(Constants.XContentLengthHeader).map(_.toLong)
       )
       payload match {
         case Left(summary) =>
@@ -148,13 +144,9 @@ class AuditController @Inject() (
       }
     }
 
-  private def getChannelAndClientId(headers: Headers, auditSource: String) = {
-    var clientId                 = headers.get(Constants.XClientIdHeader).map(ClientId(_))
-    var channel: Option[Channel] = None
-    auditSource match {
-      case Sources.commonTransitConventionTraders => channel = Channel.getChannel(clientId)
-      case _                                      => clientId = None
-    }
+  private def getChannelAndClientId(headers: Headers, auditType: Option[AuditType] = None) = {
+    val clientId = headers.get(Constants.XClientIdHeader).map(ClientId(_))
+    val channel  = if (auditType.isDefined && (auditType.get == AuditType.NCTSRequestedMissingMovement)) None else Channel.getChannel(clientId)
     (clientId, channel)
   }
 
@@ -164,7 +156,7 @@ class AuditController @Inject() (
 
       val auditSource = request.headers.get(XAuditSourceHeader).getOrElse(auditType.source)
 
-      val (clientId, channel) = getChannelAndClientId(request.headers, auditSource)
+      val (clientId, channel) = getChannelAndClientId(request.headers, Some(auditType))
 
       (for {
         string         <- extractBody(request.body)
