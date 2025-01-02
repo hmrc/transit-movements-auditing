@@ -25,7 +25,9 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.AuditError.Disabled
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.{AuditError, ConversionError, PresentationError}
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.AuditError
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ConversionError
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

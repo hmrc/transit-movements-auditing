@@ -19,15 +19,23 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.controllers
 import cats.data.EitherT
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.{ArgumentCaptor, Mockito}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.ArgumentCaptor
+import org.mockito.Mockito
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.{DefaultHttpErrorHandler, HttpErrorConfig, Status}
-import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFileCreator}
+import play.api.http.DefaultHttpErrorHandler
+import play.api.http.HttpErrorConfig
+import play.api.http.Status
+import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.*
 import play.api.test.FakeRequest
@@ -36,20 +44,25 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.config.{AppConfig, Constants}
-import uk.gov.hmrc.transitmovementsauditing.config.Constants.{XAuditSourceHeader, XClientIdHeader}
+import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
+import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XClientIdHeader
 import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.v2_1.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.*
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType.*
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageType.IE015
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MovementType.Departure
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.{AuditError, ConversionError, ParseError}
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.AuditError
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ConversionError
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.v2_1.services.*
 import uk.gov.hmrc.transitmovementsauditing.v2_1.services.XmlParsers.ParseResult
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class AuditControllerSpec
     extends AnyFreeSpec
@@ -163,9 +176,8 @@ class AuditControllerSpec
       }
   }
 
-  private val conversionServiceXmlToJson: EitherT[Future, ConversionError, Source[ByteString, ?]] = {
+  private val conversionServiceXmlToJson: EitherT[Future, ConversionError, Source[ByteString, ?]] =
     EitherT.rightT(Source.single(ByteString(Json.stringify(Json.obj("dummy" -> "dummy")))))
-  }
 
   val errorHandler = new DefaultHttpErrorHandler(HttpErrorConfig(showDevErrors = false, None), None, None)
 
@@ -228,7 +240,9 @@ class AuditControllerSpec
       "returns 202 when auditing was successful with a payload that does not exceed audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(eqTo(MessageType.IE013), eqTo(xmlStream))(any())).thenAnswer(_ => conversionServiceXmlToJson)
+        when(mockConversionService.toJson(eqTo(MessageType.IE013), eqTo(xmlStream))(any())).thenAnswer(
+          _ => conversionServiceXmlToJson
+        )
         when(mockAuditService.sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())).thenReturn(EitherT.liftF(Future.unit))
 
         val result = controller.post(DeclarationAmendment)(fakeJsonRequestWithAllHeaders)
@@ -242,7 +256,9 @@ class AuditControllerSpec
       "returns 202 when auditing was successful with a payload that exceeds the audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(_ => conversionServiceXmlToJson)
+        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(
+          _ => conversionServiceXmlToJson
+        )
         when(mockFieldParsingService.getAdditionalFields(any(), any()))
           .thenReturn(
             EitherT.rightT[Future, Seq[ParseResult[(String, String)]]](
@@ -309,7 +325,8 @@ class AuditControllerSpec
       "returns 500 when the conversion service fails" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(any(), any())(any())).thenReturn(EitherT.leftT[Future, Source[ByteString, ?]](ConversionError.UnexpectedError("test error")))
+        when(mockConversionService.toJson(any(), any())(any()))
+          .thenReturn(EitherT.leftT[Future, Source[ByteString, ?]](ConversionError.UnexpectedError("test error")))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(Constants.XContentLengthHeader -> contentLessThanAuditLimit))
         status(result) mustBe Status.INTERNAL_SERVER_ERROR
@@ -324,7 +341,8 @@ class AuditControllerSpec
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
         when(mockConversionService.toJson(any(), any())(any())).thenReturn(conversionServiceXmlToJson)
-        when(mockAuditService.sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any())).thenReturn(EitherT.leftT[Future, Unit](AuditError.UnexpectedError("test error")))
+        when(mockAuditService.sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any()))
+          .thenReturn(EitherT.leftT[Future, Unit](AuditError.UnexpectedError("test error")))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.INTERNAL_SERVER_ERROR

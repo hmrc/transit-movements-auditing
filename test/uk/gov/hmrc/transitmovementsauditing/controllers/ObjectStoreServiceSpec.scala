@@ -18,9 +18,12 @@ package uk.gov.hmrc.transitmovementsauditing.controllers
 
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers.mustBe
@@ -36,7 +39,8 @@ import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.UnexpectedError
-import uk.gov.hmrc.transitmovementsauditing.models.{FileId, ObjectStoreResourceLocation}
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
+import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreServiceImpl
 
 import java.util.UUID.randomUUID

@@ -18,7 +18,10 @@ package uk.gov.hmrc.transitmovementsauditing.base
 
 import org.apache.pekko.Done
 import org.apache.pekko.stream.FlowShape
-import org.apache.pekko.stream.scaladsl.{Broadcast, Flow, GraphDSL, Sink}
+import org.apache.pekko.stream.scaladsl.Broadcast
+import org.apache.pekko.stream.scaladsl.Flow
+import org.apache.pekko.stream.scaladsl.GraphDSL
+import org.apache.pekko.stream.scaladsl.Sink
 
 import scala.concurrent.Future
 

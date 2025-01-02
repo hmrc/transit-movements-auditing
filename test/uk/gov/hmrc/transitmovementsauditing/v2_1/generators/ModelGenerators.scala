@@ -17,12 +17,16 @@
 package uk.gov.hmrc.transitmovementsauditing.v2_1.generators
 
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Arbitrary, Gen}
-import uk.gov.hmrc.objectstore.client.{Md5Hash, ObjectSummaryWithMd5, Path}
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
+import uk.gov.hmrc.objectstore.client.Md5Hash
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
+import uk.gov.hmrc.objectstore.client.Path
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.*
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.request.MetadataRequest
 
-import java.time.{Instant, ZoneOffset}
+import java.time.Instant
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 trait ModelGenerators {

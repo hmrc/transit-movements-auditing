@@ -17,16 +17,19 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import org.apache.pekko.stream.connectors.xml.ParseEvent
-import org.apache.pekko.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import uk.gov.hmrc.transitmovementsauditing.base.{StreamTestHelpers, TestActorSystem}
+import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
+import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class XmlParserSpec

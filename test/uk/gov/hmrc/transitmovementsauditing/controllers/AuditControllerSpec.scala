@@ -19,15 +19,23 @@ package uk.gov.hmrc.transitmovementsauditing.controllers
 import cats.data.EitherT
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.{ArgumentCaptor, Mockito}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.ArgumentCaptor
+import org.mockito.Mockito
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.{DefaultHttpErrorHandler, HttpErrorConfig, Status}
-import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFileCreator}
+import play.api.http.DefaultHttpErrorHandler
+import play.api.http.HttpErrorConfig
+import play.api.http.Status
+import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.*
 import play.api.test.FakeRequest
@@ -36,20 +44,25 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.config.{AppConfig, Constants}
-import uk.gov.hmrc.transitmovementsauditing.config.Constants.{XAuditSourceHeader, XClientIdHeader}
+import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
+import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
+import uk.gov.hmrc.transitmovementsauditing.config.Constants.XClientIdHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.*
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.*
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
 import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
-import uk.gov.hmrc.transitmovementsauditing.models.errors.{AuditError, ConversionError, ParseError}
+import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.services.*
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class AuditControllerSpec
     extends AnyFreeSpec
@@ -163,9 +176,8 @@ class AuditControllerSpec
       }
   }
 
-  private val conversionServiceXmlToJson: EitherT[Future, ConversionError, Source[ByteString, ?]] = {
+  private val conversionServiceXmlToJson: EitherT[Future, ConversionError, Source[ByteString, ?]] =
     EitherT.rightT(Source.single(ByteString(Json.stringify(Json.obj("dummy" -> "dummy")))))
-  }
 
   val errorHandler = new DefaultHttpErrorHandler(HttpErrorConfig(showDevErrors = false, None), None, None)
 

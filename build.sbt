@@ -28,5 +28,5 @@ lazy val it = project
 
 // Settings for the whole build
 lazy val buildSettings = Def.settings(
-  scalafmtOnCompile := false
+  scalafmtOnCompile := true
 )

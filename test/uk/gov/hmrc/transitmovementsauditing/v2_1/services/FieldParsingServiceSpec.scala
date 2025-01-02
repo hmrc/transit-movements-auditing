@@ -26,8 +26,10 @@ import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import uk.gov.hmrc.transitmovementsauditing.base.{StreamTestHelpers, TestActorSystem}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType.{ArrivalNotification, DeclarationData}
+import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
+import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType.ArrivalNotification
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ParseError.NoElementFound
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -90,8 +92,8 @@ class FieldParsingServiceSpec
 
   "FieldParsingService" - {
 
-    val paths                      = new ElementPaths {}
-    val service                    = new FieldParsingServiceImpl()
+    val paths   = new ElementPaths {}
+    val service = new FieldParsingServiceImpl()
 
     "should return the additional field for CustomsOfficeOfDeparture" in {
       val stream: Source[ByteString, ?] = createStream(cc015c)
