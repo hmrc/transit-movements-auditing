@@ -65,9 +65,9 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
         portConfigKey.map {
           key =>
             key -> server.port.toString()
-        }*
+        } *
       )
-      .overrides(bindings*)
+      .overrides(bindings *)
 
   protected def bindings: Seq[GuiceableModule] = Seq(
     bind[Metrics].toInstance(new TestMetrics)

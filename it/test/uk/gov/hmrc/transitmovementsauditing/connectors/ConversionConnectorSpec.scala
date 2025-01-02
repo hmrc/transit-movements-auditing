@@ -57,9 +57,11 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
 
   private def conversionUrl(messageType: String) = s"/transit-movements-converter/messages/$messageType"
 
-  val appConfig      = mock[AppConfig]
+  val appConfig           = mock[AppConfig]
   lazy val serverUrl: Url = Url.parse(server.baseUrl())
-  when(appConfig.converterUrl).thenAnswer(_ => serverUrl)
+  when(appConfig.converterUrl).thenAnswer(
+    _ => serverUrl
+  )
 
   lazy val httpClientV2: HttpClientV2 = {
     val config = Configuration(ConfigFactory.load())
@@ -144,7 +146,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
     when(
       mockRequestBuilder
-        .withBody[RequestBuilder](any())(using any(), any(), any())
+        .withBody[RequestBuilder](any())(using any (), any(), any())
     )
       .thenReturn(mockRequestBuilder)
     when(mockRequestBuilder.stream(any(), any())).thenReturn(Future.failed(error))
