@@ -144,7 +144,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
     when(
       mockRequestBuilder
-        .withBody[RequestBuilder](any())(any(), any(), any())
+        .withBody[RequestBuilder](any())(using any(), any(), any())
     )
       .thenReturn(mockRequestBuilder)
     when(mockRequestBuilder.stream(any(), any())).thenReturn(Future.failed(error))

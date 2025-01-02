@@ -18,7 +18,6 @@ package uk.gov.hmrc.transitmovementsauditing.services
 
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.mockito.Mockito
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
@@ -27,7 +26,6 @@ import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.transitmovementsauditing.base.{StreamTestHelpers, TestActorSystem}
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.{ArrivalNotification, DeclarationData}
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.NoElementFound
@@ -92,7 +90,6 @@ class FieldParsingServiceSpec
 
   "FieldParsingService" - {
 
-    implicit val hc: HeaderCarrier = HeaderCarrier()
     val paths                      = new ElementPaths {}
     val service                    = new FieldParsingServiceImpl()
 

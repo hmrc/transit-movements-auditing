@@ -18,7 +18,6 @@ package uk.gov.hmrc.transitmovementsauditing.controllers
 
 import cats.data.EitherT
 import com.fasterxml.jackson.core.JsonParseException
-import org.mockito.Mockito
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec

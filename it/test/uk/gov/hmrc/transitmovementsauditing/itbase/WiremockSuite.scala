@@ -32,7 +32,7 @@ import play.api.inject.guice.GuiceableModule
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
-  protected val wiremockConfig: WireMockConfiguration = 
+  protected val wiremockConfig: WireMockConfiguration =
     wireMockConfig().dynamicPort().notifier(new ConsoleNotifier(false))
 
   protected val server: WireMockServer = new WireMockServer(wiremockConfig)
@@ -65,14 +65,14 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
         portConfigKey.map {
           key =>
             key -> server.port.toString()
-        }: _*
+        }*
       )
-      .overrides(bindings: _*)
+      .overrides(bindings*)
 
   protected def bindings: Seq[GuiceableModule] = Seq(
     bind[Metrics].toInstance(new TestMetrics)
   )
-  
+
   override def fakeApplication(): Application =
     applicationBuilder.build()
 

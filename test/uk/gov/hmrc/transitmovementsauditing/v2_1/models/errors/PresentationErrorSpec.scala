@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors
 
-import org.mockito.Mockito
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar

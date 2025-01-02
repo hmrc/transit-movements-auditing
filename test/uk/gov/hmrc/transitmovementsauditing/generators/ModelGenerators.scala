@@ -33,7 +33,7 @@ trait ModelGenerators {
       lastModified      = Instant.now()
       formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
       contentLen <- Gen.long
-      hash       <- Gen.alphaNumStr.map(Md5Hash)
+      hash       <- Gen.alphaNumStr.map(Md5Hash.apply)
     } yield ObjectSummaryWithMd5(
       Path.Directory("folder1/folder2").file(s"$fileId-$formattedDateTime.xml"),
       contentLen,

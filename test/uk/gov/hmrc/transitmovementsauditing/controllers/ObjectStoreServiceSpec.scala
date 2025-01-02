@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.transitmovementsauditing.controllers
 
-import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
@@ -29,20 +28,17 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.MimeTypes
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import uk.gov.hmrc.objectstore.client.Path.File
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.objectstore.client.*
 import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.models.{FileId, ObjectStoreResourceLocation}
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.{FileNotFound, UnexpectedError}
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.UnexpectedError
+import uk.gov.hmrc.transitmovementsauditing.models.{FileId, ObjectStoreResourceLocation}
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreServiceImpl
 
-import java.time.Instant
 import java.util.UUID.randomUUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -60,7 +56,6 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
       .file(randomUUID.toString)
       .asUri
   )
-  private val fileContents = "<xml>content</xml>"
 
   "ObjectStoreService" - {
 
