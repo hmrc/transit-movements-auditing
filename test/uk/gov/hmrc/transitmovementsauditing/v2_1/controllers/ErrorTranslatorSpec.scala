@@ -18,6 +18,7 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.controllers
 
 import cats.data.EitherT
 import com.fasterxml.jackson.core.JsonParseException
+import org.mockito.Mockito
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -25,9 +26,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.AuditError.Disabled
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.AuditError
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ConversionError
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.PresentationError
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.{AuditError, ConversionError, PresentationError}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -37,7 +36,7 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
 
   object Harness extends ErrorTranslator
 
-  import Harness._
+  import Harness.*
 
   "ErrorConverter#asPresentation" - {
     "for a success returns the same right" in {

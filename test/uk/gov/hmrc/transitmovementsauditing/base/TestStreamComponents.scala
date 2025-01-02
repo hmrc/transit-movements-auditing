@@ -18,10 +18,7 @@ package uk.gov.hmrc.transitmovementsauditing.base
 
 import org.apache.pekko.Done
 import org.apache.pekko.stream.FlowShape
-import org.apache.pekko.stream.scaladsl.Broadcast
-import org.apache.pekko.stream.scaladsl.Flow
-import org.apache.pekko.stream.scaladsl.GraphDSL
-import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.{Broadcast, Flow, GraphDSL, Sink}
 
 import scala.concurrent.Future
 
@@ -31,7 +28,7 @@ object TestStreamComponents {
     Flow.fromGraph(
       GraphDSL.createGraph(Sink.ignore) {
         implicit builder => s1 =>
-          import GraphDSL.Implicits._
+          import GraphDSL.Implicits.*
 
           val broadcast = builder.add(Broadcast[A](2))
           broadcast.out(0) ~> s1.in

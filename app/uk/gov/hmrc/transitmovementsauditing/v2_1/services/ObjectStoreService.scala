@@ -41,7 +41,7 @@ import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
 trait ObjectStoreService {
 
-  def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
+  def putFile(fileId: FileId, source: Source[ByteString, ?])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5]
@@ -52,7 +52,7 @@ class ObjectStoreServiceImpl @Inject() (appConfig: AppConfig)(implicit materiali
     extends ObjectStoreService
     with Logging {
 
-  def putFile(fileId: FileId, source: Source[ByteString, _])(implicit
+  def putFile(fileId: FileId, source: Source[ByteString, ?])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5] = EitherT {

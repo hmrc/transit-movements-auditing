@@ -16,25 +16,13 @@
 
 package uk.gov.hmrc.transitmovementsauditing.generators
 
-import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
-import uk.gov.hmrc.objectstore.client.Md5Hash
-import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import uk.gov.hmrc.objectstore.client.Path
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType
-import uk.gov.hmrc.transitmovementsauditing.models.Channel
-import uk.gov.hmrc.transitmovementsauditing.models.ClientId
-import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
-import uk.gov.hmrc.transitmovementsauditing.models.MessageId
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
-import uk.gov.hmrc.transitmovementsauditing.models.Metadata
-import uk.gov.hmrc.transitmovementsauditing.models.MovementId
-import uk.gov.hmrc.transitmovementsauditing.models.MovementType
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.objectstore.client.{Md5Hash, ObjectSummaryWithMd5, Path}
+import uk.gov.hmrc.transitmovementsauditing.models.*
 import uk.gov.hmrc.transitmovementsauditing.models.request.MetadataRequest
 
-import java.time.Instant
-import java.time.ZoneOffset
+import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 
 trait ModelGenerators {
@@ -55,7 +43,7 @@ trait ModelGenerators {
   }
 
   lazy val genShortUUID: Gen[String] = Gen.long.map {
-    l: Long =>
+    l =>
       f"${BigInt(l)}%016x"
   }
 

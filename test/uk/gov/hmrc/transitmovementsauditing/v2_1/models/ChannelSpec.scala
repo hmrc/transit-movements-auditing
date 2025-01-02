@@ -18,10 +18,8 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.models
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.libs.json.JsString
-import play.api.libs.json.Json
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.Channel.Api
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.Channel.Web
+import play.api.libs.json.{JsString, Json}
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.Channel.{Api, Web}
 
 class ChannelSpec extends AnyFlatSpec with Matchers {
 

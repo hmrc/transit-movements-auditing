@@ -19,43 +19,33 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.controllers
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.when
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.Mockito
+import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.MimeTypes
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.objectstore.client.Md5Hash
-import uk.gov.hmrc.objectstore.client.Object
-import uk.gov.hmrc.objectstore.client.ObjectMetadata
-import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import uk.gov.hmrc.objectstore.client.Path
-import uk.gov.hmrc.objectstore.client.RetentionPeriod
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.objectstore.client.Path.File
+import uk.gov.hmrc.objectstore.client.*
 import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.v2_1.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.FileId
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.ObjectStoreResourceLocation
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.{FileId, ObjectStoreResourceLocation}
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ObjectStoreError
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ObjectStoreError.FileNotFound
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ObjectStoreError.UnexpectedError
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ObjectStoreError.{FileNotFound, UnexpectedError}
 import uk.gov.hmrc.transitmovementsauditing.v2_1.services.ObjectStoreServiceImpl
 
 import java.time.Instant
 import java.util.UUID.randomUUID
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with ModelGenerators with ScalaCheckDrivenPropertyChecks with TestActorSystem {
 
@@ -76,7 +66,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
 
     "On putting a file in object store" - {
 
-      val source: Source[ByteString, _]       = Source.single(ByteString("<test>test</test>"))
+      val source: Source[ByteString, ?]       = Source.single(ByteString("<test>test</test>"))
       val fileId                              = FileId("xmlFileToStore")
       val objectSummary: ObjectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
 
@@ -114,7 +104,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
 
       "on a failed submission of the content in Object store, it should return an Unexpected error" in {
 
-        val source: Source[ByteString, _] = Source.single(ByteString("<test>test</test>"))
+        val source: Source[ByteString, ?] = Source.single(ByteString("<test>test</test>"))
 
         val error = ObjectStoreError.UnexpectedError(Some(new Throwable("test")))
 

@@ -16,25 +16,13 @@
 
 package uk.gov.hmrc.transitmovementsauditing.v2_1.generators
 
-import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
-import uk.gov.hmrc.objectstore.client.Md5Hash
-import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import uk.gov.hmrc.objectstore.client.Path
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.Channel
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.ClientId
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.EORINumber
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageId
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageType
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.Metadata
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MovementId
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MovementType
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.objectstore.client.{Md5Hash, ObjectSummaryWithMd5, Path}
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.*
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.request.MetadataRequest
 
-import java.time.Instant
-import java.time.ZoneOffset
+import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 
 trait ModelGenerators {
@@ -45,7 +33,7 @@ trait ModelGenerators {
       lastModified      = Instant.now()
       formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
       contentLen <- Gen.long
-      hash       <- Gen.alphaNumStr.map(Md5Hash)
+      hash       <- Gen.alphaNumStr.map(Md5Hash.apply)
     } yield ObjectSummaryWithMd5(
       Path.Directory("folder1/folder2").file(s"$fileId-$formattedDateTime.xml"),
       contentLen,
@@ -55,7 +43,7 @@ trait ModelGenerators {
   }
 
   lazy val genShortUUID: Gen[String] = Gen.long.map {
-    l: Long =>
+    l =>
       f"${BigInt(l)}%016x"
   }
 

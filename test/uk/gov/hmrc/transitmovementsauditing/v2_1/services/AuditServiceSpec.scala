@@ -16,36 +16,31 @@
 
 package uk.gov.hmrc.transitmovementsauditing.v2_1.services
 
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.reset
-import org.mockito.MockitoSugar.when
+import org.mockito.{ArgumentCaptor, Mockito}
+import org.mockito.Mockito.{reset, when}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.Disabled
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.Failure
-import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
+import uk.gov.hmrc.play.audit.http.connector.AuditResult.{Disabled, Failure, Success}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
-import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.base.{StreamTestHelpers, TestActorSystem}
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.*
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageType.IE015
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MovementType.Departure
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models._
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.AuditError
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
 
 class AuditServiceSpec
@@ -93,7 +88,7 @@ class AuditServiceSpec
 
   private val detailsWithEmptyPayload = Details(None, metadataMessageType, None)
 
-  override def beforeEach: Unit = reset(mockAuditConnector)
+  override def beforeEach(): Unit = reset(mockAuditConnector)
 
   "message type audit" - {
 

@@ -17,19 +17,16 @@
 package uk.gov.hmrc.transitmovementsauditing.services
 
 import org.apache.pekko.stream.connectors.xml.ParseEvent
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
-import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.base.{StreamTestHelpers, TestActorSystem}
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
 class XmlParserSpec
@@ -650,13 +647,13 @@ class XmlParserSpec
   // cc917c less than 50KB
   // cc928c less than 50KB
 
-  implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
+  given ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   "XML parsers " - {
 
     "when a valid CC004C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc004c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc004c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE004").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -678,7 +675,7 @@ class XmlParserSpec
 
     "when a valid CC007C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc007c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc007c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE007").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -702,7 +699,7 @@ class XmlParserSpec
 
     "when a valid CC009C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc009c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc009c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE009").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -724,7 +721,7 @@ class XmlParserSpec
 
     "when a valid CC013C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc013c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc013c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE013").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -759,7 +756,7 @@ class XmlParserSpec
 
     "when a valid CC014C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc014c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc014c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE014").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -781,7 +778,7 @@ class XmlParserSpec
 
     "when a valid CC015C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc015c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc015c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE015").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -814,7 +811,7 @@ class XmlParserSpec
 
     "when a valid CC017C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc017c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc017c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE017").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -845,7 +842,7 @@ class XmlParserSpec
 
     "when a valid CC019C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc019c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc019c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE019").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -866,7 +863,7 @@ class XmlParserSpec
 
     "when a valid CC022C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc022c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc022c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE022").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -887,7 +884,7 @@ class XmlParserSpec
 
     "when a valid CC023C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc023c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc023c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE023").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -908,7 +905,7 @@ class XmlParserSpec
 
     "when a valid CC025C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc025c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc025c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE025").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -930,7 +927,7 @@ class XmlParserSpec
 
     "when a valid CC028C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc028c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc028c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE028").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -952,7 +949,7 @@ class XmlParserSpec
 
     "when a valid CC029C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc029c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc029c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE029").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -988,7 +985,7 @@ class XmlParserSpec
 
     "when a valid CC035C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc035c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc035c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE035").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1009,7 +1006,7 @@ class XmlParserSpec
 
     "when a valid CC040C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc040c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc040c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE040").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1029,7 +1026,7 @@ class XmlParserSpec
 
     "when a valid CC042C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc042c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc042c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE042").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1052,7 +1049,7 @@ class XmlParserSpec
 
     "when a valid CC043C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc043c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc043c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE043").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1078,7 +1075,7 @@ class XmlParserSpec
 
     "when a valid CC044C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc044c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc044c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE044").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1101,7 +1098,7 @@ class XmlParserSpec
 
     "when a valid CC045C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc045c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc045c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE045").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1122,7 +1119,7 @@ class XmlParserSpec
 
     "when a valid CC048C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc048c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc048c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE048").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1143,7 +1140,7 @@ class XmlParserSpec
 
     "when a valid CC051C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc051c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc051c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE051").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1164,7 +1161,7 @@ class XmlParserSpec
 
     "when a valid CC055C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc055c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc055c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE055").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1185,7 +1182,7 @@ class XmlParserSpec
 
     "when a valid CC056C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc056c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc056c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE056").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1207,7 +1204,7 @@ class XmlParserSpec
 
     "when a valid CC057C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc057c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc057c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE057").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1228,7 +1225,7 @@ class XmlParserSpec
 
     "when a valid CC060C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc060c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc060c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE060").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1250,7 +1247,7 @@ class XmlParserSpec
 
     "when a valid CC140C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc140c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc140c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE140").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1271,7 +1268,7 @@ class XmlParserSpec
 
     "when a valid CC141C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc141c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc141c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE141").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1292,7 +1289,7 @@ class XmlParserSpec
 
     "when a valid CC170C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc170c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc170c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE170").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1316,7 +1313,7 @@ class XmlParserSpec
 
     "when a valid CC182C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc182c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc182c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE182").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1337,7 +1334,7 @@ class XmlParserSpec
 
     "when a valid CC190C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc190c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc190c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE190").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1362,7 +1359,7 @@ class XmlParserSpec
 
     "when a valid CC191C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc191c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc191c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE191").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1385,7 +1382,7 @@ class XmlParserSpec
 
     "when a valid CC228C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc228c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc228c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE228").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
@@ -1405,7 +1402,7 @@ class XmlParserSpec
 
     "when a valid CC906C message is provided extract all required elements" in {
 
-      val stream: Source[ParseEvent, _] = createParsingEventStream(cc906c)
+      val stream: Source[ParseEvent, ?] = createParsingEventStream(cc906c)
 
       val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE906").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)

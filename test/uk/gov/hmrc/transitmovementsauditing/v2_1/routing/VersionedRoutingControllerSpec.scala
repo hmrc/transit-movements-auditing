@@ -19,40 +19,27 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.routing
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
+import org.mockito.Mockito
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.DefaultHttpErrorHandler
-import play.api.http.HttpErrorConfig
-import play.api.http.Status.ACCEPTED
-import play.api.http.Status.BAD_REQUEST
-import play.api.libs.Files.SingletonTemporaryFileCreator
-import play.api.libs.Files.TemporaryFileCreator
-import play.api.mvc._
-import play.api.test.FakeHeaders
-import play.api.test.FakeRequest
-import play.api.test.Helpers.defaultAwaitTimeout
-import play.api.test.Helpers.status
-import play.api.test.Helpers.stubControllerComponents
-import uk.gov.hmrc.internalauth.client._
+import play.api.http.{DefaultHttpErrorHandler, HttpErrorConfig}
+import play.api.http.Status.{ACCEPTED, BAD_REQUEST}
+import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFileCreator}
+import play.api.mvc.*
+import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.test.Helpers.{defaultAwaitTimeout, status, stubControllerComponents}
+import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
-import uk.gov.hmrc.transitmovementsauditing.config.Constants
-import uk.gov.hmrc.transitmovementsauditing.controllers.actions.{InternalAuthActionProvider => TransitionalInternalAuthActionProvider}
-import uk.gov.hmrc.transitmovementsauditing.controllers.{AuditController => TransitionalAuditController}
-import uk.gov.hmrc.transitmovementsauditing.routing.VersionedRoutingController
-import uk.gov.hmrc.transitmovementsauditing.routing.routes
-import uk.gov.hmrc.transitmovementsauditing.services.{AuditService => TransitionalAuditService}
-import uk.gov.hmrc.transitmovementsauditing.services.{ConversionService => TransitionalConversionService}
-import uk.gov.hmrc.transitmovementsauditing.services.{FieldParsingService => TransitionalFieldParsingService}
-import uk.gov.hmrc.transitmovementsauditing.services.{ObjectStoreService => TransitionalObjectStoreService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.actions.{InternalAuthActionProvider => FinalInternalAuthActionProvider}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.{AuditController => FinalAuditController}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{AuditService => FinalAuditService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{ConversionService => FinalConversionService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{FieldParsingService => FinalFieldParsingService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{ObjectStoreService => FinalObjectStoreService}
+import uk.gov.hmrc.transitmovementsauditing.config.{AppConfig, Constants}
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as TransitionalAuditController
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider as TransitionalInternalAuthActionProvider
+import uk.gov.hmrc.transitmovementsauditing.routing.{VersionedRoutingController, routes}
+import uk.gov.hmrc.transitmovementsauditing.services.{AuditService as TransitionalAuditService, ConversionService as TransitionalConversionService, FieldParsingService as TransitionalFieldParsingService, ObjectStoreService as TransitionalObjectStoreService}
+import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.AuditController as FinalAuditController
+import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.actions.InternalAuthActionProvider as FinalInternalAuthActionProvider
+import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{AuditService as FinalAuditService, ConversionService as FinalConversionService, FieldParsingService as FinalFieldParsingService, ObjectStoreService as FinalObjectStoreService}
 
 import java.time.Clock
 import scala.concurrent.ExecutionContext

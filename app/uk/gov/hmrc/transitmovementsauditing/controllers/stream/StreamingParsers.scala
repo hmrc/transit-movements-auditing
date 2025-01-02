@@ -42,12 +42,12 @@ trait StreamingParsers {
   implicit val materializerExecutionContext: ExecutionContext =
     ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
-  lazy val streamFromMemory: BodyParser[Source[ByteString, _]] = BodyParser {
+  lazy val streamFromMemory: BodyParser[Source[ByteString, ?]] = BodyParser {
     _ =>
       Accumulator.source[ByteString].map(Right.apply)
   }
 
-  implicit class ActionBuilderStreamHelpers(actionBuilder: ActionBuilder[Request, _]) {
+  implicit class ActionBuilderStreamHelpers(actionBuilder: ActionBuilder[Request, ?]) {
 
     /** Updates the [[Source]] with a version that can be used
       *  multiple times via the use of a temporary file.
@@ -59,8 +59,8 @@ trait StreamingParsers {
     // Doing it like this ensures that we can make sure that the source we pass is the file based one,
     // and only when it's ready.
     def streamFromFile(
-      block: Request[Source[ByteString, _]] => Future[Result]
-    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      block: Request[Source[ByteString, ?]] => Future[Result]
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, ?]] =
       actionBuilder.async(streamFromMemory) {
         request =>
           val file = temporaryFileCreator.create()

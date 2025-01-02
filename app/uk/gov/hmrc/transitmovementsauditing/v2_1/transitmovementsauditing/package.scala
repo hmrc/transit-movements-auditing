@@ -22,6 +22,6 @@ import uk.gov.hmrc.transitmovementsauditing.v2_1.models.ObjectSummaryWithFields
 
 package object transitmovementsauditing {
 
-  type Payload = Either[ObjectSummaryWithFields, Source[ByteString, _]]
+  type Payload = Either[ObjectSummaryWithFields, Source[ByteString, ?]]
 
 }

@@ -19,22 +19,16 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.stream
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
-import org.apache.pekko.util.Timeout
+import org.apache.pekko.util.{ByteString, Timeout}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import play.api.http.HeaderNames
 import play.api.http.Status.OK
-import play.api.mvc.Action
-import play.api.mvc.BaseController
-import play.api.mvc.ControllerComponents
-import play.api.test.FakeHeaders
-import play.api.test.FakeRequest
-import play.api.test.Helpers
-import play.api.test.Helpers.contentAsString
-import play.api.test.Helpers.status
+import play.api.mvc.{Action, BaseController, ControllerComponents}
+import play.api.test.{FakeHeaders, FakeRequest, Helpers}
+import play.api.test.Helpers.{contentAsString, status}
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 
 import java.nio.charset.StandardCharsets
@@ -49,7 +43,7 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with ScalaFutures w
 
   class Harness(val controllerComponents: ControllerComponents)(implicit val materializer: Materializer) extends BaseController with StreamingParsers {
 
-    def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
+    def testFromMemory: Action[Source[ByteString, ?]] = Action.async(streamFromMemory) {
       request => result.apply(request).run(request.body)(materializer)
     }
 

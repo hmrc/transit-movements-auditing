@@ -16,22 +16,19 @@
 
 package uk.gov.hmrc.transitmovementsauditing.v2_1.services
 
-import org.apache.pekko.stream.scaladsl.Keep
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import cats.data.EitherT
+import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source}
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar.when
+import org.mockito.Mockito
+import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.base.TestStreamComponents
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.transitmovementsauditing.base.{TestActorSystem, TestStreamComponents}
 import uk.gov.hmrc.transitmovementsauditing.v2_1.connectors.ConversionConnector
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.ConversionError
@@ -46,7 +43,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     "assure the stream is consumed and returns a valid JSON ByteString based stream" in {
 
       val mockConversionConnector = mock[ConversionConnector]
-      val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, _]] =
+      val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
         EitherT.rightT(Source.single(ByteString("""{ "dummy": "dummy" }""")))
       when(mockConversionConnector.postXml(any(), any())(any())).thenReturn(dummyJsonSource)
 
@@ -81,7 +78,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     "assure we get a ConversionError#FailedConversion with the appropriate message" in {
 
       val mockConversionConnector = mock[ConversionConnector]
-      val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, _]] =
+      val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
         EitherT.leftT(UpstreamErrorResponse("""{ "code": "BAD_REQUEST", "message": "error" }""", 400))
       when(mockConversionConnector.postXml(any(), any())(any())).thenReturn(dummyJsonSource)
 
@@ -115,7 +112,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       "assure we get a ConversionError#UnknownError with the appropriate message" in {
 
         val mockConversionConnector = mock[ConversionConnector]
-        val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, _]] =
+        val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
           EitherT.leftT(UpstreamErrorResponse("""{ "code": "INTERNAL_SERVER_ERROR", "message": "error" }""", 500))
         when(mockConversionConnector.postXml(any(), any())(any())).thenReturn(dummyJsonSource)
 
