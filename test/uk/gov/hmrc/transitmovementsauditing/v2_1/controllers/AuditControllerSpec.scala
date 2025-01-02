@@ -19,7 +19,7 @@ package uk.gov.hmrc.transitmovementsauditing.v2_1.controllers
 import cats.data.EitherT
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.{ArgumentCaptor, Mockito}
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.BeforeAndAfterEach
