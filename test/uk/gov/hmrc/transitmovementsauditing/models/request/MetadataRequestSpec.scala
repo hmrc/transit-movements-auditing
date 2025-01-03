@@ -24,7 +24,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.models._
+import uk.gov.hmrc.transitmovementsauditing.models.*
 
 class MetadataRequestSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {
   private val path = Gen.listOfN(10, Gen.alphaChar).map(_.mkString)

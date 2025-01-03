@@ -36,21 +36,21 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[FieldParsingServiceImpl])
 trait FieldParsingService {
 
-  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]]
+  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, ?]): Future[ParseResult[(String, String)]]
 
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]]
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, ?]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]]
 }
 
 @Singleton
 class FieldParsingServiceImpl @Inject() (implicit ec: ExecutionContext, materializer: Materializer) extends FieldParsingService with ElementPaths with Logging {
 
-  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, _]): Future[ParseResult[(String, String)]] =
+  def getAdditionalField(name: String, path: Seq[String], src: Source[ByteString, ?]): Future[ParseResult[(String, String)]] =
     src
       .via(XmlParsing.parser)
       .via(XmlParsers.extractElement(name, path))
       .runWith(concatKeyValue)
 
-  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, _]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]] =
+  def getAdditionalFields(messageType: Option[MessageType], src: Source[ByteString, ?]): EitherT[Future, ParseError, Seq[ParseResult[(String, String)]]] =
     EitherT {
       messageType match {
         case Some(value) =>

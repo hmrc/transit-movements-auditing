@@ -18,8 +18,8 @@ package uk.gov.hmrc.transitmovementsauditing.models
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import Binders.auditTypePathBindable
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.AmendmentAcceptance
+import uk.gov.hmrc.transitmovementsauditing.models.Binders.auditTypePathBindable
 
 class BindersSpec extends AnyFreeSpec with Matchers {
 

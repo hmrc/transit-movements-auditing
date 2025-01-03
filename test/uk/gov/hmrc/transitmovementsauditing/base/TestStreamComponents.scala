@@ -31,7 +31,7 @@ object TestStreamComponents {
     Flow.fromGraph(
       GraphDSL.createGraph(Sink.ignore) {
         implicit builder => s1 =>
-          import GraphDSL.Implicits._
+          import GraphDSL.Implicits.*
 
           val broadcast = builder.add(Broadcast[A](2))
           broadcast.out(0) ~> s1.in

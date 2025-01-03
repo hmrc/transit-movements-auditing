@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.transitmovementsauditing.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.typesafe.config.ConfigFactory
 import io.lemonlabs.uri.Url
 import org.apache.pekko.stream.scaladsl.Flow
@@ -24,18 +24,19 @@ import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
-import org.mockito.MockitoSugar.when
+import org.mockito.Mockito.when
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
+import org.mockito.Mockito
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.http.HeaderNames
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.Json
-import play.api.libs.ws.ahc._
+import play.api.libs.ws.ahc.*
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -46,19 +47,21 @@ import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.itbase.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.Future
 
 class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
 
-  implicit val ec     = materializer.executionContext
   private val timeout = Timeout(5.seconds)
 
   private def conversionUrl(messageType: String) = s"/transit-movements-converter/messages/$messageType"
 
-  val appConfig      = mock[AppConfig]
-  lazy val serverUrl = Url.parse(server.baseUrl())
-  when(appConfig.converterUrl).thenAnswer(serverUrl)
+  val appConfig           = mock[AppConfig]
+  lazy val serverUrl: Url = Url.parse(server.baseUrl())
+  when(appConfig.converterUrl).thenAnswer(
+    _ => serverUrl
+  )
 
   lazy val httpClientV2: HttpClientV2 = {
     val config = Configuration(ConfigFactory.load())
@@ -143,7 +146,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     when(mockRequestBuilder.setHeader(any())).thenReturn(mockRequestBuilder)
     when(
       mockRequestBuilder
-        .withBody[RequestBuilder](any())(any(), any(), any())
+        .withBody[RequestBuilder](any())(using any(), any(), any())
     )
       .thenReturn(mockRequestBuilder)
     when(mockRequestBuilder.stream(any(), any())).thenReturn(Future.failed(error))

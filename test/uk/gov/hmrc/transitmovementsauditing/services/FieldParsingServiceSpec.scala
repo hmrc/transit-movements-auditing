@@ -22,11 +22,10 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.ArrivalNotification
@@ -93,12 +92,11 @@ class FieldParsingServiceSpec
 
   "FieldParsingService" - {
 
-    implicit val hc: HeaderCarrier = HeaderCarrier()
-    val paths                      = new ElementPaths {}
-    val service                    = new FieldParsingServiceImpl()
+    val paths   = new ElementPaths {}
+    val service = new FieldParsingServiceImpl()
 
     "should return the additional field for CustomsOfficeOfDeparture" in {
-      val stream: Source[ByteString, _] = createStream(cc015c)
+      val stream: Source[ByteString, ?] = createStream(cc015c)
       val result                        = service.getAdditionalField("CustomsOfficeOfDeparture", paths.customsOfficeOfDepartureFor("CC015C"), stream)
 
       whenReady(result, Timeout(1.second)) {
@@ -108,8 +106,8 @@ class FieldParsingServiceSpec
     }
 
     "should return element not found for an incorrect path" in {
-      val stream: Source[ByteString, _] = createStream(cc015c)
-      val result                        = service.getAdditionalField("CustomsOfficeOfDeparture", paths.customsOfficeOfDepartureFor("NonExistentMessage"), stream)
+      val stream: Source[ByteString, ?] = createStream(cc015c)
+      val result = service.getAdditionalField("CustomsOfficeOfDeparture", paths.customsOfficeOfDepartureFor("NonExistentMessage"), stream)
 
       whenReady(result, Timeout(1.second)) {
         result =>
@@ -118,7 +116,7 @@ class FieldParsingServiceSpec
     }
 
     "should return all the additional fields for message type CC015C " in {
-      val stream: Source[ByteString, _] = createStream(cc015c)
+      val stream: Source[ByteString, ?] = createStream(cc015c)
       val result                        = service.getAdditionalFields(DeclarationData.messageType, stream)
 
       val expected =
@@ -148,7 +146,7 @@ class FieldParsingServiceSpec
     }
 
     "should not find Arrival notification (cc007c) elements in a cc015c stream" in {
-      val stream: Source[ByteString, _] = createStream(cc015c)
+      val stream: Source[ByteString, ?] = createStream(cc015c)
       val result                        = service.getAdditionalFields(ArrivalNotification.messageType, stream)
 
       val expected =

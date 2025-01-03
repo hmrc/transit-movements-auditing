@@ -20,12 +20,13 @@ sealed trait ParentAuditType
 
 object ParentAuditType {
 
-  final case object CTCTradersSucceeded extends ParentAuditType
+  case object CTCTradersSucceeded extends ParentAuditType
 
-  final case object CTCTradersFailed extends ParentAuditType
+  case object CTCTradersFailed extends ParentAuditType
 
-  final case object CTCTradersWorkflow extends ParentAuditType
+  case object CTCTradersWorkflow extends ParentAuditType
 
-  val parentAuditValues = Seq(CTCTradersSucceeded, CTCTradersFailed, CTCTradersWorkflow)
+  val parentAuditValues: Seq[ParentAuditType] =
+    Seq(CTCTradersSucceeded, CTCTradersFailed, CTCTradersWorkflow)
 
 }

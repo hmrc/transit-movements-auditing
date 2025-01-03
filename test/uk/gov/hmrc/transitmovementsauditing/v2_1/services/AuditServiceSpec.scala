@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.transitmovementsauditing.v2_1.services
 
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentCaptor
+import org.mockito.Mockito
 import org.mockito.Mockito.reset
-import org.mockito.MockitoSugar.when
+import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.must.Matchers.mustBe
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -37,10 +38,10 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.v2_1.models.*
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageType.IE015
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MovementType.Departure
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models._
 import uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors.AuditError
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -93,7 +94,7 @@ class AuditServiceSpec
 
   private val detailsWithEmptyPayload = Details(None, metadataMessageType, None)
 
-  override def beforeEach: Unit = reset(mockAuditConnector)
+  override def beforeEach(): Unit = reset(mockAuditConnector)
 
   "message type audit" - {
 

@@ -37,7 +37,7 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
 
   object Harness extends ErrorTranslator
 
-  import Harness._
+  import Harness.*
 
   "ErrorConverter#asPresentation" - {
     "for a success returns the same right" in {

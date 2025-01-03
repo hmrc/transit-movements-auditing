@@ -20,7 +20,7 @@ import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 object ObjectStoreResourceLocation {
-  implicit lazy val ObjectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.format[ObjectStoreResourceLocation]
+  implicit lazy val ObjectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.valueFormat[ObjectStoreResourceLocation]
 }
 
 case class ObjectStoreResourceLocation(value: String) extends AnyVal

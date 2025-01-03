@@ -76,14 +76,14 @@ class AuditController @Inject() (
 
   private val predicate = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
 
-  def post(auditType: AuditType): Action[Source[ByteString, _]] =
+  def post(auditType: AuditType): Action[Source[ByteString, ?]] =
     internalAuth(predicate).async(streamFromMemory) {
       implicit request =>
         if (auditType.messageType.isDefined) postMessageTypeAudit(auditType)
         else postStatusAudit(auditType)
     }
 
-  private def postMessageTypeAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+  private def postMessageTypeAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, ?]]): Future[Result] =
     if (appConfig.auditingEnabled) {
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       (for {
@@ -101,7 +101,7 @@ class AuditController @Inject() (
     }
 
   private def buildDetails(payload: Payload)(implicit
-    request: Request[Source[ByteString, _]]
+    request: Request[Source[ByteString, ?]]
   ): EitherT[Future, PresentationError, Details] =
     if (request.headers.get(Constants.XAuditMetaPath).isEmpty) {
       EitherT.leftT[Future, Details](PresentationError.badRequestError(s"${Constants.XAuditMetaPath} is missing"))
@@ -150,7 +150,7 @@ class AuditController @Inject() (
     (clientId, channel)
   }
 
-  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, _]]): Future[Result] =
+  def postStatusAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, ?]]): Future[Result] =
     if (appConfig.auditingEnabled) {
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -199,10 +199,10 @@ class AuditController @Inject() (
         x => EitherT.rightT[Future, PresentationError](x)
       )
       .recoverTotal {
-        err: JsError => EitherT.leftT(PresentationError.badRequestError(s"Could not parse: $err"))
+        (err: JsError) => EitherT.leftT(PresentationError.badRequestError(s"Could not parse: $err"))
       }
 
-  private def extractBody(stream: Source[ByteString, _]): EitherT[Future, PresentationError, String] =
+  private def extractBody(stream: Source[ByteString, ?]): EitherT[Future, PresentationError, String] =
     EitherT {
       stream
         .reduce(_ ++ _)
@@ -214,14 +214,14 @@ class AuditController @Inject() (
         }
     }
 
-  private def exceedsMessageSize(implicit request: Request[Source[ByteString, _]]): Boolean =
+  private def exceedsMessageSize(implicit request: Request[Source[ByteString, ?]]): Boolean =
     request.headers
       .get(Constants.XContentLengthHeader)
       .exists(_.toLong > appConfig.auditMessageMaxSize)
 
-  private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, _]])(implicit
+  private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, ConversionError, Source[ByteString, _]] =
+  ): EitherT[Future, ConversionError, Source[ByteString, ?]] =
     if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined) {
       conversionService.toJson(auditType.messageType.get, request.body)
     } else {
@@ -231,7 +231,7 @@ class AuditController @Inject() (
   private def fileId(): FileId =
     FileId(s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}")
 
-  private def getSource(auditType: AuditType, request: Request[Source[ByteString, _]])(exceedsLimit: Boolean)(implicit
+  private def getSource(auditType: AuditType, request: Request[Source[ByteString, ?]])(exceedsLimit: Boolean)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Payload] =
     if (exceedsLimit) {
@@ -252,7 +252,7 @@ class AuditController @Inject() (
         .map(Right(_))
     }
 
-  private def materializeSource(source: Source[ByteString, _]): EitherT[Future, PresentationError, Seq[ByteString]] =
+  private def materializeSource(source: Source[ByteString, ?]): EitherT[Future, PresentationError, Seq[ByteString]] =
     EitherT(
       source
         .runWith(Sink.seq)
@@ -264,9 +264,9 @@ class AuditController @Inject() (
     )
 
   // Function to create a new source from the materialized sequence
-  private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, _] = Source(seq.toList)
+  private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, ?] = Source(seq.toList)
 
-  private def reUsableSource(request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+  private def reUsableSource(request: Request[Source[ByteString, ?]]): EitherT[Future, PresentationError, List[Source[ByteString, ?]]] = for {
     byteStringSeq <- materializeSource(request.body)
   } yield List.fill(3)(createReusableSource(byteStringSeq))
 

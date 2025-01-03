@@ -27,8 +27,8 @@ import play.api.libs.json.Writes
 sealed abstract class Channel(val channel: String) extends Product with Serializable
 
 object Channel {
-  final case object Api extends Channel("api")
-  final case object Web extends Channel("web")
+  case object Api extends Channel("api")
+  case object Web extends Channel("web")
 
   val values = Seq(Api, Web)
 
