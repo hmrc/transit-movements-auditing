@@ -51,7 +51,7 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
       .postXml(messageType, xmlStream)
       .leftMap {
         case UpstreamErrorResponse(m, BAD_REQUEST, _, _) => ConversionError.FailedConversion(Json.parse(m).as[StandardError].message)
-        case NonFatal(e)                                 => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))
+        case NonFatal(e) => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))
       }
 
 }

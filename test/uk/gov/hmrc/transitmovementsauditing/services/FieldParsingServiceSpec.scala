@@ -107,7 +107,7 @@ class FieldParsingServiceSpec
 
     "should return element not found for an incorrect path" in {
       val stream: Source[ByteString, ?] = createStream(cc015c)
-      val result                        = service.getAdditionalField("CustomsOfficeOfDeparture", paths.customsOfficeOfDepartureFor("NonExistentMessage"), stream)
+      val result = service.getAdditionalField("CustomsOfficeOfDeparture", paths.customsOfficeOfDepartureFor("NonExistentMessage"), stream)
 
       whenReady(result, Timeout(1.second)) {
         result =>
