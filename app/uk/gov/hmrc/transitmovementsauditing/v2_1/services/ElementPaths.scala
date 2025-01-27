@@ -45,7 +45,7 @@ trait ElementPaths {
   def grnForRef(message: String)                        = message :: "GuaranteeReference" :: "GRN" :: Nil
   def accessCodeFor(message: String)                    = message :: "Guarantee" :: "GuaranteeReference" :: "accessCode" :: Nil
   def economicOperatorFor(message: String)              = message :: "Consignment" :: "LocationOfGoods" :: "EconomicOperator" :: "identificationNumber" :: Nil
-  def numberOfPackagesFor(message: String)              = message :: "Consignment" :: "HouseConsignment" :: "ConsignmentItem" :: "Packaging" :: "numberOfPackages" :: Nil
+  def numberOfPackagesFor(message: String) = message :: "Consignment" :: "HouseConsignment" :: "ConsignmentItem" :: "Packaging" :: "numberOfPackages" :: Nil
 
   val elementPaths: Map[String, Map[String, Seq[String]]] = Map(
     "IE004" -> Map(

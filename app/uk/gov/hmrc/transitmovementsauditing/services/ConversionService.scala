@@ -37,7 +37,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionServiceImpl])
 trait ConversionService {
 
-  def toJson(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, _]]
+  def toJson(messageType: MessageType, xmlStream: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, ?]]
 
 }
 
@@ -45,13 +45,13 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
 
   override def toJson(
     messageType: MessageType,
-    xmlStream: Source[ByteString, _]
-  )(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, _]] =
+    xmlStream: Source[ByteString, ?]
+  )(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, ?]] =
     conversionConnector
       .postXml(messageType, xmlStream)
       .leftMap {
         case UpstreamErrorResponse(m, BAD_REQUEST, _, _) => ConversionError.FailedConversion(Json.parse(m).as[StandardError].message)
-        case NonFatal(e)                                 => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))
+        case NonFatal(e) => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))
       }
 
 }

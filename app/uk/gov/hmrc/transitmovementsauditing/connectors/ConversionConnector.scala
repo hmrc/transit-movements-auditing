@@ -26,6 +26,7 @@ import com.google.inject.Inject
 import io.lemonlabs.uri.UrlPath
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.libs.ws.DefaultBodyWritables
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.StringContextOps
@@ -33,6 +34,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.http.client.readStreamHttpResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -41,17 +43,18 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]]
+  def postXml(messageType: MessageType, source: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, ?]]
 
 }
 
 class ConversionConnectorImpl @Inject() (appConfig: AppConfig, httpClient: HttpClientV2)(implicit materializer: Materializer, ec: ExecutionContext)
     extends ConversionConnector
+    with DefaultBodyWritables
     with HttpErrorFunctions {
 
   private def converterPath(messageType: MessageType) = UrlPath.parse(s"/transit-movements-converter/messages/${messageType.messageCode}")
 
-  override def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]] =
+  override def postXml(messageType: MessageType, source: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, ?]] =
     EitherT(
       httpClient
         .post(url"${appConfig.converterUrl.withPath(converterPath(messageType))}")

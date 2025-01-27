@@ -49,7 +49,7 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with ScalaFutures w
 
   class Harness(val controllerComponents: ControllerComponents)(implicit val materializer: Materializer) extends BaseController with StreamingParsers {
 
-    def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
+    def testFromMemory: Action[Source[ByteString, ?]] = Action.async(streamFromMemory) {
       request => result.apply(request).run(request.body)(materializer)
     }
 
