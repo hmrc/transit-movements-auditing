@@ -12,7 +12,7 @@ object AppDependencies {
     "io.lemonlabs"            %% "scala-uri"                    % "4.0.3",
     "uk.gov.hmrc.objectstore" %% "object-store-client-play-30"  % "2.1.0",
     "uk.gov.hmrc"             %% "internal-auth-client-play-30" % "3.1.0",
-    "uk.gov.hmrc"             %% "crypto-json-play-30"          % "8.0.0",
+    "uk.gov.hmrc"             %% "crypto-json-play-30"          % "8.2.0",
     "org.apache.pekko"        %% "pekko-protobuf-v3"            % "1.1.2",
     "org.apache.pekko"        %% "pekko-serialization-jackson"  % "1.1.2",
     "org.apache.pekko"        %% "pekko-stream"                 % "1.1.2",
