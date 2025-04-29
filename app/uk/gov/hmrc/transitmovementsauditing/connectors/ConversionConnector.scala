@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,9 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.http.client.readStreamHttpResponse
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -43,23 +44,31 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def postXml(messageType: MessageType, source: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, ?]]
+  def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]]
 
 }
 
-class ConversionConnectorImpl @Inject() (appConfig: AppConfig, httpClient: HttpClientV2)(implicit materializer: Materializer, ec: ExecutionContext)
+class ConversionConnectorImpl @Inject() (
+  appConfig: AppConfig,
+  httpClient: HttpClientV2
+)(implicit materializer: Materializer, ec: ExecutionContext)
     extends ConversionConnector
     with DefaultBodyWritables
     with HttpErrorFunctions {
 
-  private def converterPath(messageType: MessageType) = UrlPath.parse(s"/transit-movements-converter/messages/${messageType.messageCode}")
+  private def converterPath(messageType: MessageType) =
+    UrlPath.parse(s"/transit-movements-converter/messages/${messageType.messageCode}")
 
-  override def postXml(messageType: MessageType, source: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, ?]] =
+  override def postXml(
+    messageType: MessageType,
+    source: Source[ByteString, _]
+  )(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]] =
     EitherT(
       httpClient
         .post(url"${appConfig.converterUrl.withPath(converterPath(messageType))}")
         .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
         .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
+        .setHeader("final" -> Constants.APIVersionFinalHeaderValue)
         .withBody(source)
         .stream[uk.gov.hmrc.http.HttpResponse]
         .flatMap {
@@ -71,12 +80,11 @@ class ConversionConnectorImpl @Inject() (appConfig: AppConfig, httpClient: HttpC
                 .map(_.utf8String)
                 .runWith(Sink.head)
                 .map(
-                  result => Left(UpstreamErrorResponse(result, response.status))
+                  body => Left(UpstreamErrorResponse(body, response.status))
                 )
         }
         .recover {
           case NonFatal(e) => Left(e)
         }
     )
-
 }

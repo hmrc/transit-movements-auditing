@@ -20,7 +20,7 @@ import cats.data.EitherT
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.ArgumentMatchers.eq as eqTo
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito
 import org.mockito.Mockito.reset
@@ -48,15 +48,29 @@ import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.config.Constants.XClientIdHeader
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.models.*
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType.*
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
-import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType.*
+import uk.gov.hmrc.transitmovementsauditing.models.Channel
+import uk.gov.hmrc.transitmovementsauditing.models.ClientId
+import uk.gov.hmrc.transitmovementsauditing.models.Details
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
+import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
+import uk.gov.hmrc.transitmovementsauditing.services.AuditService
+import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
+import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
+import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
+import uk.gov.hmrc.transitmovementsauditing.services.XmlParsingServiceHelpers
 import uk.gov.hmrc.transitmovementsauditing.services.*
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
@@ -340,11 +354,9 @@ class AuditControllerSpec
       "returns 500 when the audit service fails" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(
-          _ => conversionServiceXmlToJson
-        )
+        when(mockConversionService.toJson(any(), any())(any())).thenReturn(conversionServiceXmlToJson)
         when(mockAuditService.sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any()))
-          .thenReturn(EitherT.leftT[Future, Source[ByteString, ?]](AuditError.UnexpectedError("test error")))
+          .thenReturn(EitherT.leftT[Future, Unit](AuditError.UnexpectedError("test error")))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.INTERNAL_SERVER_ERROR

@@ -26,6 +26,8 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
+import uk.gov.hmrc.transitmovementsauditing.models.request.DetailsRequest
+import uk.gov.hmrc.transitmovementsauditing.models.request.MetadataRequest
 
 class DetailsRequestSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {
   implicit val jsValueArbitrary: Arbitrary[JsObject] = Arbitrary(Gen.const(Json.obj("code" -> "BUSINESS_VALIDATION_ERROR", "message" -> "Expected NTA.GB")))

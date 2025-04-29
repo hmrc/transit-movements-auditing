@@ -26,6 +26,8 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.services.ElementPaths
+import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
 import scala.concurrent.ExecutionContext
@@ -650,19 +652,19 @@ class XmlParserSpec
   // cc917c less than 50KB
   // cc928c less than 50KB
 
-  given ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-
   "XML parsers " - {
+
+    import scala.concurrent.ExecutionContext.Implicits.global
 
     "when a valid CC004C message is provided extract all required elements" in {
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc004c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE004").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE004").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -680,11 +682,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc007c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE007").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE007").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -704,11 +706,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc009c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE009").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE009").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -726,11 +728,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc013c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE013").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE013").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -761,11 +763,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc014c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE014").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE014").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -783,11 +785,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc015c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE015").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE015").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -816,11 +818,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc017c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE017").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE017").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -847,11 +849,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc019c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE019").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE019").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -868,11 +870,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc022c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE022").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE022").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -889,11 +891,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc023c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE023").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE023").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -910,11 +912,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc025c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE025").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE025").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -932,11 +934,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc028c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE028").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE028").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -954,11 +956,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc029c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE029").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE029").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -990,11 +992,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc035c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE035").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE035").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1011,11 +1013,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc040c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE040").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE040").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1031,11 +1033,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc042c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE042").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE042").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1054,11 +1056,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc043c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE043").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE043").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1080,11 +1082,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc044c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE044").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE044").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1103,11 +1105,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc045c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE045").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE045").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1124,11 +1126,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc048c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE048").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE048").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1145,11 +1147,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc051c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE051").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE051").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1166,11 +1168,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc055c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE055").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE055").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1187,11 +1189,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc056c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE056").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE056").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1209,11 +1211,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc057c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE057").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE057").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1230,11 +1232,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc060c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE060").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE060").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1252,11 +1254,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc140c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE140").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE140").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1273,11 +1275,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc141c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE141").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE141").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result = concurrent.Future.sequence(additionalFields)
+      val result = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1294,11 +1296,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc170c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE170").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE170").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1318,11 +1320,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc182c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE182").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE182").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1339,11 +1341,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc190c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE190").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE190").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1364,11 +1366,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc191c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE191").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE191").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1387,11 +1389,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc228c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE228").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE228").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>
@@ -1407,11 +1409,11 @@ class XmlParserSpec
 
       val stream: Source[ParseEvent, ?] = createParsingEventStream(cc906c)
 
-      val additionalFields: Iterable[concurrent.Future[ParseResult[(String, String)]]] = elementPaths("IE906").map(
+      val additionalFields: Iterable[Future[ParseResult[(String, String)]]] = elementPaths("IE906").map(
         elem => stream.via(XmlParsers.extractElement(elem._1, elem._2)).runWith(Sink.head)
       )
 
-      val result: Future[Iterable[ParseResult[(String, String)]]] = concurrent.Future.sequence(additionalFields)
+      val result: Future[Iterable[ParseResult[(String, String)]]] = Future.sequence(additionalFields)
 
       whenReady(result) {
         additionalParams =>

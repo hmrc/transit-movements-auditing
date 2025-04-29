@@ -30,7 +30,7 @@ object Channel {
   case object Api extends Channel("api")
   case object Web extends Channel("web")
 
-  val values = Seq(Api, Web)
+  val values: Seq[Channel] = Seq(Api, Web)
 
   def findByChannel(channel: String): Option[Channel] =
     values.find(_.channel == channel)

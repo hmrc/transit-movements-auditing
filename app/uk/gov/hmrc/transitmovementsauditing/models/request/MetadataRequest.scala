@@ -18,7 +18,12 @@ package uk.gov.hmrc.transitmovementsauditing.models.request
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import uk.gov.hmrc.transitmovementsauditing.models._
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
+import uk.gov.hmrc.transitmovementsauditing.models.MovementType
+import uk.gov.hmrc.transitmovementsauditing.models.*
 
 object MetadataRequest {
   implicit lazy val metadataRequestFormat: OFormat[MetadataRequest] = Json.format[MetadataRequest]

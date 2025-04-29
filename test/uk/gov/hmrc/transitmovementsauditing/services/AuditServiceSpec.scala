@@ -38,11 +38,20 @@ import uk.gov.hmrc.play.audit.http.connector.AuditResult.Success
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
+import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.*
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.Channel
+import uk.gov.hmrc.transitmovementsauditing.models.ClientId
+import uk.gov.hmrc.transitmovementsauditing.models.Details
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
+import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
-import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
+import uk.gov.hmrc.transitmovementsauditing.services.AuditServiceImpl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext

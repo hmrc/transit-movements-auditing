@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as FinalAuditController
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as TransitionalAuditController
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
-import uk.gov.hmrc.transitmovementsauditing.models.{AuditType => TransitionalAuditType}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.{AuditType => FinalAuditType}
-import uk.gov.hmrc.transitmovementsauditing.controllers.{AuditController => TransitionalAuditController}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.{AuditController => FinalAuditController}
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType as FinalAuditType
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType as TransitionalAuditType
 
 import javax.inject.Inject
 import scala.concurrent.Future
@@ -42,10 +42,10 @@ class VersionedRoutingController @Inject() (
     extends BackendController(cc)
     with StreamingParsers {
 
-  def post(auditType: String): Action[Source[ByteString, ?]] =
+  def post(auditType: String): Action[Source[ByteString, _]] =
     Action.async(streamFromMemory) {
       implicit request =>
-        request.headers.get(Constants.APIVersionHeaderKey).map(_.trim.toLowerCase) match {
+        request.headers.get("final").map(_.trim.toLowerCase) match {
           case Some(Constants.APIVersionFinalHeaderValue) =>
             validateFinalAuditType(auditType)
               .flatMap(

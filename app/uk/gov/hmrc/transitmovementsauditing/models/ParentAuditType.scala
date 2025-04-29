@@ -26,7 +26,6 @@ object ParentAuditType {
 
   case object CTCTradersWorkflow extends ParentAuditType
 
-  val parentAuditValues: Seq[ParentAuditType] =
-    Seq(CTCTradersSucceeded, CTCTradersFailed, CTCTradersWorkflow)
+  val parentAuditValues = Seq(CTCTradersSucceeded, CTCTradersFailed, CTCTradersWorkflow)
 
 }

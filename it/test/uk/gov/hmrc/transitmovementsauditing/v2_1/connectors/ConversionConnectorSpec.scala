@@ -45,11 +45,12 @@ import uk.gov.hmrc.http.client.HttpClientV2Impl
 import uk.gov.hmrc.http.client.RequestBuilder
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnectorImpl
 import uk.gov.hmrc.transitmovementsauditing.itbase.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageType
-import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
@@ -86,7 +87,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
         .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.JSON))
-        .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
+        .withHeader(Constants.APIVersionFinalHeaderValue, equalTo(Constants.APIVersionFinalHeaderValue))
         .willReturn(
           aResponse().withStatus(OK).withBody(Json.stringify(success))
         )
@@ -124,7 +125,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
         .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.JSON))
-        .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
+        .withHeader(Constants.APIVersionFinalHeaderValue, equalTo(Constants.APIVersionFinalHeaderValue))
         .willReturn(
           aResponse().withStatus(BAD_REQUEST).withBody(Json.stringify(body))
         )

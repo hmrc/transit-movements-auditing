@@ -27,6 +27,7 @@ import play.api.mvc.ActionBuilder
 import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProviderImpl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

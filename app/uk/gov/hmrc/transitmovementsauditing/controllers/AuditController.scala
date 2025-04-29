@@ -28,24 +28,37 @@ import play.api.libs.json.JsError
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.internalauth.client._
+import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.transitmovementsauditing.Payload
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
-import uk.gov.hmrc.transitmovementsauditing.models._
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType
+import uk.gov.hmrc.transitmovementsauditing.models.Channel
+import uk.gov.hmrc.transitmovementsauditing.models.ClientId
+import uk.gov.hmrc.transitmovementsauditing.models.Details
+import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageId
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
+import uk.gov.hmrc.transitmovementsauditing.models.Metadata
+import uk.gov.hmrc.transitmovementsauditing.models.MovementId
+import uk.gov.hmrc.transitmovementsauditing.models.MovementType
+import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
 import uk.gov.hmrc.transitmovementsauditing.models.request.DetailsRequest
 import uk.gov.hmrc.transitmovementsauditing.services.AuditService
 import uk.gov.hmrc.transitmovementsauditing.services.ConversionService
 import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
+import uk.gov.hmrc.transitmovementsauditing.transitmovementsauditing.Payload
+import uk.gov.hmrc.transitmovementsauditing.models.*
 
 import java.time.Instant
 import java.time.ZoneOffset
@@ -88,7 +101,8 @@ class AuditController @Inject() (
       (for {
         stream  <- getSource(auditType, request)(exceedsMessageSize)
         details <- buildDetails(stream)
-        result  <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
+
+        result <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
       } yield result)
         .fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -117,7 +131,6 @@ class AuditController @Inject() (
         channel,
         request.headers.get(Constants.XContentLengthHeader).map(_.toLong)
       )
-
       payload match {
         case Left(summary) =>
           val objSummary = Json.obj(
@@ -220,15 +233,12 @@ class AuditController @Inject() (
 
   private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, PresentationError, Source[ByteString, ?]] =
-    for {
-      sources <- reUsableSource(request, 2)
-      converted <-
-        if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined)
-          conversionService.toJson(auditType.messageType.get, sources.head).asPresentation
-        else
-          EitherT.rightT[Future, PresentationError](sources.lift(1).get)
-    } yield converted
+  ): EitherT[Future, ConversionError, Source[ByteString, ?]] =
+    if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined) {
+      conversionService.toJson(auditType.messageType.get, request.body)
+    } else {
+      EitherT.rightT(request.body)
+    }
 
   private def fileId(): FileId =
     FileId(s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}")
@@ -239,18 +249,18 @@ class AuditController @Inject() (
     if (exceedsLimit) {
       logger.info("Payload in body and > auditing message limit")
       (for {
-        sources      <- reUsableSource(request, 2)
-        parseResults <- fieldParsingService.getAdditionalFields(auditType.messageType, sources.head).asPresentation
+        source       <- reUsableSource(request)
+        parseResults <- fieldParsingService.getAdditionalFields(auditType.messageType, source.lift(1).get).asPresentation
         keyValuePairs = parseResults.collect {
           case Right(pair) => pair
         }
-        objSummary <- objectStoreService.putFile(fileId(), sources.lift(1).get).asPresentation
+        objSummary <- objectStoreService.putFile(fileId(), source.lift(2).get).asPresentation
       } yield ObjectSummaryWithFields(objSummary, keyValuePairs)).map {
         summaryWithFields => Left(summaryWithFields)
       }
     } else {
       logger.info("Payload in body and < auditing message limit")
-      convertIfNecessary(auditType, request)
+      convertIfNecessary(auditType, request).asPresentation
         .map(Right(_))
     }
 
@@ -268,11 +278,8 @@ class AuditController @Inject() (
   // Function to create a new source from the materialized sequence
   private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, ?] = Source(seq.toList)
 
-  private def reUsableSource(
-    request: Request[Source[ByteString, ?]],
-    numberOfSources: Int
-  ): EitherT[Future, PresentationError, List[Source[ByteString, ?]]] = for {
+  private def reUsableSource(request: Request[Source[ByteString, ?]]): EitherT[Future, PresentationError, List[Source[ByteString, ?]]] = for {
     byteStringSeq <- materializeSource(request.body)
-  } yield List.fill(numberOfSources)(createReusableSource(byteStringSeq))
+  } yield List.fill(3)(createReusableSource(byteStringSeq))
 
 }

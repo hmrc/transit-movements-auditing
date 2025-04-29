@@ -24,10 +24,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
-import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError.Disabled
 import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
+import AuditError.Disabled
+import uk.gov.hmrc.transitmovementsauditing.controllers.ErrorTranslator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
