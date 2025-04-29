@@ -44,7 +44,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def postXml(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]]
+  def postXml(messageType: MessageType, source: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]]
 
 }
 
@@ -61,8 +61,8 @@ class ConversionConnectorImpl @Inject() (
 
   override def postXml(
     messageType: MessageType,
-    source: Source[ByteString, _]
-  )(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]] =
+    source: Source[ByteString, ?]
+  )(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, ?]] =
     EitherT(
       httpClient
         .post(url"${appConfig.converterUrl.withPath(converterPath(messageType))}")
