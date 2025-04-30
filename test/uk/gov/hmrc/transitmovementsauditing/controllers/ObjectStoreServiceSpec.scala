@@ -36,9 +36,9 @@ import uk.gov.hmrc.objectstore.client.*
 import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
-import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.UnexpectedError
+import ObjectStoreError.UnexpectedError
+import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
 import uk.gov.hmrc.transitmovementsauditing.models.FileId
 import uk.gov.hmrc.transitmovementsauditing.models.ObjectStoreResourceLocation
 import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreServiceImpl
@@ -88,7 +88,7 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
         val sut    = new ObjectStoreServiceImpl(appConfig)(materializer, mockClient)
         val result = sut.putFile(fileId, source)
         whenReady(result.value) {
-          v => v mustBe Right(objectSummary)
+          _ mustBe Right(objectSummary)
         }
 
         verify(mockClient, times(1)).putObject(

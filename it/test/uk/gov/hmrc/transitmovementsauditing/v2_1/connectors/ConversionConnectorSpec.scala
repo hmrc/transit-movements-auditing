@@ -45,11 +45,12 @@ import uk.gov.hmrc.http.client.HttpClientV2Impl
 import uk.gov.hmrc.http.client.RequestBuilder
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnectorImpl
 import uk.gov.hmrc.transitmovementsauditing.itbase.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.MessageType
-import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
@@ -86,32 +87,30 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
         .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.JSON))
-        .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
         .willReturn(
-          aResponse().withStatus(OK).withBody(Json.stringify(success))
+          aResponse().withStatus(OK).withBody(Json.stringify(success)).withHeader(HeaderNames.CONTENT_TYPE, MimeTypes.JSON)
         )
     )
 
-    val stream = Source.fromIterator(
-      () => Seq(ByteString("<test>"), ByteString("</test>")).iterator
-    )
+    val stream                     = Source.single(ByteString("<testXml></testXml>", "UTF-8"))
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
     val result = sut
       .postXml(MessageType.IE015, stream)
-      .semiflatMap(
-        r =>
-          r.reduce(_ ++ _)
-            .via(Flow.fromFunction(_.utf8String))
-            .via(Flow.fromFunction(Json.parse))
-            .runWith(Sink.head)
-      )
 
-    whenReady(result.value, timeout) {
+    val processedResultFuture = result.semiflatMap {
+      source =>
+        source
+          .reduce(_ ++ _)
+          .map(_.utf8String)
+          .map(Json.parse)
+          .runWith(Sink.head)
+    }.value
+
+    whenReady(processedResultFuture, timeout) {
       case Right(x) => x mustBe success
-      case Left(x)  => fail("There should not have been an error", x)
+      case Left(x)  => fail(s"There should not have been an error")
     }
-
   }
 
   "On a failed conversion, return a 400 (Bad Request)" in {
@@ -124,7 +123,6 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
         .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.JSON))
-        .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
         .willReturn(
           aResponse().withStatus(BAD_REQUEST).withBody(Json.stringify(body))
         )

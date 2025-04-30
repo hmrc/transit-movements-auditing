@@ -17,9 +17,9 @@
 package uk.gov.hmrc.transitmovementsauditing.models
 
 import Sources._
-import uk.gov.hmrc.transitmovementsauditing.models.ParentAuditType.CTCTradersFailed
-import uk.gov.hmrc.transitmovementsauditing.models.ParentAuditType.CTCTradersSucceeded
-import uk.gov.hmrc.transitmovementsauditing.models.ParentAuditType.CTCTradersWorkflow
+import ParentAuditType.CTCTradersFailed
+import ParentAuditType.CTCTradersSucceeded
+import ParentAuditType.CTCTradersWorkflow
 
 sealed abstract class AuditType(val name: String, val source: String, val messageType: Option[MessageType] = None, val parent: Option[ParentAuditType])
     extends Product

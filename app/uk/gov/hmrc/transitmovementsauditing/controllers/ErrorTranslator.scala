@@ -22,12 +22,12 @@ import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.PresentationError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError.Disabled
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.FileNotFound
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError.UnexpectedError
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.BadDateTime
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.NoElementFound
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.TooManyElementsFound
+import AuditError.Disabled
+import ObjectStoreError.FileNotFound
+import ObjectStoreError.UnexpectedError
+import ParseError.BadDateTime
+import ParseError.NoElementFound
+import ParseError.TooManyElementsFound
 
 import java.time.format.DateTimeParseException
 import scala.concurrent.ExecutionContext
@@ -78,6 +78,7 @@ trait ErrorTranslator {
       case BadDateTime(element, ex: DateTimeParseException) => PresentationError.badRequestError(s"Could not parse datetime for $element: ${ex.getMessage}")
       case ParseError.UnexpectedError(ex)                   => PresentationError.internalServiceError(cause = ex)
       case ParseError.IgnoreElement                         => PresentationError.badRequestError("Element set to Ignore")
+
     }
   }
 

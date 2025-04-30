@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.v2_1.routing
+package uk.gov.hmrc.transitmovementsauditing.routing
 
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
@@ -39,20 +39,20 @@ import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
-import uk.gov.hmrc.transitmovementsauditing.controllers.{AuditController => TransitionalAuditController}
-import uk.gov.hmrc.transitmovementsauditing.controllers.actions.{InternalAuthActionProvider => TransitionalInternalAuthActionProvider}
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as TransitionalAuditController
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider as FinalInternalAuthActionProvider
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider as TransitionalInternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.routing.VersionedRoutingController
 import uk.gov.hmrc.transitmovementsauditing.routing.routes
-import uk.gov.hmrc.transitmovementsauditing.services.{AuditService => TransitionalAuditService}
+import uk.gov.hmrc.transitmovementsauditing.services.AuditService as FinalAuditService
+import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingService as FinalFieldParsingService
+import uk.gov.hmrc.transitmovementsauditing.services.AuditService as TransitionalAuditService
+import uk.gov.hmrc.transitmovementsauditing.services.ConversionService as FinalConversionService
+import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService as FinalObjectStoreService
 import uk.gov.hmrc.transitmovementsauditing.services.{ConversionService => TransitionalConversionService}
 import uk.gov.hmrc.transitmovementsauditing.services.{FieldParsingService => TransitionalFieldParsingService}
 import uk.gov.hmrc.transitmovementsauditing.services.{ObjectStoreService => TransitionalObjectStoreService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.{AuditController => FinalAuditController}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.actions.{InternalAuthActionProvider => FinalInternalAuthActionProvider}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{AuditService => FinalAuditService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{ConversionService => FinalConversionService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{FieldParsingService => FinalFieldParsingService}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.services.{ObjectStoreService => FinalObjectStoreService}
 
 import java.time.Clock
 import scala.concurrent.ExecutionContext
@@ -60,25 +60,10 @@ import scala.concurrent.ExecutionContext
 class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with MockitoSugar with ScalaFutures {
 
   "post" should {
-    "call the transitional controller when APIVersion non 'final' value has been sent" in new Setup {
-      val route   = routes.VersionedRoutingController.post("AmendmentAcceptance")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq(Constants.APIVersionHeaderKey -> "anything")), xmlStream)
-      val result  = controller.post("AmendmentAcceptance")(request)
-
-      status(result) shouldBe ACCEPTED
-    }
-
-    "call the transitional controller when no APIVersion header has been sent" in new Setup {
-      val route   = routes.VersionedRoutingController.post("AmendmentAcceptance")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq.empty), xmlStream)
-      val result  = controller.post("AmendmentAcceptance")(request)
-
-      status(result) shouldBe ACCEPTED
-    }
 
     "call the versioned controller when APIVersion header 'final' has been sent" in new Setup {
       val route   = routes.VersionedRoutingController.post("AmendmentAcceptance")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq(Constants.APIVersionHeaderKey -> "final")), xmlStream)
+      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq.empty), xmlStream)
       val result  = controller.post("AmendmentAcceptance")(request)
 
       status(result) shouldBe ACCEPTED
@@ -94,7 +79,7 @@ class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with Mock
 
     "return BAD_REQUEST when auditType is not found in versioned models" in new Setup {
       val route   = routes.VersionedRoutingController.post("INVALID")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq(Constants.APIVersionHeaderKey -> "final")), xmlStream)
+      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq.empty), xmlStream)
       val result  = controller.post("INVALID")(request)
 
       status(result) shouldBe BAD_REQUEST
@@ -148,7 +133,7 @@ class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with Mock
 
     implicit val temporaryFileCreator: TemporaryFileCreator = SingletonTemporaryFileCreator
 
-    val mockFinalAuditController: FinalAuditController = new FinalAuditController(
+    val mockFinalAuditController: AuditController = new AuditController(
       controllerComponentWithTempFile,
       mockConversionService,
       mockAuditService,
@@ -176,8 +161,7 @@ class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with Mock
 
     val controller = new VersionedRoutingController(
       stubControllerComponents(),
-      mockTransitionalAuditController,
-      mockFinalAuditController
+      mockTransitionalAuditController
     )
 
   }

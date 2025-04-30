@@ -24,8 +24,6 @@ import com.google.inject.Inject
 import play.api.Logging
 import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.transitmovementsauditing.models.FileId
-import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 import org.apache.pekko.stream.Materializer
 
 import javax.inject.Singleton
@@ -37,6 +35,8 @@ import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
+import uk.gov.hmrc.transitmovementsauditing.models.FileId
+import uk.gov.hmrc.transitmovementsauditing.models.errors.ObjectStoreError
 
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
 trait ObjectStoreService {

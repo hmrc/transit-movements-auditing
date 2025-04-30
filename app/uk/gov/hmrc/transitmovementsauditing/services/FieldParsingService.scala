@@ -25,10 +25,10 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
-import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
-import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.concatKeyValue
+import XmlParsers.ParseResult
+import XmlParsers.concatKeyValue
+import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

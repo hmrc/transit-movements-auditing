@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.transitmovementsauditing.v2_1.models.errors
+package uk.gov.hmrc.transitmovementsauditing
 
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.ObjectStoreResourceLocation
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import uk.gov.hmrc.transitmovementsauditing.models.ObjectSummaryWithFields
 
-sealed trait ObjectStoreError extends Throwable
+package object transitmovementsauditing {
 
-object ObjectStoreError {
-  case class FileNotFound(uri: ObjectStoreResourceLocation) extends ObjectStoreError
-  case class UnexpectedError(thr: Option[Throwable] = None) extends ObjectStoreError
+  type Payload = Either[ObjectSummaryWithFields, Source[ByteString, ?]]
+
 }

@@ -3,16 +3,16 @@ import sbt._
 object AppDependencies {
 
   private val catsVersion     = "2.12.0"
-  private val hmrcPlayVersion = "9.3.0"
+  private val hmrcPlayVersion = "9.11.0"
 
   val compile = Seq(
     "uk.gov.hmrc"             %% "bootstrap-backend-play-30"    % hmrcPlayVersion,
     "org.typelevel"           %% "cats-core"                    % catsVersion,
     "org.apache.pekko"        %% "pekko-connectors-xml"         % "1.0.2",
     "io.lemonlabs"            %% "scala-uri"                    % "4.0.3",
-    "uk.gov.hmrc.objectstore" %% "object-store-client-play-30"  % "2.0.0",
-    "uk.gov.hmrc"             %% "internal-auth-client-play-30" % "3.0.0",
-    "uk.gov.hmrc"             %% "crypto-json-play-30"          % "8.0.0",
+    "uk.gov.hmrc.objectstore" %% "object-store-client-play-30"  % "2.1.0",
+    "uk.gov.hmrc"             %% "internal-auth-client-play-30" % "3.1.0",
+    "uk.gov.hmrc"             %% "crypto-json-play-30"          % "8.2.0",
     "org.apache.pekko"        %% "pekko-protobuf-v3"            % "1.1.2",
     "org.apache.pekko"        %% "pekko-serialization-jackson"  % "1.1.2",
     "org.apache.pekko"        %% "pekko-stream"                 % "1.1.2",

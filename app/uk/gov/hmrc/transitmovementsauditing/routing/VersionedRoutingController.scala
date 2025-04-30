@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,16 @@ import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.transitmovementsauditing.config.Constants
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
-import uk.gov.hmrc.transitmovementsauditing.models.{AuditType => TransitionalAuditType}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.models.{AuditType => FinalAuditType}
-import uk.gov.hmrc.transitmovementsauditing.controllers.{AuditController => TransitionalAuditController}
-import uk.gov.hmrc.transitmovementsauditing.v2_1.controllers.{AuditController => FinalAuditController}
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType as FinalAuditType
 
 import javax.inject.Inject
 import scala.concurrent.Future
 
 class VersionedRoutingController @Inject() (
   cc: ControllerComponents,
-  transitionalController: TransitionalAuditController,
-  finalController: FinalAuditController
+  Controller: AuditController
 )(implicit val materializer: Materializer)
     extends BackendController(cc)
     with StreamingParsers {
@@ -45,30 +41,15 @@ class VersionedRoutingController @Inject() (
   def post(auditType: String): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
       implicit request =>
-        request.headers.get(Constants.APIVersionHeaderKey).map(_.trim.toLowerCase) match {
-          case Some(Constants.APIVersionFinalHeaderValue) =>
-            validateFinalAuditType(auditType)
-              .flatMap(
-                aType => finalController.post(aType)(request).asRight
-              )
-              .merge
-          case _ =>
-            validateTransitionalAuditType(auditType)
-              .flatMap(
-                aType => transitionalController.post(aType)(request).asRight
-              )
-              .merge
-        }
+        validateFinalAuditType(auditType)
+          .flatMap(
+            aType => Controller.post(aType)(request).asRight
+          )
+          .merge
     }
 
   private def validateFinalAuditType(auditType: String): Either[Future[Result], FinalAuditType] =
     FinalAuditType.values.find(_.name == auditType) match {
-      case Some(value) => value.asRight
-      case None        => Future.successful(BadRequest(s"Invalid audit type: $auditType")).asLeft
-    }
-
-  private def validateTransitionalAuditType(auditType: String): Either[Future[Result], TransitionalAuditType] =
-    TransitionalAuditType.values.find(_.name == auditType) match {
       case Some(value) => value.asRight
       case None        => Future.successful(BadRequest(s"Invalid audit type: $auditType")).asLeft
     }
