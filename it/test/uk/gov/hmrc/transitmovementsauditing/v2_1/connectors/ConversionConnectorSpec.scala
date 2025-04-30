@@ -109,7 +109,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
 
     whenReady(processedResultFuture, timeout) {
       case Right(x) => x mustBe success
-      case Left(x) => fail(s"There should not have been an error")
+      case Left(x)  => fail(s"There should not have been an error")
     }
   }
 

@@ -26,6 +26,4 @@ object Constants {
   val XAuditMetaMovementType     = "X-Audit-Meta-Movement-Type"
   val XAuditMetaMessageType      = "X-Audit-Meta-Message-Type"
   val XClientIdHeader            = "X-Client-Id"
-  val APIVersionHeaderKey        = "APIVersion"
-  val APIVersionFinalHeaderValue = "final"
 }
