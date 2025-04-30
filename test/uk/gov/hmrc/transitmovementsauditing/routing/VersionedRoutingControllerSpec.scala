@@ -60,25 +60,10 @@ import scala.concurrent.ExecutionContext
 class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with MockitoSugar with ScalaFutures {
 
   "post" should {
-    "call the transitional controller when APIVersion non 'final' value has been sent" in new Setup {
-      val route   = routes.VersionedRoutingController.post("AmendmentAcceptance")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq(Constants.APIVersionFinalHeaderValue -> "anything")), xmlStream)
-      val result  = controller.post("AmendmentAcceptance")(request)
-
-      status(result) shouldBe ACCEPTED
-    }
-
-    "call the transitional controller when no APIVersion header has been sent" in new Setup {
-      val route   = routes.VersionedRoutingController.post("AmendmentAcceptance")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq.empty), xmlStream)
-      val result  = controller.post("AmendmentAcceptance")(request)
-
-      status(result) shouldBe ACCEPTED
-    }
 
     "call the versioned controller when APIVersion header 'final' has been sent" in new Setup {
       val route   = routes.VersionedRoutingController.post("AmendmentAcceptance")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq(Constants.APIVersionFinalHeaderValue -> "final")), xmlStream)
+      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq.empty), xmlStream)
       val result  = controller.post("AmendmentAcceptance")(request)
 
       status(result) shouldBe ACCEPTED
@@ -94,7 +79,7 @@ class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with Mock
 
     "return BAD_REQUEST when auditType is not found in versioned models" in new Setup {
       val route   = routes.VersionedRoutingController.post("INVALID")
-      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq(Constants.APIVersionFinalHeaderValue -> "final")), xmlStream)
+      val request = FakeRequest(route.method, route.url, FakeHeaders(Seq.empty), xmlStream)
       val result  = controller.post("INVALID")(request)
 
       status(result) shouldBe BAD_REQUEST
