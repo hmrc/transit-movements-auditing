@@ -176,8 +176,7 @@ class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with Mock
 
     val controller = new VersionedRoutingController(
       stubControllerComponents(),
-      mockTransitionalAuditController,
-      mockFinalAuditController
+      mockTransitionalAuditController
     )
 
   }

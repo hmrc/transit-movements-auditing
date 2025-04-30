@@ -24,51 +24,32 @@ import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as FinalAuditController
-import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as TransitionalAuditController
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType as FinalAuditType
-import uk.gov.hmrc.transitmovementsauditing.models.AuditType as TransitionalAuditType
 
 import javax.inject.Inject
 import scala.concurrent.Future
 
 class VersionedRoutingController @Inject() (
   cc: ControllerComponents,
-  transitionalController: TransitionalAuditController,
   finalController: FinalAuditController
 )(implicit val materializer: Materializer)
     extends BackendController(cc)
     with StreamingParsers {
 
-  def post(auditType: String): Action[Source[ByteString, _]] =
+  def post(auditType: String): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
       implicit request =>
-        request.headers.get("final").map(_.trim.toLowerCase) match {
-          case Some(Constants.APIVersionFinalHeaderValue) =>
-            validateFinalAuditType(auditType)
-              .flatMap(
-                aType => finalController.post(aType)(request).asRight
-              )
-              .merge
-          case _ =>
-            validateTransitionalAuditType(auditType)
-              .flatMap(
-                aType => transitionalController.post(aType)(request).asRight
-              )
-              .merge
-        }
+        validateFinalAuditType(auditType)
+          .flatMap(
+            aType => finalController.post(aType)(request).asRight
+          )
+          .merge
     }
 
   private def validateFinalAuditType(auditType: String): Either[Future[Result], FinalAuditType] =
     FinalAuditType.values.find(_.name == auditType) match {
-      case Some(value) => value.asRight
-      case None        => Future.successful(BadRequest(s"Invalid audit type: $auditType")).asLeft
-    }
-
-  private def validateTransitionalAuditType(auditType: String): Either[Future[Result], TransitionalAuditType] =
-    TransitionalAuditType.values.find(_.name == auditType) match {
       case Some(value) => value.asRight
       case None        => Future.successful(BadRequest(s"Invalid audit type: $auditType")).asLeft
     }
