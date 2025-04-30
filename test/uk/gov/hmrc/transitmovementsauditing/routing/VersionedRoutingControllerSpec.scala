@@ -39,7 +39,7 @@ import uk.gov.hmrc.internalauth.client.*
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
-import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as FinalAuditController
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController
 import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as TransitionalAuditController
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider as FinalInternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider as TransitionalInternalAuthActionProvider
@@ -148,7 +148,7 @@ class VersionedRoutingControllerSpec extends AnyWordSpec with Matchers with Mock
 
     implicit val temporaryFileCreator: TemporaryFileCreator = SingletonTemporaryFileCreator
 
-    val mockFinalAuditController: FinalAuditController = new FinalAuditController(
+    val mockFinalAuditController: AuditController = new AuditController(
       controllerComponentWithTempFile,
       mockConversionService,
       mockAuditService,

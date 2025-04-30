@@ -95,7 +95,8 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     val stream                     = Source.single(ByteString("<testXml></testXml>", "UTF-8"))
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    val result = sut.postXml(MessageType.IE015, stream)
+    val result = sut
+      .postXml(MessageType.IE015, stream)
 
     val processedResultFuture = result.semiflatMap {
       source =>
@@ -107,10 +108,8 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     }.value
 
     whenReady(processedResultFuture, timeout) {
-      case Right(x) =>
-        x mustBe success
-      case Left(x) =>
-        fail(s"There should not have been an error")
+      case Right(x) => x mustBe success
+      case Left(x) => fail(s"There should not have been an error")
     }
   }
 

@@ -24,7 +24,7 @@ import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController as FinalAuditController
+import uk.gov.hmrc.transitmovementsauditing.controllers.AuditController
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType as FinalAuditType
 
@@ -33,7 +33,7 @@ import scala.concurrent.Future
 
 class VersionedRoutingController @Inject() (
   cc: ControllerComponents,
-  finalController: FinalAuditController
+  Controller: AuditController
 )(implicit val materializer: Materializer)
     extends BackendController(cc)
     with StreamingParsers {
@@ -43,7 +43,7 @@ class VersionedRoutingController @Inject() (
       implicit request =>
         validateFinalAuditType(auditType)
           .flatMap(
-            aType => finalController.post(aType)(request).asRight
+            aType => Controller.post(aType)(request).asRight
           )
           .merge
     }
