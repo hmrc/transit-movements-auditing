@@ -24,6 +24,8 @@ import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
+import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -34,15 +36,19 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.base.TestStreamComponents
 import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnector
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V2_1
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V3_0
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
-import uk.gov.hmrc.transitmovementsauditing.services.ConversionServiceImpl
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with TestActorSystem with ScalaFutures {
+class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with OptionValues with TestActorSystem with ScalaFutures {
+
+  val version: APIVersionHeader = Gen.oneOf(V2_1, V3_0).sample.value
 
   "When a valid stream is provided" - {
     "assure the stream is consumed and returns a valid JSON ByteString based stream" in {
@@ -50,7 +56,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       val mockConversionConnector = mock[ConversionConnector]
       val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
         EitherT.rightT(Source.single(ByteString("""{ "dummy": "dummy" }""")))
-      when(mockConversionConnector.postXml(any(), any())(any())).thenReturn(dummyJsonSource)
+      when(mockConversionConnector.postXml(any(), any(), any())(any())).thenReturn(dummyJsonSource)
 
       val sut = new ConversionServiceImpl(mockConversionConnector)
 
@@ -65,7 +71,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       val messageType: MessageType   = MessageType.IE015
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
-      val newSource = sut.toJson(messageType, source)
+      val newSource = sut.toJson(messageType, source, version)
       val sink = newSource.flatMap(
         x => EitherT.right[ConversionError](x.runWith(Sink.head))
       )
@@ -87,7 +93,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
         val mockConversionConnector = mock[ConversionConnector]
         val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
           EitherT.leftT(UpstreamErrorResponse("""{ "code": "BAD_REQUEST", "message": "error" }""", 400))
-        when(mockConversionConnector.postXml(any(), any())(any())).thenReturn(dummyJsonSource)
+        when(mockConversionConnector.postXml(any(), any(), any())(any())).thenReturn(dummyJsonSource)
 
         val sut = new ConversionServiceImpl(mockConversionConnector)
 
@@ -102,7 +108,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
         val messageType: MessageType   = MessageType.IE015
         implicit val hc: HeaderCarrier = HeaderCarrier()
 
-        val newSource = sut.toJson(messageType, source)
+        val newSource = sut.toJson(messageType, source, version)
 
         whenReady(newSource.value) {
           result =>
@@ -121,7 +127,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
           val mockConversionConnector = mock[ConversionConnector]
           val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
             EitherT.leftT(UpstreamErrorResponse("""{ "code": "INTERNAL_SERVER_ERROR", "message": "error" }""", 500))
-          when(mockConversionConnector.postXml(any(), any())(any())).thenReturn(dummyJsonSource)
+          when(mockConversionConnector.postXml(any(), any(), any())(any())).thenReturn(dummyJsonSource)
 
           val sut = new ConversionServiceImpl(mockConversionConnector)
 
@@ -136,7 +142,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
           val messageType: MessageType   = MessageType.IE015
           implicit val hc: HeaderCarrier = HeaderCarrier()
 
-          val newSource = sut.toJson(messageType, source)
+          val newSource = sut.toJson(messageType, source, version)
 
           whenReady(
             monitor.flatMap(
