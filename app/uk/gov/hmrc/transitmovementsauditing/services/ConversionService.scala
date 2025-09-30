@@ -26,6 +26,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnector
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.StandardError
@@ -37,7 +38,9 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionServiceImpl])
 trait ConversionService {
 
-  def toJson(messageType: MessageType, xmlStream: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, ?]]
+  def toJson(messageType: MessageType, xmlStream: Source[ByteString, ?], apiVersion: APIVersionHeader)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, ConversionError, Source[ByteString, ?]]
 
 }
 
@@ -45,10 +48,11 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
 
   override def toJson(
     messageType: MessageType,
-    xmlStream: Source[ByteString, ?]
+    xmlStream: Source[ByteString, ?],
+    apiVersion: APIVersionHeader
   )(implicit hc: HeaderCarrier): EitherT[Future, ConversionError, Source[ByteString, ?]] =
     conversionConnector
-      .postXml(messageType, xmlStream)
+      .postXml(messageType, xmlStream, apiVersion)
       .leftMap {
         case UpstreamErrorResponse(m, BAD_REQUEST, _, _) => ConversionError.FailedConversion(Json.parse(m).as[StandardError].message)
         case NonFatal(e) => ConversionError.UnexpectedError("An error was returned when converting the XML to Json", thr = Some(e))

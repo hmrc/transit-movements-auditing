@@ -20,6 +20,7 @@ import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
@@ -44,7 +45,9 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def postXml(messageType: MessageType, source: Source[ByteString, ?])(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, _]]
+  def postXml(messageType: MessageType, source: Source[ByteString, ?], apiVersion: APIVersionHeader)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, Throwable, Source[ByteString, ?]]
 
 }
 
@@ -61,13 +64,15 @@ class ConversionConnectorImpl @Inject() (
 
   override def postXml(
     messageType: MessageType,
-    source: Source[ByteString, ?]
+    source: Source[ByteString, ?],
+    apiVersion: APIVersionHeader
   )(implicit hc: HeaderCarrier): EitherT[Future, Throwable, Source[ByteString, ?]] =
     EitherT(
       httpClient
         .post(url"${appConfig.converterUrl.withPath(converterPath(messageType))}")
         .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
         .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
+        .setHeader("APIVersion" -> s"${apiVersion.value}")
         .withBody(source)
         .stream[uk.gov.hmrc.http.HttpResponse]
         .flatMap {

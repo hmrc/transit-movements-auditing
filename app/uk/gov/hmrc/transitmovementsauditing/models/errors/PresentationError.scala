@@ -44,6 +44,9 @@ object PresentationError extends CommonFormats {
   def notFoundError(message: String): PresentationError =
     StandardError(message, ErrorCode.NotFound)
 
+  def notAcceptableError(message: String): PresentationError =
+    StandardError(message, ErrorCode.NotAcceptable)
+
   def upstreamServiceError(
     message: String = "Internal server error",
     code: ErrorCode = ErrorCode.InternalServerError,

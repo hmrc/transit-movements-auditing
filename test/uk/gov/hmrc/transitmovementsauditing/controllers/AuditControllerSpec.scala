@@ -17,6 +17,8 @@
 package uk.gov.hmrc.transitmovementsauditing.controllers
 
 import cats.data.EitherT
+import org.apache.pekko.stream.scaladsl.Keep
+import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
@@ -27,10 +29,14 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.concurrent.ScalaFutures
 import play.api.http.DefaultHttpErrorHandler
 import play.api.http.HttpErrorConfig
 import play.api.http.Status
@@ -38,6 +44,7 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.*
+import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import uk.gov.hmrc.http.HeaderCarrier
@@ -55,6 +62,8 @@ import uk.gov.hmrc.transitmovementsauditing.models.errors.AuditError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ConversionError
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.*
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader
+import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.Channel
 import uk.gov.hmrc.transitmovementsauditing.models.ClientId
 import uk.gov.hmrc.transitmovementsauditing.models.Details
@@ -73,6 +82,9 @@ import uk.gov.hmrc.transitmovementsauditing.services.ObjectStoreService
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsingServiceHelpers
 import uk.gov.hmrc.transitmovementsauditing.services.*
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.ValidateAcceptRefiner
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V2_1
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V3_0
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
@@ -82,6 +94,8 @@ class AuditControllerSpec
     extends AnyFreeSpec
     with XmlParsingServiceHelpers
     with Matchers
+    with OptionValues
+    with ScalaFutures
     with TestActorSystem
     with MockitoSugar
     with ModelGenerators
@@ -135,9 +149,12 @@ class AuditControllerSpec
 
   private val emptyFakeRequest = FakeRequest("POST", "/")
 
+  val versionHeader: APIVersionHeader = Gen.oneOf(V2_1, V3_0).sample.value
+
   private val fakeRequest = emptyFakeRequest
     .withHeaders(
       CONTENT_TYPE                   -> "application/xml",
+      "APIVersion"                   -> s"${versionHeader.value}",
       Constants.XContentLengthHeader -> contentLessThanAuditLimit,
       Constants.XAuditMetaPath       -> "/customs/transits/movements"
     )
@@ -146,10 +163,12 @@ class AuditControllerSpec
   private val fakeStatusWithClientIdRequest = emptyFakeRequest
     .withHeaders(CONTENT_TYPE -> "application/json")
     .withHeaders(XClientIdHeader -> "53434")
+    .withHeaders("APIVersion" -> s"${versionHeader.value}")
     .withBody(jsonDetailsStream)
 
   private val fakeStatusWithoutClientIdRequest = emptyFakeRequest
     .withHeaders(CONTENT_TYPE -> "application/json")
+    .withHeaders("APIVersion" -> s"${versionHeader.value}")
     .withBody(jsonDetailsStream)
 
   private val fakeJsonRequestHeadersWithoutPath = emptyFakeRequest
@@ -160,19 +179,23 @@ class AuditControllerSpec
       Constants.XAuditMetaEORI         -> "eori-1",
       Constants.XAuditMetaMovementType -> "departure",
       Constants.XAuditMetaMessageType  -> "IE015",
-      Constants.XContentLengthHeader   -> contentLessThanAuditLimit
+      Constants.XContentLengthHeader   -> contentLessThanAuditLimit,
+      "APIVersion"                     -> s"${versionHeader.value}"
     )
     .withBody(jsonStreamMultiple)
 
   private val fakeJsonRequestWithAllHeaders = fakeJsonRequestHeadersWithoutPath
     .withHeaders(
-      Constants.XAuditMetaPath -> "/customs/transits/movements"
+      Constants.XAuditMetaPath -> "/customs/transits/movements",
+      "APIVersion"             -> s"${versionHeader.value}"
     )
 
   private val fakeJsonRequestWithAllHeadersAndExceeds = fakeJsonRequestWithAllHeaders
     .withHeaders(
       Constants.XContentLengthHeader -> contentExceedsAuditLimit
     )
+
+  val auditTypeGen: Gen[AuditType] = Gen.oneOf(AuditType.values)
 
   private val mockAppConfig           = mock[AppConfig]
   private val mockAuditService        = mock[AuditService]
@@ -207,7 +230,8 @@ class AuditControllerSpec
     mockObjectStoreService,
     mockFieldParsingService,
     TestInternalAuthActionProvider,
-    mockAppConfig
+    mockAppConfig,
+    new ValidateAcceptRefiner(stubControllerComponents())
   )(
     materializer,
     temporaryFileCreator
@@ -223,6 +247,93 @@ class AuditControllerSpec
 
   "POST /" - {
 
+    "when APIVersion are invalid or missing " - {
+      val (matVal, sourceUnderTest) = Source.single(ByteString("<valid></valid>")).alsoToMat(Sink.head)(Keep.right).preMaterialize()
+
+      def reqWithAccept(accept: Option[String]): FakeRequest[Source[ByteString, ?]] =
+        FakeRequest(
+          method = "POST",
+          uri = "/",
+          headers = FakeHeaders(
+            accept
+              .map(
+                ac => Seq("APIVersion" -> ac)
+              )
+              .getOrElse(Seq.empty)
+          ),
+          body = sourceUnderTest
+        )
+
+      "return NOT_ACCEPTABLE when the the APIVersion is None" in {
+
+        val resultMatVal = matVal.map(_.utf8String)
+
+        val sample = auditTypeGen.sample.value
+
+        val request = reqWithAccept(None)
+
+        val result = controller.post(sample)(request)
+
+        status(result) mustEqual NOT_ACCEPTABLE
+
+        contentAsJson(result) mustEqual Json.obj(
+          "code"    -> "NOT_ACCEPTABLE",
+          "message" -> "An Accept Header is missing."
+        )
+
+        whenReady(resultMatVal) {
+          _ mustBe "<valid></valid>" // testing we drain the stream
+        }
+      }
+      "return UNSUPPORTED_MEDIA_TYPE error when the the APIVersion is invalid or not supported" in {
+
+        val invalidAPIVersion = Gen.alphaNumStr.sample.getOrElse("invalidHeader")
+
+        val resultMatVal = matVal.map(_.utf8String)
+
+        val sample = auditTypeGen.sample.value
+
+        val request = reqWithAccept(Some(invalidAPIVersion))
+
+        val result = controller.post(sample)(request)
+
+        status(result) mustEqual UNSUPPORTED_MEDIA_TYPE
+
+        contentAsJson(result) mustEqual Json.obj(
+          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+          "message" -> s"The Accept header $invalidAPIVersion is not supported."
+        )
+
+        whenReady(resultMatVal) {
+          _ mustBe "<valid></valid>" // testing we drain the stream
+        }
+      }
+      "return UNSUPPORTED_MEDIA_TYPE error when the the APIVersion Header is empty" in {
+
+        val emptyAPIVersion = ""
+
+        val resultMatVal = matVal.map(_.utf8String)
+
+        val sample = auditTypeGen.sample.value
+
+        val request = reqWithAccept(Some(emptyAPIVersion))
+
+        val result = controller.post(sample)(request)
+
+        status(result) mustEqual UNSUPPORTED_MEDIA_TYPE
+
+        contentAsJson(result) mustEqual Json.obj(
+          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+          "message" -> s"The Accept header $emptyAPIVersion is not supported."
+        )
+
+        whenReady(resultMatVal) {
+          _ mustBe "<valid></valid>" // testing we drain the stream
+        }
+
+      }
+    }
+
     "Message type audits" - {
 
       "returns 202 for a message type audit message when auditing is disabled" in {
@@ -234,27 +345,27 @@ class AuditControllerSpec
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.ACCEPTED
         verify(mockAppConfig, times(0)).auditMessageMaxSize
-        verify(mockConversionService, times(0)).toJson(any(), any())(any())
+        verify(mockConversionService, times(0)).toJson(any(), any(), any())(any())
       }
 
       "returns 202 when auditing was successful with an XML payload that does not exceed audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(eqTo(MessageType.IE004), any())(any())).thenReturn(conversionServiceXmlToJson)
+        when(mockConversionService.toJson(eqTo(MessageType.IE004), any(), any())(any())).thenReturn(conversionServiceXmlToJson)
         when(mockAuditService.sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any())).thenReturn(EitherT.liftF(Future.unit))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest)
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
-        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), any())(any())
+        verify(mockConversionService, times(1)).toJson(eqTo(MessageType.IE004), any(), any())(any())
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any())
       }
 
       "returns 202 when auditing was successful with a payload that does not exceed audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(eqTo(MessageType.IE013), eqTo(xmlStream))(any())).thenAnswer(
+        when(mockConversionService.toJson(eqTo(MessageType.IE013), eqTo(xmlStream), any())(any())).thenAnswer(
           _ => conversionServiceXmlToJson
         )
         when(mockAuditService.sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())).thenReturn(EitherT.liftF(Future.unit))
@@ -263,14 +374,14 @@ class AuditControllerSpec
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
-        verify(mockConversionService, times(0)).toJson(eqTo(MessageType.IE013), eqTo(xmlStream))(any())
+        verify(mockConversionService, times(0)).toJson(eqTo(MessageType.IE013), eqTo(xmlStream), any())(any())
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationAmendment), any())(any())
       }
 
       "returns 202 when auditing was successful with a payload that exceeds the audit limit" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(any(), any())(any())).thenAnswer(
+        when(mockConversionService.toJson(any(), any(), any())(any())).thenAnswer(
           _ => conversionServiceXmlToJson
         )
         when(mockFieldParsingService.getAdditionalFields(any(), any()))
@@ -296,7 +407,7 @@ class AuditControllerSpec
         status(result) mustBe Status.ACCEPTED
 
         verify(mockAppConfig, times(1)).auditMessageMaxSize
-        verify(mockConversionService, times(0)).toJson(any(), any())(any())
+        verify(mockConversionService, times(0)).toJson(any(), any(), any())(any())
         verify(mockAuditService, times(1)).sendMessageTypeEvent(eqTo(DeclarationData), any())(any())
         verify(mockFieldParsingService, times(1)).getAdditionalFields(any(), any())
         verify(mockObjectStoreService, times(1)).putFile(FileId(any()), any())(any(), any())
@@ -339,7 +450,7 @@ class AuditControllerSpec
       "returns 500 when the conversion service fails" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(any(), any())(any()))
+        when(mockConversionService.toJson(any(), any(), any())(any()))
           .thenReturn(EitherT.leftT[Future, Source[ByteString, ?]](ConversionError.UnexpectedError("test error")))
 
         val result = controller.post(AmendmentAcceptance)(fakeRequest.withHeaders(Constants.XContentLengthHeader -> contentLessThanAuditLimit))
@@ -354,7 +465,7 @@ class AuditControllerSpec
       "returns 500 when the audit service fails" in {
 
         when(mockAppConfig.auditMessageMaxSize).thenReturn(50000L)
-        when(mockConversionService.toJson(any(), any())(any())).thenReturn(conversionServiceXmlToJson)
+        when(mockConversionService.toJson(any(), any(), any())(any())).thenReturn(conversionServiceXmlToJson)
         when(mockAuditService.sendMessageTypeEvent(eqTo(AmendmentAcceptance), any())(any()))
           .thenReturn(EitherT.leftT[Future, Unit](AuditError.UnexpectedError("test error")))
 
@@ -483,7 +594,12 @@ class AuditControllerSpec
 
         val request =
           emptyFakeRequest
-            .withHeaders(CONTENT_TYPE -> "application/json", XAuditSourceHeader -> "common-transit-convention-traders", XClientIdHeader -> "53434")
+            .withHeaders(
+              CONTENT_TYPE       -> "application/json",
+              XAuditSourceHeader -> "common-transit-convention-traders",
+              XClientIdHeader    -> "53434",
+              "APIVersion"       -> s"${versionHeader.value}"
+            )
             .withBody(jsonDetailsStream)
         val result = controller.post(TraderFailedUpload)(request)
         status(result) mustBe Status.ACCEPTED

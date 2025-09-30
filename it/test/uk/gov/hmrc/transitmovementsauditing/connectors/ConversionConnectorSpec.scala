@@ -31,6 +31,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.mockito.Mockito
+import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.http.HeaderNames
@@ -46,12 +48,17 @@ import uk.gov.hmrc.http.client.RequestBuilder
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.itbase.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V2_1
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V3_0
+import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
-import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
+class ConversionConnectorSpec extends AnyFreeSpec with Matchers with OptionValues with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
+
+  val version: APIVersionHeader = Gen.oneOf(V2_1, V3_0).sample.value
 
   private val timeout = Timeout(5.seconds)
 
@@ -96,7 +103,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
     val result = sut
-      .postXml(MessageType.IE015, stream)
+      .postXml(MessageType.IE015, stream, version)
       .semiflatMap(
         r =>
           r.reduce(_ ++ _)
@@ -106,8 +113,13 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
       )
 
     whenReady(result.value, timeout) {
-      case Right(x) => x mustBe success
-      case Left(x)  => fail("There should not have been an error", x)
+      case Right(x) =>
+        x mustBe success
+        server.verify(
+          postRequestedFor(urlEqualTo(conversionUrl("IE015")))
+            .withHeader("APIVersion", equalTo(version.value))
+        )
+      case Left(x) => fail("There should not have been an error", x)
     }
 
   }
@@ -122,6 +134,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
         .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.JSON))
+        .withHeader("APIVersion", equalTo(version.value))
         .willReturn(
           aResponse().withStatus(BAD_REQUEST).withBody(Json.stringify(body))
         )
@@ -130,7 +143,7 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
     val stream                     = Source.single(ByteString("<test></test>"))
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    whenReady(sut.postXml(MessageType.IE015, stream).value, timeout) {
+    whenReady(sut.postXml(MessageType.IE015, stream, version).value, timeout) {
       case Left(UpstreamErrorResponse(msg, 400, _, _)) => Json.parse(msg) mustBe body
       case Right(_)                                    => fail("Should not have succeeded")
       case _                                           => fail("A different error occurred")
@@ -149,10 +162,10 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
         .withBody[RequestBuilder](any())(using any(), any(), any())
     )
       .thenReturn(mockRequestBuilder)
-    when(mockRequestBuilder.stream(any(), any())).thenReturn(Future.failed(error))
+    when(mockRequestBuilder.stream(using any(), any())).thenReturn(Future.failed(error))
 
     val failingSut = new ConversionConnectorImpl(appConfig, mockClient)
-    val result     = failingSut.postXml(MessageType.IE015, Source.single(ByteString("")))(HeaderCarrier())
+    val result     = failingSut.postXml(MessageType.IE015, Source.single(ByteString("")), version)(HeaderCarrier())
 
     whenReady(result.value, timeout) {
       case Left(e) if e == error => ()
@@ -160,5 +173,4 @@ class ConversionConnectorSpec extends AnyFreeSpec with Matchers with MockitoSuga
       case Right(_)              => fail("Should not have succeeded")
     }
   }
-
 }

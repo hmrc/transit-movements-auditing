@@ -37,6 +37,7 @@ import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.transitmovementsauditing.config.Constants.XAuditSourceHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
+import uk.gov.hmrc.transitmovementsauditing.controllers.actions.ValidateAcceptRefiner
 import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType
 import uk.gov.hmrc.transitmovementsauditing.models.Channel
@@ -77,7 +78,8 @@ class AuditController @Inject() (
   objectStoreService: ObjectStoreService,
   fieldParsingService: FieldParsingService,
   internalAuth: InternalAuthActionProvider,
-  appConfig: AppConfig
+  appConfig: AppConfig,
+  validateAcceptRefiner: ValidateAcceptRefiner
 )(implicit
   val materializer: Materializer,
   val temporaryFileCreator: TemporaryFileCreator
@@ -89,17 +91,17 @@ class AuditController @Inject() (
   private val predicate = Predicate.Permission(Resource(ResourceType("transit-movements-auditing"), ResourceLocation("audit")), IAAction("WRITE"))
 
   def post(auditType: AuditType): Action[Source[ByteString, ?]] =
-    internalAuth(predicate).async(streamFromMemory) {
+    (internalAuth(predicate) andThen validateAcceptRefiner).async(streamFromMemory) {
       implicit request =>
-        if (auditType.messageType.isDefined) postMessageTypeAudit(auditType)
+        if (auditType.messageType.isDefined) postMessageTypeAudit(auditType, request.versionHeader)
         else postStatusAudit(auditType)
     }
 
-  private def postMessageTypeAudit(auditType: AuditType)(implicit request: Request[Source[ByteString, ?]]): Future[Result] =
+  private def postMessageTypeAudit(auditType: AuditType, apiVersion: APIVersionHeader)(implicit request: Request[Source[ByteString, ?]]): Future[Result] =
     if (appConfig.auditingEnabled) {
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
       (for {
-        stream  <- getSource(auditType, request)(exceedsMessageSize)
+        stream  <- getSource(auditType, request, apiVersion)(exceedsMessageSize)
         details <- buildDetails(stream)
 
         result <- auditService.sendMessageTypeEvent(auditType, details).asPresentation
@@ -125,8 +127,8 @@ class AuditController @Inject() (
         request.headers.get(Constants.XAuditMetaMovementId).map(MovementId(_)),
         request.headers.get(Constants.XAuditMetaMessageId).map(MessageId(_)),
         request.headers.get(Constants.XAuditMetaEORI).map(EORINumber(_)),
-        request.headers.get(Constants.XAuditMetaMovementType).flatMap(MovementType.findByName(_)),
-        request.headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode(_)),
+        request.headers.get(Constants.XAuditMetaMovementType).flatMap(MovementType.findByName),
+        request.headers.get(Constants.XAuditMetaMessageType).flatMap(MessageType.findByCode),
         clientId,
         channel,
         request.headers.get(Constants.XContentLengthHeader).map(_.toLong)
@@ -231,11 +233,11 @@ class AuditController @Inject() (
       .get(Constants.XContentLengthHeader)
       .exists(_.toLong > appConfig.auditMessageMaxSize)
 
-  private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, ?]])(implicit
+  private def convertIfNecessary(auditType: AuditType, request: Request[Source[ByteString, ?]], apiVersion: APIVersionHeader)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, ConversionError, Source[ByteString, ?]] =
     if (request.contentType.contains(MimeTypes.XML) && auditType.messageType.isDefined) {
-      conversionService.toJson(auditType.messageType.get, request.body)
+      conversionService.toJson(auditType.messageType.get, request.body, apiVersion)
     } else {
       EitherT.rightT(request.body)
     }
@@ -243,7 +245,7 @@ class AuditController @Inject() (
   private def fileId(): FileId =
     FileId(s"${UUID.randomUUID().toString}-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss.SSS").withZone(ZoneOffset.UTC).format(Instant.now())}")
 
-  private def getSource(auditType: AuditType, request: Request[Source[ByteString, ?]])(exceedsLimit: Boolean)(implicit
+  private def getSource(auditType: AuditType, request: Request[Source[ByteString, ?]], apiVersion: APIVersionHeader)(exceedsLimit: Boolean)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Payload] =
     if (exceedsLimit) {
@@ -260,7 +262,7 @@ class AuditController @Inject() (
       }
     } else {
       logger.info("Payload in body and < auditing message limit")
-      convertIfNecessary(auditType, request).asPresentation
+      convertIfNecessary(auditType, request, apiVersion).asPresentation
         .map(Right(_))
     }
 
