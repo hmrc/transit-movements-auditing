@@ -31,8 +31,6 @@ import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.ArrivalNotification
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.DeclarationData
 import uk.gov.hmrc.transitmovementsauditing.models.errors.ParseError.NoElementFound
-import uk.gov.hmrc.transitmovementsauditing.services.ElementPaths
-import uk.gov.hmrc.transitmovementsauditing.services.FieldParsingServiceImpl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt

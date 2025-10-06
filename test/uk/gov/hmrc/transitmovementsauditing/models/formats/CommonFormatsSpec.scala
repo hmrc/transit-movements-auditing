@@ -23,7 +23,6 @@ import play.api.libs.json.JsArray
 import play.api.libs.json.JsNumber
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.transitmovementsauditing.models.formats.CommonFormats
 
 class CommonFormatsSpec extends AnyFreeSpec with Matchers {
 

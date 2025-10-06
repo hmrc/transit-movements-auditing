@@ -22,8 +22,6 @@ import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import uk.gov.hmrc.transitmovementsauditing.models.Channel.Api
 import uk.gov.hmrc.transitmovementsauditing.models.Channel.Web
-import uk.gov.hmrc.transitmovementsauditing.models.Channel
-import uk.gov.hmrc.transitmovementsauditing.models.ClientId
 
 class ChannelSpec extends AnyFlatSpec with Matchers {
 

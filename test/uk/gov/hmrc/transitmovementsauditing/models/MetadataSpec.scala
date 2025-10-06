@@ -24,12 +24,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.models.EORINumber
-import uk.gov.hmrc.transitmovementsauditing.models.MessageId
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
-import uk.gov.hmrc.transitmovementsauditing.models.Metadata
-import uk.gov.hmrc.transitmovementsauditing.models.MovementId
-import uk.gov.hmrc.transitmovementsauditing.models.MovementType
 
 class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {
   private val path = Gen.listOfN(10, Gen.alphaChar).map(_.mkString)
@@ -44,7 +38,7 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     (path, movementId, messageId, eoriNumber, movementType, messageType) =>
       val clientId = arbitraryClientId.arbitrary.sample.get
       val channel  = arbitraryChannel.arbitrary.sample.get
-      val actual = Metadata.metadataFormat.writes(
+      val actual   = Metadata.metadataFormat.writes(
         Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType), Some(clientId), Some(channel), Some(123))
       )
       val expected = Json.obj(
@@ -72,7 +66,7 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     (path, movementId, messageId, eoriNumber, movementType, messageType) =>
       val clientId = arbitraryClientId.arbitrary.sample.get
       val channel  = arbitraryChannel.arbitrary.sample.get
-      val actual = Metadata.metadataFormat.reads(
+      val actual   = Metadata.metadataFormat.reads(
         Json.obj(
           "path"          -> path,
           "movementId"    -> movementId,

@@ -26,8 +26,6 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.models.Details
-import uk.gov.hmrc.transitmovementsauditing.models.Metadata
 
 class DetailsSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {
   implicit val jsValueArbitrary: Arbitrary[JsObject] = Arbitrary(Gen.const(Json.obj("code" -> "BUSINESS_VALIDATION_ERROR", "message" -> "Expected NTA.GB")))
@@ -36,7 +34,7 @@ class DetailsSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropert
     arbitrary[JsObject]
   ) {
     (metadata, payload) =>
-      val actual = Details.detailsFormat.writes(Details(Some("SubmitDeclarationFailedEvent"), metadata, Some(payload)))
+      val actual   = Details.detailsFormat.writes(Details(Some("SubmitDeclarationFailedEvent"), metadata, Some(payload)))
       val expected = Json.obj(
         "subType"  -> "SubmitDeclarationFailedEvent",
         "metadata" -> metadata,
