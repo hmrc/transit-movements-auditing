@@ -29,7 +29,6 @@ import uk.gov.hmrc.transitmovementsauditing.models.MessageId
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.MovementType
-import uk.gov.hmrc.transitmovementsauditing.models.request.MetadataRequest
 import uk.gov.hmrc.transitmovementsauditing.models.*
 
 class MetadataRequestSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with ModelGenerators {

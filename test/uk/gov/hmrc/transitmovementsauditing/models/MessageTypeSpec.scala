@@ -18,7 +18,6 @@ package uk.gov.hmrc.transitmovementsauditing.models
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
 class MessageTypeSpec extends AnyFreeSpec with Matchers {
 

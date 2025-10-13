@@ -53,7 +53,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
   "When a valid stream is provided" - {
     "assure the stream is consumed and returns a valid JSON ByteString based stream" in {
 
-      val mockConversionConnector = mock[ConversionConnector]
+      val mockConversionConnector                                            = mock[ConversionConnector]
       val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
         EitherT.rightT(Source.single(ByteString("""{ "dummy": "dummy" }""")))
       when(mockConversionConnector.postXml(any(), any(), any())(any())).thenReturn(dummyJsonSource)
@@ -72,7 +72,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
       val newSource = sut.toJson(messageType, source, version)
-      val sink = newSource.flatMap(
+      val sink      = newSource.flatMap(
         x => EitherT.right[ConversionError](x.runWith(Sink.head))
       )
 
@@ -90,7 +90,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     "When an invalid stream is provided" - {
       "assure we get a ConversionError#FailedConversion with the appropriate message" in {
 
-        val mockConversionConnector = mock[ConversionConnector]
+        val mockConversionConnector                                            = mock[ConversionConnector]
         val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
           EitherT.leftT(UpstreamErrorResponse("""{ "code": "BAD_REQUEST", "message": "error" }""", 400))
         when(mockConversionConnector.postXml(any(), any(), any())(any())).thenReturn(dummyJsonSource)
@@ -124,7 +124,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       "When an unknown error occurs" - {
         "assure we get a ConversionError#UnknownError with the appropriate message" in {
 
-          val mockConversionConnector = mock[ConversionConnector]
+          val mockConversionConnector                                            = mock[ConversionConnector]
           val dummyJsonSource: EitherT[Future, Throwable, Source[ByteString, ?]] =
             EitherT.leftT(UpstreamErrorResponse("""{ "code": "INTERNAL_SERVER_ERROR", "message": "error" }""", 500))
           when(mockConversionConnector.postXml(any(), any(), any())(any())).thenReturn(dummyJsonSource)

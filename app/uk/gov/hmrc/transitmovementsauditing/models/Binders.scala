@@ -25,7 +25,7 @@ object Binders {
     def bind(key: String, value: String): Either[String, AuditType] =
       for {
         name <- binder.bind(key, value)
-        at <-
+        at   <-
           AuditType.fromName(name) match {
             case None            => Left("Error locating audit type")
             case Some(auditType) => Right(auditType)

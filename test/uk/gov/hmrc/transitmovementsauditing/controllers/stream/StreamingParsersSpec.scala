@@ -36,7 +36,6 @@ import play.api.test.Helpers
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.status
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.controllers.stream.StreamingParsers
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
@@ -72,7 +71,7 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with ScalaFutures w
     Source(byteString.grouped(1024).toList)
 
   "Streaming" - {
-    "from Memory" - {
+    "from Memory" -
       (1 to 5).foreach {
         value =>
           s"~$value kb string is created" in {
@@ -84,7 +83,6 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with ScalaFutures w
             contentAsString(result) mustBe byteString.decodeString(StandardCharsets.UTF_8)
           }
       }
-    }
   }
 
 }

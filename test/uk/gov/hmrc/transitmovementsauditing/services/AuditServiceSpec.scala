@@ -51,7 +51,6 @@ import uk.gov.hmrc.transitmovementsauditing.models.MessageId
 import uk.gov.hmrc.transitmovementsauditing.models.Metadata
 import uk.gov.hmrc.transitmovementsauditing.models.MovementId
 import uk.gov.hmrc.transitmovementsauditing.models.MovementType.Departure
-import uk.gov.hmrc.transitmovementsauditing.services.AuditServiceImpl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
@@ -198,7 +197,7 @@ class AuditServiceSpec
             val subType           = if (auditType.parent.isDefined) Some(auditType.name) else None
             val parent            = auditType.parent.getOrElse(auditType.name).toString
             val statusTypeDetails = statusEventDetails.copy(subType = subType)
-            val result = service.sendStatusTypeEvent(
+            val result            = service.sendStatusTypeEvent(
               statusTypeDetails,
               parent,
               auditType.source

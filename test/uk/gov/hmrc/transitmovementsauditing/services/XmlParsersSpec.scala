@@ -26,7 +26,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.transitmovementsauditing.base.StreamTestHelpers
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
-import uk.gov.hmrc.transitmovementsauditing.services.ElementPaths
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers
 import uk.gov.hmrc.transitmovementsauditing.services.XmlParsers.ParseResult
 
