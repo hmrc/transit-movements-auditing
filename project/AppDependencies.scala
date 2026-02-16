@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
 
   private val catsVersion     = "2.13.0"
-  private val bootstrapVersion = "10.2.0"
+  private val bootstrapVersion = "10.5.0"
 
   val compile = Seq(
     "uk.gov.hmrc"             %% "bootstrap-backend-play-30"    % bootstrapVersion,
@@ -12,7 +12,7 @@ object AppDependencies {
     "io.lemonlabs"            %% "scala-uri"                    % "4.0.3",
     "uk.gov.hmrc.objectstore" %% "object-store-client-play-30"  % "2.4.0",
     "uk.gov.hmrc"             %% "internal-auth-client-play-30" % "3.1.0",
-    "uk.gov.hmrc"             %% "crypto-json-play-30"          % "8.3.0",
+    "uk.gov.hmrc"             %% "crypto-json-play-30"          % "8.4.0",
     "org.apache.pekko"        %% "pekko-protobuf-v3"            % "1.2.1",
     "org.apache.pekko"        %% "pekko-serialization-jackson"  % "1.2.1",
     "org.apache.pekko"        %% "pekko-stream"                 % "1.2.1",
