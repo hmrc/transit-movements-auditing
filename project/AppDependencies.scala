@@ -10,7 +10,7 @@ object AppDependencies {
     "org.typelevel"           %% "cats-core"                    % catsVersion,
     "org.apache.pekko"        %% "pekko-connectors-xml"         % "1.2.0",
     "io.lemonlabs"            %% "scala-uri"                    % "4.0.3",
-    "uk.gov.hmrc.objectstore" %% "object-store-client-play-30"  % "2.4.0",
+    "uk.gov.hmrc.objectstore" %% "object-store-client-play-30"  % "2.5.0",
     "uk.gov.hmrc"             %% "internal-auth-client-play-30" % "3.1.0",
     "uk.gov.hmrc"             %% "crypto-json-play-30"          % "8.4.0",
     "org.apache.pekko"        %% "pekko-protobuf-v3"            % "1.2.1",
