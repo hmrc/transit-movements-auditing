@@ -34,7 +34,6 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
-import uk.gov.hmrc.transitmovementsauditing.config.Constants
 import uk.gov.hmrc.http.client.readStreamHttpResponse
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
 
