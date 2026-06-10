@@ -17,7 +17,6 @@
 package uk.gov.hmrc.transitmovementsauditing.models
 
 enum APIVersionHeader(val value: String) {
-  case V2_1 extends APIVersionHeader("2.1")
   case V3_0 extends APIVersionHeader("3.0")
 }
 

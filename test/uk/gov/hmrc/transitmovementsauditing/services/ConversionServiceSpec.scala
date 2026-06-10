@@ -24,7 +24,6 @@ import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.Mockito.when
-import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -36,7 +35,6 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.transitmovementsauditing.base.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.base.TestStreamComponents
 import uk.gov.hmrc.transitmovementsauditing.connectors.ConversionConnector
-import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V2_1
 import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V3_0
 import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
@@ -48,7 +46,7 @@ import scala.concurrent.Future
 
 class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with OptionValues with TestActorSystem with ScalaFutures {
 
-  val version: APIVersionHeader = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: APIVersionHeader = V3_0
 
   "When a valid stream is provided" - {
     "assure the stream is consumed and returns a valid JSON ByteString based stream" in {

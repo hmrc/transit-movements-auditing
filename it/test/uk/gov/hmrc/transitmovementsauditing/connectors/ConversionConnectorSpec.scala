@@ -31,7 +31,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.mockito.Mockito
-import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
@@ -48,7 +47,6 @@ import uk.gov.hmrc.http.client.RequestBuilder
 import uk.gov.hmrc.transitmovementsauditing.config.AppConfig
 import uk.gov.hmrc.transitmovementsauditing.itbase.TestActorSystem
 import uk.gov.hmrc.transitmovementsauditing.itbase.WiremockSuite
-import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V2_1
 import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V3_0
 import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType
@@ -58,7 +56,7 @@ import scala.concurrent.Future
 
 class ConversionConnectorSpec extends AnyFreeSpec with Matchers with OptionValues with MockitoSugar with WiremockSuite with ScalaFutures with TestActorSystem {
 
-  val version: APIVersionHeader = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: APIVersionHeader = V3_0
 
   private val timeout = Timeout(5.seconds)
 

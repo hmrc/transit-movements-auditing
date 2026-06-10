@@ -57,7 +57,6 @@ import uk.gov.hmrc.transitmovementsauditing.config.Constants.XClientIdHeader
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.InternalAuthActionProvider
 import uk.gov.hmrc.transitmovementsauditing.controllers.actions.ValidateAcceptRefiner
 import uk.gov.hmrc.transitmovementsauditing.generators.ModelGenerators
-import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V2_1
 import uk.gov.hmrc.transitmovementsauditing.models.APIVersionHeader.V3_0
 import uk.gov.hmrc.transitmovementsauditing.models.AuditType.*
 import uk.gov.hmrc.transitmovementsauditing.models.MessageType.IE015
@@ -132,7 +131,7 @@ class AuditControllerSpec
 
   private val emptyFakeRequest = FakeRequest("POST", "/")
 
-  val versionHeader: APIVersionHeader = Gen.oneOf(V2_1, V3_0).sample.value
+  val versionHeader: APIVersionHeader = V3_0
 
   private val fakeRequest = emptyFakeRequest
     .withHeaders(
